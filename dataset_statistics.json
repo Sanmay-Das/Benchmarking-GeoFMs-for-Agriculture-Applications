@@ -1,0 +1,82 @@
+{
+  "NWIA": {
+    "num_chips": 190,
+    "total_pixels": 9533440,
+    "class_distribution": {
+      "No Data": 0,
+      "Natural Vegetation": 1417715,
+      "Forest": 361924,
+      "Corn": 3814652,
+      "Soybeans": 3269083,
+      "Wetlands": 129069,
+      "Developed/Barren": 424228,
+      "Open Water": 36158,
+      "Winter Wheat": 195,
+      "Alfalfa": 38525,
+      "Fallow/Idle": 12608,
+      "Cotton": 0,
+      "Sorghum": 71,
+      "Other": 29212
+    }
+  },
+  "EastNC": {
+    "num_chips": 918,
+    "total_pixels": 46061568,
+    "class_distribution": {
+      "No Data": 17764316,
+      "Natural Vegetation": 649722,
+      "Forest": 16953358,
+      "Corn": 1571372,
+      "Soybeans": 2475377,
+      "Wetlands": 972956,
+      "Developed/Barren": 1469286,
+      "Open Water": 2346759,
+      "Winter Wheat": 17456,
+      "Alfalfa": 17176,
+      "Fallow/Idle": 9625,
+      "Cotton": 1071193,
+      "Sorghum": 11934,
+      "Other": 731038
+    }
+  },
+  "SouthMN": {
+    "num_chips": 1292,
+    "total_pixels": 64827392,
+    "class_distribution": {
+      "No Data": 0,
+      "Natural Vegetation": 4205151,
+      "Forest": 3079616,
+      "Corn": 27053347,
+      "Soybeans": 22865671,
+      "Wetlands": 1610822,
+      "Developed/Barren": 3986295,
+      "Open Water": 1259823,
+      "Winter Wheat": 11626,
+      "Alfalfa": 199632,
+      "Fallow/Idle": 235643,
+      "Cotton": 0,
+      "Sorghum": 1611,
+      "Other": 318155
+    }
+  },
+  "SouthCA": {
+    "num_chips": 92,
+    "total_pixels": 4616192,
+    "class_distribution": {
+      "No Data": 0,
+      "Natural Vegetation": 2591468,
+      "Forest": 33704,
+      "Corn": 69700,
+      "Soybeans": 0,
+      "Wetlands": 999,
+      "Developed/Barren": 251500,
+      "Open Water": 7907,
+      "Winter Wheat": 2168,
+      "Alfalfa": 109818,
+      "Fallow/Idle": 19289,
+      "Cotton": 46464,
+      "Sorghum": 11157,
+      "Other": 1472018
+    }
+  }
+}

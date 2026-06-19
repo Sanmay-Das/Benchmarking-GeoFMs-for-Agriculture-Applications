@@ -1,0 +1,296 @@
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+\documentclass[sigconf]{acmart}
+\usepackage{multirow}
+\usepackage{booktabs}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights information — update after completing the ACM rights form
+\setcopyright{acmlicensed}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{XXXXXXX.XXXXXXX}
+%% These commands are for a PROCEEDINGS abstract or paper.
+\acmConference[Conference acronym 'XX]{Make sure to enter the correct
+  conference title from your rights confirmation email}{June 03--05,
+  2018}{Woodstock, NY}
+%%
+%%  Uncomment \acmBooktitle if the title of the proceedings is different
+%%  from ``Proceedings of ...''!
+%%
+%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+%%  June 03--05, 2018, Woodstock, NY}
+\acmISBN{978-1-4503-XXXX-X/2018/06}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+\title{Benchmarking Geospatial Foundation Models for Agriculture Applications}
+
+\author{Sanmay Das}
+\affiliation{%
+  \institution{University of California, Riverside}
+  \city{Riverside}
+  \state{California}
+  \country{USA}}
+\email{sdas050@ucr.edu}
+
+\author{Zhuocheng Shang}
+\affiliation{%
+  \institution{University of California, Riverside}
+  \city{Riverside}
+  \country{USA}}
+\email{zshan011@ucr.edu}
+
+\author{Ahmed Eldawy}
+\affiliation{%
+  \institution{University of California, Riverside}
+  \city{Riverside}
+  \country{USA}}
+\email{eldawy@ucr.edu}
+
+\renewcommand{\shortauthors}{Das and Eldawy}
+
+\begin{abstract}
+Satellite imagery enables large-scale monitoring of agricultural land, and geospatial foundation models pretrained on such data are widely assumed to generalize across remote sensing tasks. Yet whether these models transfer across geographic regions
+remains untested. We present a controlled benchmark evaluating three models, Prithvi, SpectralGPT, and SatMAE, on multi-temporal crop segmentation and change detection  using Sentinel-2 imagery across four climatically diverse U.S. states including Iowa, North Carolina, California, and Minnesota. Strict geographic train, validation, and test splits over contiguous study regions isolate geographic generalization as the variable under test. Our results show that spectral encoding yields a more generalizable inductive
+bias than temporal encoding for cross-regional crop mapping, and expose systematic  failure modes including majority class collapse and minority crop invisibility under distribution shift. These findings reveal critical limitations of current geospatial foundation models for diverse agricultural applications and motivate architectures that prioritize spectral over temporal feature learning.
+\end{abstract}
+
+%%
+%% CCS concepts — generate your terms at https://dl.acm.org/ccs/ccs.cfm
+%% then replace the block below.
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>10010147.10010178</concept_id>
+  <concept_desc>Computing methodologies~Machine learning</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10010147.10010178.10010224</concept_id>
+  <concept_desc>Computing methodologies~Computer vision</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Computing methodologies~Machine learning}
+\ccsdesc[300]{Computing methodologies~Computer vision}
+
+\keywords{geospatial foundation models, remote sensing, change detection, crop mapping, Sentinel-2}
+
+\maketitle
+
+
+\section{Introduction}
+Agriculture is one of the largest commercial sectors in California and across the United States. Nearly 40 percent of the land in California is used for agriculture~\cite{ppic2024landuse}, and the state produces close to half of the vegetables and over three quarters of the fruits and nuts grown nationally, spanning more than 400 distinct commodities with farm output above \$61 billion in 2024~\cite{cdfa2024statistics}. This output is increasingly produced under resource stress. Groundwater levels in the Central Valley have dropped quickly during recent droughts~\cite{liu2022groundwater}, and heavy pumping has dried up wells and damaged infrastructure~\cite{ppic2024drought}. Managing land and water under these conditions depends on knowing what is grown and where, which makes accurate crop type mapping at scale a key input for tracking food supply, estimating yield, and supporting agricultural decisions~\cite{joshi2025cropmapping}.
+
+Producing this information across national agriculture is difficult. With roughly 880 million acres of farmland accounting for nearly 39 percent of all land in the United States~\cite{usda2022census}, the area under agricultural use far exceeds what manual ground surveys can feasibly cover. Satellite imagery removes this bottleneck by capturing large regions in a single pass with minimal manual effort, and a growing body of work builds on it to monitor agriculture. Geospatial Foundation Models (GeoFMs) such as Prithvi~\cite{jakubik2023foundation}, SatMAE~\cite{cong2022satmae}, and SpectralGPT~\cite{hong2024spectralgpt}, pretrained on large Earth observation datasets, aim to provide generalizable representations for multi temporal crop segmentation and change detection with little task specific supervision. Whether they deliver on this aim is unclear. \textit{Do these models generalize across geographies, or do reported results mainly reflect quirks of a single dataset?}
+
+Existing benchmarks cannot answer this question, because each fails to meet at least one of three requirements, geographic diversity beyond Europe, accurate labels, and an evaluation setup that exposes generalization rather than hiding it. PASTIS~\cite{garnot2021panoptic}, BreizhCrop~\cite{russwurm2019breizhcrops}, Sen4AgriNet~\cite{sykas2021sen4agrinet}, and EuroCropsML~\cite{reuss2025eurocropsml} are all limited to Europe, and their labels are reported by farmers themselves, which adds systematic error. GEO-Bench~\cite{lacoste2023geobench} randomly subsamples to 20{,}000 chips, which removes the spatial structure needed to test whether a model transfers to new regions. PANGAEA~\cite{marsocci2024pangaea} reports that supervised baselines often match or exceed GeoFMs, and PhilEO Bench~\cite{fibaek2024phileo} shows that foundation models lose fine grained detail on tasks that require dense, pixel level output, yet neither targets U.S. conditions or provides controlled comparisons across regions. As a result, whether GeoFMs transfer across U.S. geographies remains untested.
+
+We address this gap with a systematic benchmark that evaluates Prithvi, SpectralGPT, and SatMAE on multi-temporal crop segmentation and change detection using raw Sentinel-2 imagery~\cite{sentinel2_eoportal} across four climatically diverse U.S. states, Iowa, North Carolina, California, and Minnesota. By holding the evaluation fixed across regions, with identical preprocessing, contiguous 800 to 1{,}300~km$^{2}$ study regions, and strict geographic train, validation, and test splits, we isolate geographic generalization as the variable under test. Our results show that \textbf{spectral encoding provides a more generalizable inductive bias than temporal encoding} for cross regional crop mapping, and expose systematic failure modes including majority class collapse and minority crop invisibility under distribution shift.
+
+
+\section{Related Work}
+
+TODO
+
+
+\section{Dataset and Experimental Setup}
+\textbf{Study Regions.}
+We selected three spatially contiguous 800--1{,}300~km$^{2}$
+regions per state assigned to train, validation, and test
+splits with no spatial overlap, covering Iowa (Ames /
+Cedar~Rapids / Sheldon--Sibley), North Carolina
+(Rocky~Mount / Clinton / Belhaven), California
+(Rio~Vista / Merced / Bakersfield), and Minnesota
+(Willmar / Crookston / Rochester). States were chosen to
+maximize climatic and agronomic diversity: Iowa and Minnesota
+represent the annual row-crop Corn Belt; North Carolina
+introduces coastal ecotones and organic muck soils; and
+California introduces perennial orchards and arid irrigated
+agriculture under the most severe distribution shift.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.75\columnwidth]{Ground_truth_Conus.png}
+\caption{USDA Cropland Data Layer (CDL) ground truth for the contiguous
+U.S.\ (CONUS). Colors represent 13 crop and land cover classes used as
+labels for both segmentation and change detection tasks.}
+\label{fig:cdl_conus}
+\end{figure}
+
+\textbf{Imagery \& Labels.}
+Sentinel-2 Level-2A imagery was acquired via the Copernicus
+Data Space Ecosystem~\cite{cdse_annual_report} for the 2024
+growing season (March--September) using six bands: B2, B3,
+B4, B8A, B11, B12~\cite{sentinel2_bands}. Three phenological
+composites (early / mid / late season) were formed by
+selecting the least-cloudy scene per window using the SCL
+mask. All scenes were reprojected to EPSG:5070 at 10~m and
+stacked into 18-band GeoTIFFs. Chips were extracted with
+50\% sliding-window overlap and a 5\% per-chip cloud
+threshold at model-native resolutions: 224$\times$224
+(Prithvi), 128$\times$128 (SpectralGPT), and 96$\times$96
+(SatMAE). Ground truth was derived from the USDA Cropland
+Data Layer (CDL)~\cite{usda_cdl} for 2024, mapped to 13
+classes: Natural Vegetation, Forest, Corn, Soybeans,
+Wetlands, Developed/Barren, Open Water, Winter Wheat,
+Alfalfa, Fallow/Idle, Cotton, Sorghum, and Other.
+
+\textbf{Models.}
+Candidate selection required native multispectral support
+beyond RGB---eliminating Scale-MAE~\cite{reed2023scale}
+(RGB-only pretraining) and SAM~\cite{osco2023segment}. Three models were retained:
+
+\begin{itemize}
+  \item \textbf{Prithvi}~\cite{jakubik2023foundation}: ViT
+    masked autoencoder pretrained on multi-temporal HLS
+    imagery. Uses 3D spatiotemporal patch embeddings and
+    lacks explicit geolocation embeddings. Segmentation head:
+    4-layer ConvTranspose2D neck + FCN. Change detection:
+    Siamese encoder + FCN. Trained 80 epochs, Adam,
+    LR$=1.5\!\times\!10^{-5}$, weighted cross-entropy.
+  \item \textbf{SpectralGPT}~\cite{hong2024spectralgpt}:
+    Generative model with 3D spatial-spectral coupling,
+    adapted for multi-temporal input. Segmentation head: MLP
+    + UPerNet. Change detection: Siamese encoder + FPN.
+    Trained 250 epochs, AdamW, LR$=1\!\times\!10^{-4}$,
+    cross-entropy.
+  \item \textbf{SatMAE}~\cite{cong2022satmae}: GroupChannels
+    ViT-Large masked autoencoder with per-group spectral
+    patch embeddings, pretrained on fMoW-Sentinel.
+    Segmentation head: FPN. Change detection: Siamese encoder
+    + FCN. Trained 100 epochs, AdamW, cross-entropy.
+\end{itemize}
+
+\textbf{Inference \& Evaluation.}
+Full-scene segmentation inference followed the TerraTorch
+tiled protocol~\cite{gomes2025terratorch}: reflect-padded
+sliding window, cosine-tapered blend weights, and an
+8-pixel border discard to suppress edge artifacts.
+For change detection, single mid-season scenes from 2023
+(T1) and 2024 (T2) serve as the bi-temporal image pair.
+Change masks are derived by directly comparing 2023 and
+2024 CDL annotations, both remapped to the same 13-class
+schema: any pixel where the land cover class differs
+between years is labeled changed (1), same-class pixels
+as unchanged (0), and pixels with missing CDL data in
+either year are excluded (255). Both T1 and T2 are
+cloud-filtered using their respective SCL masks, requiring
+$\geq$95\% valid pixels per chip. All three models use a
+Siamese encoder with shared weights; Prithvi and SatMAE
+use an FCN head, SpectralGPT uses an FPN head.
+Segmentation was evaluated with mIoU and per-class
+IoU; change detection with Precision, Recall, F1, and
+IoU\textsubscript{change} following the SpectralGPT
+protocol~\cite{hong2024spectralgpt}. All experiments ran
+on a single NVIDIA A100 GPU.
+
+
+\section{Results}
+
+\subsection{Segmentation}
+
+Table~\ref{tab:iou_results} presents per-class IoU for
+Prithvi, SpectralGPT, and SatMAE across all four states.
+
+\begin{table*}[t]
+\centering
+\caption{Per-class IoU (\%) for Prithvi, SpectralGPT, and SatMAE across
+four U.S.\ states. mIoU is averaged across all states.
+NaN = class absent in that region. -- = results pending.}
+\label{tab:iou_results}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccccccc}
+\toprule
+\multirow{2}{*}{\textbf{Class}} &
+\multicolumn{3}{c}{\textbf{Iowa}} &
+\multicolumn{3}{c}{\textbf{North Carolina}} &
+\multicolumn{3}{c}{\textbf{California}} &
+\multicolumn{3}{c}{\textbf{Minnesota}} &
+\multicolumn{3}{c}{\textbf{mIoU}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+\cmidrule(lr){8-10}\cmidrule(lr){11-13}\cmidrule(lr){14-16}
+& \textbf{Prithvi} & \textbf{SGPT} & \textbf{SatMAE}
+& \textbf{Prithvi} & \textbf{SGPT} & \textbf{SatMAE}
+& \textbf{Prithvi} & \textbf{SGPT} & \textbf{SatMAE}
+& \textbf{Prithvi} & \textbf{SGPT} & \textbf{SatMAE}
+& \textbf{Prithvi} & \textbf{SGPT} & \textbf{SatMAE} \\
+\midrule
+Natural Vegetation & 0.00  & 41.86 & 1.86 & 11.10 & 32.06 & -- & 1.46  & 74.86 & -- & 0.01  & 14.94 & 0.59 & 3.14  & 40.93 & -- \\
+Forest             & 0.73  & 8.62  & 1.96 & 65.42 & 88.43 & -- & 12.98 & 2.74  & -- & 2.16  & 44.38 & 0.71 & 20.32 & 36.04 & -- \\
+Corn               & 33.69 & 7.99  & 0.21 & 9.58  & 48.83 & -- & 0.00  & 0.75  & -- & 4.04  & 46.86 & 0.57 & 11.83 & 26.11 & -- \\
+Soybean            & 38.41 & 26.70 & 0.02 & 6.12  & 59.84 & -- & NaN   & NaN   & -- & 17.27 & 62.14 & 0.00 & 20.60 & 49.56 & -- \\
+Wetlands           & 0.00  & 2.03  & 0.01 & 0.00  & 0.02  & -- & 0.00  & 0.45  & -- & 1.69  & 14.08 & 1.26 & 0.42  & 4.15  & -- \\
+Developed/Barren   & 1.51  & 53.35 & 4.20 & 3.22  & 56.43 & -- & 6.95  & 23.91 & -- & 0.32  & 52.83 & 1.33 & 3.00  & 46.63 & -- \\
+Open Water         & 6.86  & 39.44 & 0.10 & 0.13  & 90.26 & -- & 11.17 & 34.76 & -- & 0.76  & 75.35 & 0.05 & 4.73  & 59.95 & -- \\
+Winter Wheat       & 0.00  & 0.00  & 0.00 & 0.00  & 0.87  & -- & 0.00  & 0.01  & -- & 0.00  & 0.00  & 0.50 & 0.00  & 0.22  & -- \\
+Alfalfa            & 0.00  & 30.62 & 0.15 & 0.00  & 0.00  & -- & 0.09  & 41.08 & -- & 0.12  & 9.31  & 0.16 & 0.05  & 20.25 & -- \\
+Fallow/Idle        & 0.00  & 0.34  & 0.00 & 0.00  & 0.25  & -- & 0.00  & 2.80  & -- & 0.00  & 23.57 & 0.00 & 0.00  & 6.74  & -- \\
+Cotton             & NaN   & NaN   & 0.00 & 2.35  & 66.90 & -- & 0.00  & 0.00  & -- & NaN   & NaN   & 0.00 & 1.18  & 33.45 & -- \\
+Sorghum            & 0.00  & 0.00  & 0.00 & 0.00  & 4.94  & -- & 0.00  & 0.03  & -- & 0.00  & 0.00  & 0.39 & 0.00  & 1.24  & -- \\
+Other              & 0.00  & 0.08  & 0.00 & 4.51  & 64.75 & -- & 20.35 & 62.96 & -- & 0.93  & 8.35  & 0.00 & 6.45  & 34.04 & -- \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+
+\subsection{Change Detection}
+
+\begin{table*}[t]
+\centering
+\caption{Change detection F1 (\%) across four U.S.\ states. -- = results pending.}
+\label{tab:cd_results}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & \textbf{Iowa} & \textbf{North Carolina} & \textbf{California} & \textbf{Minnesota} \\
+\midrule
+SpectralGPT & 68.20 & 48.81 & 18.73 & 86.05 \\
+Prithvi     & --    & 53.80 & 23.64 & 83.26 \\
+SatMAE      & --    & 55.65 & 27.00 & 67.89 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+\section{Discussion}
+
+TODO
+
+
+\section{Conclusion}
+
+TODO
+
+
+% \begin{acks}
+% TODO: Acknowledge funding sources and individuals who assisted in the research.
+% \end{acks}
+
+
+% \section*{Ethics and Privacy Statement}
+
+% TODO: Discuss potential societal risks, privacy, fairness, and safety implications of this work.
+
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

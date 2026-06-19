@@ -1,0 +1,35 @@
+# Virtual environments
+prithvifmenv/
+satmae_env/
+spectralgptenv/
+
+# Pretrained weights
+weights/
+
+# Output artifacts
+visualizations/
+visualizations_geotiff/
+visualizations_sidebyside/
+eurosat_output/
+work_dirs/
+logs/
+
+# Third-party library
+mmsegmentation/
+
+# Cache / compiled
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Data split files
+data/
+
+# Claude settings
+.claude/
+
+# Large binary files
+*.tif
+*.pth
+*.pt

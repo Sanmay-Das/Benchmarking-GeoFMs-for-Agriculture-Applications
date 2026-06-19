@@ -1,0 +1,1620 @@
+
+[epoch: 0]
+train_loss: 0.3499
+lr: 0.00020080
+val_loss:   0.5794
+OA:         71.92%
+Precision:  77.20%
+Recall:     70.16%
+F1:         73.51%
+
+[epoch: 1]
+train_loss: 0.3157
+lr: 0.00040060
+val_loss:   0.5659
+OA:         72.07%
+Precision:  76.35%
+Recall:     72.02%
+F1:         74.12%
+
+[epoch: 2]
+train_loss: 0.3180
+lr: 0.00060040
+val_loss:   0.5841
+OA:         69.81%
+Precision:  76.13%
+Recall:     66.50%
+F1:         70.99%
+
+[epoch: 3]
+train_loss: 0.3329
+lr: 0.00080020
+val_loss:   0.6694
+OA:         66.83%
+Precision:  72.39%
+Recall:     65.12%
+F1:         68.56%
+
+[epoch: 4]
+train_loss: 0.3619
+lr: 0.00100000
+val_loss:   0.6240
+OA:         66.57%
+Precision:  73.54%
+Recall:     62.19%
+F1:         67.39%
+
+[epoch: 5]
+train_loss: 0.3779
+lr: 0.00098362
+val_loss:   0.6326
+OA:         66.96%
+Precision:  71.95%
+Recall:     66.41%
+F1:         69.07%
+
+[epoch: 6]
+train_loss: 0.3765
+lr: 0.00096721
+val_loss:   0.6366
+OA:         67.07%
+Precision:  72.39%
+Recall:     65.81%
+F1:         68.94%
+
+[epoch: 7]
+train_loss: 0.3806
+lr: 0.00095077
+val_loss:   0.6198
+OA:         66.76%
+Precision:  71.79%
+Recall:     66.14%
+F1:         68.85%
+
+[epoch: 8]
+train_loss: 0.3858
+lr: 0.00093430
+val_loss:   0.5814
+OA:         68.94%
+Precision:  70.19%
+Recall:     76.60%
+F1:         73.26%
+
+[epoch: 9]
+train_loss: 0.3786
+lr: 0.00091780
+val_loss:   0.6229
+OA:         68.02%
+Precision:  71.58%
+Recall:     70.34%
+F1:         70.96%
+
+[epoch: 10]
+train_loss: 0.3663
+lr: 0.00090126
+val_loss:   0.6227
+OA:         67.24%
+Precision:  73.26%
+Recall:     64.58%
+F1:         68.65%
+
+[epoch: 11]
+train_loss: 0.3658
+lr: 0.00088469
+val_loss:   0.6199
+OA:         67.10%
+Precision:  72.46%
+Recall:     65.77%
+F1:         68.95%
+
+[epoch: 12]
+train_loss: 0.3785
+lr: 0.00086808
+val_loss:   0.6133
+OA:         67.30%
+Precision:  69.14%
+Recall:     74.29%
+F1:         71.62%
+
+[epoch: 13]
+train_loss: 0.3620
+lr: 0.00085144
+val_loss:   0.6521
+OA:         66.63%
+Precision:  72.48%
+Recall:     64.36%
+F1:         68.18%
+
+[epoch: 14]
+train_loss: 0.3618
+lr: 0.00083477
+val_loss:   0.6115
+OA:         68.99%
+Precision:  73.36%
+Recall:     69.36%
+F1:         71.30%
+
+[epoch: 15]
+train_loss: 0.3483
+lr: 0.00081805
+val_loss:   0.5925
+OA:         68.20%
+Precision:  70.17%
+Recall:     74.33%
+F1:         72.19%
+
+[epoch: 16]
+train_loss: 0.3544
+lr: 0.00080130
+val_loss:   0.6770
+OA:         66.56%
+Precision:  70.89%
+Recall:     67.51%
+F1:         69.16%
+
+[epoch: 17]
+train_loss: 0.3653
+lr: 0.00078451
+val_loss:   0.6367
+OA:         67.21%
+Precision:  69.39%
+Recall:     73.31%
+F1:         71.30%
+
+[epoch: 18]
+train_loss: 0.3556
+lr: 0.00076768
+val_loss:   0.6289
+OA:         69.46%
+Precision:  72.12%
+Recall:     73.36%
+F1:         72.74%
+
+[epoch: 19]
+train_loss: 0.3495
+lr: 0.00075081
+val_loss:   0.7311
+OA:         65.76%
+Precision:  72.83%
+Recall:     61.17%
+F1:         66.49%
+
+[epoch: 20]
+train_loss: 0.3515
+lr: 0.00073389
+val_loss:   0.6082
+OA:         68.61%
+Precision:  70.62%
+Recall:     74.48%
+F1:         72.50%
+
+[epoch: 21]
+train_loss: 0.3585
+lr: 0.00071693
+val_loss:   0.6393
+OA:         67.62%
+Precision:  71.30%
+Recall:     69.80%
+F1:         70.54%
+
+[epoch: 22]
+train_loss: 0.3483
+lr: 0.00069993
+val_loss:   0.6350
+OA:         67.14%
+Precision:  71.92%
+Recall:     66.98%
+F1:         69.36%
+
+[epoch: 23]
+train_loss: 0.3424
+lr: 0.00068288
+val_loss:   0.6760
+OA:         66.90%
+Precision:  70.43%
+Recall:     69.65%
+F1:         70.04%
+
+[epoch: 24]
+train_loss: 0.3385
+lr: 0.00066579
+val_loss:   0.5552
+OA:         71.38%
+Precision:  73.02%
+Recall:     76.85%
+F1:         74.89%
+
+[epoch: 25]
+train_loss: 0.3359
+lr: 0.00064864
+val_loss:   0.6876
+OA:         66.42%
+Precision:  71.36%
+Recall:     66.04%
+F1:         68.60%
+
+[epoch: 26]
+train_loss: 0.3330
+lr: 0.00063145
+val_loss:   0.6071
+OA:         70.03%
+Precision:  72.12%
+Recall:     75.06%
+F1:         73.56%
+
+[epoch: 27]
+train_loss: 0.3280
+lr: 0.00061420
+val_loss:   0.5536
+OA:         72.11%
+Precision:  73.26%
+Recall:     78.42%
+F1:         75.75%
+
+[epoch: 28]
+train_loss: 0.3293
+lr: 0.00059690
+val_loss:   0.5734
+OA:         71.23%
+Precision:  72.17%
+Recall:     78.45%
+F1:         75.18%
+
+[epoch: 29]
+train_loss: 0.3277
+lr: 0.00057954
+val_loss:   0.5779
+OA:         71.02%
+Precision:  73.82%
+Recall:     74.11%
+F1:         73.97%
+
+[epoch: 30]
+train_loss: 0.3224
+lr: 0.00056212
+val_loss:   0.5703
+OA:         71.46%
+Precision:  72.07%
+Recall:     79.37%
+F1:         75.54%
+
+[epoch: 31]
+train_loss: 0.3219
+lr: 0.00054465
+val_loss:   0.5849
+OA:         71.09%
+Precision:  73.61%
+Recall:     74.75%
+F1:         74.17%
+
+[epoch: 32]
+train_loss: 0.3186
+lr: 0.00052711
+val_loss:   0.5591
+OA:         71.84%
+Precision:  73.06%
+Recall:     78.08%
+F1:         75.49%
+
+[epoch: 33]
+train_loss: 0.3178
+lr: 0.00050951
+val_loss:   0.5911
+OA:         70.31%
+Precision:  72.41%
+Recall:     75.21%
+F1:         73.78%
+
+[epoch: 34]
+train_loss: 0.3190
+lr: 0.00049184
+val_loss:   0.5881
+OA:         70.61%
+Precision:  73.22%
+Recall:     74.25%
+F1:         73.73%
+
+[epoch: 35]
+train_loss: 0.3192
+lr: 0.00047409
+val_loss:   0.5969
+OA:         70.35%
+Precision:  72.72%
+Recall:     74.58%
+F1:         73.64%
+
+[epoch: 36]
+train_loss: 0.3191
+lr: 0.00045628
+val_loss:   0.5474
+OA:         72.70%
+Precision:  73.34%
+Recall:     79.87%
+F1:         76.47%
+
+[epoch: 37]
+train_loss: 0.3178
+lr: 0.00043838
+val_loss:   0.6305
+OA:         69.52%
+Precision:  72.61%
+Recall:     72.43%
+F1:         72.52%
+
+[epoch: 38]
+train_loss: 0.3183
+lr: 0.00042041
+val_loss:   0.5942
+OA:         69.79%
+Precision:  71.58%
+Recall:     75.63%
+F1:         73.55%
+
+[epoch: 39]
+train_loss: 0.3180
+lr: 0.00040235
+val_loss:   0.6290
+OA:         69.64%
+Precision:  72.24%
+Recall:     73.62%
+F1:         72.93%
+
+[epoch: 40]
+train_loss: 0.3149
+lr: 0.00038420
+val_loss:   0.5847
+OA:         70.79%
+Precision:  72.39%
+Recall:     76.64%
+F1:         74.45%
+
+[epoch: 41]
+train_loss: 0.3130
+lr: 0.00036595
+val_loss:   0.5782
+OA:         71.59%
+Precision:  71.96%
+Recall:     80.04%
+F1:         75.79%
+
+[epoch: 42]
+train_loss: 0.3117
+lr: 0.00034760
+val_loss:   0.6072
+OA:         71.25%
+Precision:  72.92%
+Recall:     76.73%
+F1:         74.78%
+
+[epoch: 43]
+train_loss: 0.3117
+lr: 0.00032914
+val_loss:   0.5904
+OA:         70.78%
+Precision:  72.75%
+Recall:     75.78%
+F1:         74.24%
+
+[epoch: 44]
+train_loss: 0.3107
+lr: 0.00031057
+val_loss:   0.5904
+OA:         71.03%
+Precision:  73.71%
+Recall:     74.37%
+F1:         74.04%
+
+[epoch: 45]
+train_loss: 0.3121
+lr: 0.00029187
+val_loss:   0.5461
+OA:         72.53%
+Precision:  73.75%
+Recall:     78.47%
+F1:         76.04%
+
+[epoch: 46]
+train_loss: 0.3102
+lr: 0.00027304
+val_loss:   0.5552
+OA:         72.23%
+Precision:  72.91%
+Recall:     79.56%
+F1:         76.09%
+
+[epoch: 47]
+train_loss: 0.3073
+lr: 0.00025406
+val_loss:   0.5513
+OA:         73.03%
+Precision:  74.40%
+Recall:     78.43%
+F1:         76.36%
+
+[epoch: 48]
+train_loss: 0.3082
+lr: 0.00023492
+val_loss:   0.5642
+OA:         71.90%
+Precision:  72.69%
+Recall:     79.15%
+F1:         75.78%
+
+[epoch: 49]
+train_loss: 0.3074
+lr: 0.00021561
+val_loss:   0.5681
+OA:         72.40%
+Precision:  73.51%
+Recall:     78.64%
+F1:         75.99%
+
+[epoch: 50]
+train_loss: 0.3080
+lr: 0.00019611
+val_loss:   0.5797
+OA:         71.44%
+Precision:  73.52%
+Recall:     75.93%
+F1:         74.71%
+
+[epoch: 51]
+train_loss: 0.3086
+lr: 0.00017638
+val_loss:   0.5550
+OA:         72.41%
+Precision:  72.78%
+Recall:     80.40%
+F1:         76.40%
+
+[epoch: 52]
+train_loss: 0.3067
+lr: 0.00015641
+val_loss:   0.5664
+OA:         72.24%
+Precision:  73.73%
+Recall:     77.72%
+F1:         75.67%
+
+[epoch: 53]
+train_loss: 0.3060
+lr: 0.00013615
+val_loss:   0.5814
+OA:         71.82%
+Precision:  74.02%
+Recall:     75.90%
+F1:         74.95%
+
+[epoch: 54]
+train_loss: 0.3053
+lr: 0.00011554
+val_loss:   0.5629
+OA:         72.50%
+Precision:  73.83%
+Recall:     78.21%
+F1:         75.96%
+
+[epoch: 55]
+train_loss: 0.3044
+lr: 0.00009452
+val_loss:   0.5807
+OA:         71.87%
+Precision:  74.30%
+Recall:     75.43%
+F1:         74.86%
+
+[epoch: 56]
+train_loss: 0.3035
+lr: 0.00007296
+val_loss:   0.5737
+OA:         71.88%
+Precision:  73.12%
+Recall:     78.08%
+F1:         75.52%
+
+[epoch: 57]
+train_loss: 0.3024
+lr: 0.00005065
+val_loss:   0.5778
+OA:         71.82%
+Precision:  72.73%
+Recall:     78.83%
+F1:         75.66%
+
+[epoch: 58]
+train_loss: 0.3021
+lr: 0.00002714
+val_loss:   0.5839
+OA:         71.79%
+Precision:  73.39%
+Recall:     77.19%
+F1:         75.25%
+
+[epoch: 59]
+train_loss: 0.3011
+lr: 0.00000000
+val_loss:   0.5752
+OA:         72.24%
+Precision:  73.23%
+Recall:     78.82%
+F1:         75.92%
+
+[epoch: 0]
+train_loss: 0.4185
+lr: 0.00098499
+val_loss:   0.5974
+OA:         68.42%
+Precision:  76.04%
+Recall:     62.99%
+F1:         68.90%
+
+[epoch: 1]
+train_loss: 0.3695
+lr: 0.00096995
+val_loss:   0.5370
+OA:         72.24%
+Precision:  72.58%
+Recall:     80.39%
+F1:         76.29%
+
+[epoch: 2]
+train_loss: 0.3671
+lr: 0.00095489
+val_loss:   0.5519
+OA:         71.79%
+Precision:  74.60%
+Recall:     74.63%
+F1:         74.61%
+
+[epoch: 3]
+train_loss: 0.3577
+lr: 0.00093979
+val_loss:   0.5609
+OA:         70.67%
+Precision:  73.61%
+Recall:     73.57%
+F1:         73.59%
+
+[epoch: 4]
+train_loss: 0.3510
+lr: 0.00092468
+val_loss:   0.6039
+OA:         69.67%
+Precision:  76.47%
+Recall:     65.57%
+F1:         70.60%
+
+[epoch: 5]
+train_loss: 0.3455
+lr: 0.00090953
+val_loss:   0.6336
+OA:         68.42%
+Precision:  78.16%
+Recall:     59.87%
+F1:         67.80%
+
+[epoch: 6]
+train_loss: 0.3782
+lr: 0.00089436
+val_loss:   0.5667
+OA:         71.16%
+Precision:  74.53%
+Recall:     73.05%
+F1:         73.78%
+
+[epoch: 7]
+train_loss: 0.3770
+lr: 0.00087916
+val_loss:   0.5784
+OA:         68.96%
+Precision:  70.47%
+Recall:     75.94%
+F1:         73.11%
+
+[epoch: 8]
+train_loss: 0.3866
+lr: 0.00086393
+val_loss:   0.6355
+OA:         66.43%
+Precision:  76.63%
+Recall:     56.92%
+F1:         65.32%
+
+[epoch: 9]
+train_loss: 0.3714
+lr: 0.00084867
+val_loss:   0.5758
+OA:         69.97%
+Precision:  73.71%
+Recall:     71.41%
+F1:         72.54%
+
+[epoch: 10]
+train_loss: 0.3634
+lr: 0.00083337
+val_loss:   0.5826
+OA:         69.39%
+Precision:  74.69%
+Recall:     67.90%
+F1:         71.13%
+
+[epoch: 11]
+train_loss: 0.3564
+lr: 0.00081805
+val_loss:   0.5796
+OA:         69.29%
+Precision:  73.04%
+Recall:     70.86%
+F1:         71.93%
+
+[epoch: 12]
+train_loss: 0.3503
+lr: 0.00080270
+val_loss:   0.6005
+OA:         69.39%
+Precision:  72.22%
+Recall:     72.94%
+F1:         72.58%
+
+[epoch: 13]
+train_loss: 0.3705
+lr: 0.00078731
+val_loss:   0.6425
+OA:         65.42%
+Precision:  71.20%
+Recall:     63.39%
+F1:         67.07%
+
+[epoch: 14]
+train_loss: 0.3662
+lr: 0.00077189
+val_loss:   0.5465
+OA:         72.43%
+Precision:  71.77%
+Recall:     83.01%
+F1:         76.98%
+
+[epoch: 15]
+train_loss: 0.3659
+lr: 0.00075643
+val_loss:   0.5798
+OA:         70.50%
+Precision:  73.70%
+Recall:     72.92%
+F1:         73.31%
+
+[epoch: 16]
+train_loss: 0.3532
+lr: 0.00074094
+val_loss:   0.6132
+OA:         69.20%
+Precision:  73.75%
+Recall:     69.15%
+F1:         71.38%
+
+[epoch: 17]
+train_loss: nan
+lr: 0.00072542
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 18]
+train_loss: nan
+lr: 0.00070985
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 19]
+train_loss: nan
+lr: 0.00069425
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 20]
+train_loss: nan
+lr: 0.00067861
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 21]
+train_loss: nan
+lr: 0.00066293
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 22]
+train_loss: nan
+lr: 0.00064721
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 23]
+train_loss: nan
+lr: 0.00063145
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 24]
+train_loss: nan
+lr: 0.00061564
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 25]
+train_loss: nan
+lr: 0.00059978
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 26]
+train_loss: nan
+lr: 0.00058388
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 27]
+train_loss: nan
+lr: 0.00056794
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 28]
+train_loss: nan
+lr: 0.00055194
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 29]
+train_loss: nan
+lr: 0.00053589
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 30]
+train_loss: nan
+lr: 0.00051978
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 31]
+train_loss: nan
+lr: 0.00050362
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 32]
+train_loss: nan
+lr: 0.00048741
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 33]
+train_loss: nan
+lr: 0.00047113
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 34]
+train_loss: nan
+lr: 0.00045479
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 35]
+train_loss: nan
+lr: 0.00043838
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 36]
+train_loss: nan
+lr: 0.00042191
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 37]
+train_loss: nan
+lr: 0.00040536
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 38]
+train_loss: nan
+lr: 0.00038874
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 39]
+train_loss: nan
+lr: 0.00037204
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 40]
+train_loss: nan
+lr: 0.00035526
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 41]
+train_loss: nan
+lr: 0.00033838
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 42]
+train_loss: nan
+lr: 0.00032142
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 43]
+train_loss: nan
+lr: 0.00030435
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 44]
+train_loss: nan
+lr: 0.00028717
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 45]
+train_loss: nan
+lr: 0.00026989
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 46]
+train_loss: nan
+lr: 0.00025247
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 47]
+train_loss: nan
+lr: 0.00023492
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 48]
+train_loss: nan
+lr: 0.00021723
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 49]
+train_loss: nan
+lr: 0.00019937
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 50]
+train_loss: nan
+lr: 0.00018134
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 51]
+train_loss: nan
+lr: 0.00016310
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 52]
+train_loss: nan
+lr: 0.00014463
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 53]
+train_loss: nan
+lr: 0.00012589
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 54]
+train_loss: nan
+lr: 0.00010684
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 55]
+train_loss: nan
+lr: 0.00008740
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 56]
+train_loss: nan
+lr: 0.00006746
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 57]
+train_loss: nan
+lr: 0.00004684
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 58]
+train_loss: nan
+lr: 0.00002510
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 59]
+train_loss: nan
+lr: 0.00000000
+val_loss:   nan
+OA:         44.46%
+Precision:  0.00%
+Recall:     0.00%
+F1:         0.00%
+
+[epoch: 0]
+train_loss: 0.3300
+lr: 0.00009850
+val_loss:   0.6559
+OA:         69.65%
+Precision:  79.79%
+Recall:     60.74%
+F1:         68.97%
+
+[epoch: 1]
+train_loss: 0.2894
+lr: 0.00009699
+val_loss:   0.5068
+OA:         74.88%
+Precision:  74.90%
+Recall:     82.39%
+F1:         78.47%
+
+[epoch: 2]
+train_loss: 0.2748
+lr: 0.00009549
+val_loss:   0.6010
+OA:         73.11%
+Precision:  74.80%
+Recall:     77.80%
+F1:         76.27%
+
+[epoch: 3]
+train_loss: 0.2667
+lr: 0.00009398
+val_loss:   0.6234
+OA:         69.35%
+Precision:  70.05%
+Recall:     78.29%
+F1:         73.94%
+
+[epoch: 4]
+train_loss: 0.2600
+lr: 0.00009247
+val_loss:   0.5956
+OA:         73.24%
+Precision:  75.37%
+Recall:     76.99%
+F1:         76.17%
+
+[epoch: 5]
+train_loss: 0.2543
+lr: 0.00009095
+val_loss:   0.5813
+OA:         73.74%
+Precision:  75.91%
+Recall:     77.24%
+F1:         76.57%
+
+[epoch: 6]
+train_loss: 0.2499
+lr: 0.00008944
+val_loss:   0.6703
+OA:         69.42%
+Precision:  73.60%
+Recall:     70.07%
+F1:         71.79%
+
+[epoch: 7]
+train_loss: 0.2438
+lr: 0.00008792
+val_loss:   0.5971
+OA:         73.40%
+Precision:  76.18%
+Recall:     75.81%
+F1:         76.00%
+
+[epoch: 8]
+train_loss: 0.2396
+lr: 0.00008639
+val_loss:   0.5672
+OA:         74.14%
+Precision:  74.87%
+Recall:     80.43%
+F1:         77.55%
+
+[epoch: 9]
+train_loss: 0.2338
+lr: 0.00008487
+val_loss:   0.6077
+OA:         73.68%
+Precision:  75.33%
+Recall:     78.24%
+F1:         76.75%
+
+[epoch: 10]
+train_loss: 0.2305
+lr: 0.00008334
+val_loss:   0.6885
+OA:         70.46%
+Precision:  74.82%
+Recall:     70.56%
+F1:         72.63%
+
+[epoch: 11]
+train_loss: 0.2244
+lr: 0.00008181
+val_loss:   0.6630
+OA:         71.32%
+Precision:  75.92%
+Recall:     70.84%
+F1:         73.29%
+
+[epoch: 12]
+train_loss: 0.2200
+lr: 0.00008027
+val_loss:   0.6264
+OA:         72.81%
+Precision:  75.95%
+Recall:     74.68%
+F1:         75.31%
+
+[epoch: 13]
+train_loss: 0.2149
+lr: 0.00007873
+val_loss:   0.6692
+OA:         71.13%
+Precision:  75.06%
+Recall:     71.93%
+F1:         73.46%
+
+[epoch: 14]
+train_loss: 0.2119
+lr: 0.00007719
+val_loss:   0.6829
+OA:         71.56%
+Precision:  74.49%
+Recall:     74.20%
+F1:         74.35%
+
+[epoch: 15]
+train_loss: 0.2079
+lr: 0.00007564
+val_loss:   0.6761
+OA:         72.04%
+Precision:  75.16%
+Recall:     74.17%
+F1:         74.66%
+
+[epoch: 16]
+train_loss: 0.2042
+lr: 0.00007409
+val_loss:   0.6179
+OA:         73.90%
+Precision:  75.76%
+Recall:     77.94%
+F1:         76.83%
+
+[epoch: 17]
+train_loss: 0.2004
+lr: 0.00007254
+val_loss:   0.6898
+OA:         71.22%
+Precision:  74.95%
+Recall:     72.37%
+F1:         73.64%
+
+[epoch: 18]
+train_loss: 0.1966
+lr: 0.00007099
+val_loss:   0.6755
+OA:         72.34%
+Precision:  74.63%
+Recall:     76.05%
+F1:         75.33%
+
+[epoch: 19]
+train_loss: 0.1952
+lr: 0.00006943
+val_loss:   0.6776
+OA:         72.26%
+Precision:  74.17%
+Recall:     76.79%
+F1:         75.46%
+
+[epoch: 20]
+train_loss: 0.1913
+lr: 0.00006786
+val_loss:   0.6870
+OA:         72.10%
+Precision:  74.92%
+Recall:     74.82%
+F1:         74.87%
+
+[epoch: 21]
+train_loss: 0.1891
+lr: 0.00006629
+val_loss:   0.5896
+OA:         74.61%
+Precision:  74.25%
+Recall:     83.11%
+F1:         78.43%
+
+[epoch: 22]
+train_loss: 0.1871
+lr: 0.00006472
+val_loss:   0.7192
+OA:         70.79%
+Precision:  73.18%
+Recall:     74.85%
+F1:         74.00%
+
+[epoch: 23]
+train_loss: 0.1860
+lr: 0.00006314
+val_loss:   0.8083
+OA:         69.57%
+Precision:  74.12%
+Recall:     69.45%
+F1:         71.71%
+
+[epoch: 24]
+train_loss: 0.1822
+lr: 0.00006156
+val_loss:   0.6880
+OA:         72.48%
+Precision:  74.26%
+Recall:     77.21%
+F1:         75.71%
+
+[epoch: 25]
+train_loss: 0.1810
+lr: 0.00005998
+val_loss:   0.7946
+OA:         70.00%
+Precision:  73.90%
+Recall:     71.09%
+F1:         72.47%
+
+[epoch: 26]
+train_loss: 0.1785
+lr: 0.00005839
+val_loss:   0.7798
+OA:         70.21%
+Precision:  74.16%
+Recall:     71.16%
+F1:         72.63%
+
+[epoch: 27]
+train_loss: 0.1768
+lr: 0.00005679
+val_loss:   0.7350
+OA:         71.07%
+Precision:  74.24%
+Recall:     73.38%
+F1:         73.81%
+
+[epoch: 28]
+train_loss: 0.1756
+lr: 0.00005519
+val_loss:   0.7943
+OA:         70.65%
+Precision:  73.98%
+Recall:     72.72%
+F1:         73.35%
+
+[epoch: 29]
+train_loss: 0.1730
+lr: 0.00005359
+val_loss:   0.7717
+OA:         71.23%
+Precision:  73.89%
+Recall:     74.55%
+F1:         74.22%
+
+[epoch: 30]
+train_loss: 0.1714
+lr: 0.00005198
+val_loss:   0.8500
+OA:         70.85%
+Precision:  73.42%
+Recall:     74.48%
+F1:         73.95%
+
+[epoch: 31]
+train_loss: 0.1697
+lr: 0.00005036
+val_loss:   0.7956
+OA:         71.05%
+Precision:  74.34%
+Recall:     73.11%
+F1:         73.72%
+
+[epoch: 32]
+train_loss: 0.1683
+lr: 0.00004874
+val_loss:   0.7763
+OA:         71.80%
+Precision:  74.06%
+Recall:     75.75%
+F1:         74.90%
+
+[epoch: 33]
+train_loss: 0.1668
+lr: 0.00004711
+val_loss:   0.8240
+OA:         70.16%
+Precision:  73.24%
+Recall:     72.91%
+F1:         73.07%
+
+[epoch: 34]
+train_loss: 0.1655
+lr: 0.00004548
+val_loss:   0.8156
+OA:         70.41%
+Precision:  73.12%
+Recall:     73.87%
+F1:         73.49%
+
+[epoch: 35]
+train_loss: 0.1634
+lr: 0.00004384
+val_loss:   0.8284
+OA:         70.76%
+Precision:  73.02%
+Recall:     75.09%
+F1:         74.04%
+
+[epoch: 36]
+train_loss: 0.1618
+lr: 0.00004219
+val_loss:   0.8154
+OA:         71.14%
+Precision:  73.31%
+Recall:     75.55%
+F1:         74.41%
+
+[epoch: 37]
+train_loss: 0.1606
+lr: 0.00004054
+val_loss:   0.8929
+OA:         69.79%
+Precision:  72.68%
+Recall:     73.07%
+F1:         72.88%
+
+[epoch: 38]
+train_loss: 0.1589
+lr: 0.00003887
+val_loss:   0.8845
+OA:         70.31%
+Precision:  72.90%
+Recall:     74.09%
+F1:         73.49%
+
+[epoch: 39]
+train_loss: 0.1574
+lr: 0.00003720
+val_loss:   0.8803
+OA:         69.97%
+Precision:  73.16%
+Recall:     72.56%
+F1:         72.86%
+
+[epoch: 40]
+train_loss: 0.1560
+lr: 0.00003553
+val_loss:   0.8875
+OA:         69.81%
+Precision:  72.00%
+Recall:     74.69%
+F1:         73.32%
+
+[epoch: 41]
+train_loss: 0.1547
+lr: 0.00003384
+val_loss:   0.9024
+OA:         70.01%
+Precision:  72.41%
+Recall:     74.33%
+F1:         73.36%
+
+[epoch: 42]
+train_loss: 0.1532
+lr: 0.00003214
+val_loss:   0.9045
+OA:         69.87%
+Precision:  73.01%
+Recall:     72.61%
+F1:         72.80%
+
+[epoch: 43]
+train_loss: 0.1518
+lr: 0.00003043
+val_loss:   0.8844
+OA:         70.36%
+Precision:  72.58%
+Recall:     74.94%
+F1:         73.74%
+
+[epoch: 44]
+train_loss: 0.1503
+lr: 0.00002872
+val_loss:   0.9142
+OA:         69.88%
+Precision:  72.69%
+Recall:     73.31%
+F1:         73.00%
+
+[epoch: 45]
+train_loss: 0.1491
+lr: 0.00002699
+val_loss:   0.9244
+OA:         70.29%
+Precision:  73.15%
+Recall:     73.48%
+F1:         73.32%
+
+[epoch: 46]
+train_loss: 0.1477
+lr: 0.00002525
+val_loss:   0.9238
+OA:         70.05%
+Precision:  72.90%
+Recall:     73.35%
+F1:         73.12%
+
+[epoch: 47]
+train_loss: 0.1466
+lr: 0.00002349
+val_loss:   1.0013
+OA:         69.36%
+Precision:  72.67%
+Recall:     71.85%
+F1:         72.26%
+
+[epoch: 48]
+train_loss: 0.1451
+lr: 0.00002172
+val_loss:   0.9537
+OA:         70.02%
+Precision:  73.10%
+Recall:     72.84%
+F1:         72.97%
+
+[epoch: 49]
+train_loss: 0.1441
+lr: 0.00001994
+val_loss:   0.9906
+OA:         69.23%
+Precision:  72.29%
+Recall:     72.32%
+F1:         72.30%
+
+[epoch: 50]
+train_loss: 0.1430
+lr: 0.00001813
+val_loss:   1.0049
+OA:         69.26%
+Precision:  72.68%
+Recall:     71.55%
+F1:         72.11%
+
+[epoch: 51]
+train_loss: 0.1419
+lr: 0.00001631
+val_loss:   1.0086
+OA:         69.06%
+Precision:  72.18%
+Recall:     72.07%
+F1:         72.13%
+
+[epoch: 52]
+train_loss: 0.1409
+lr: 0.00001446
+val_loss:   1.0208
+OA:         69.14%
+Precision:  72.22%
+Recall:     72.20%
+F1:         72.21%
+
+[epoch: 53]
+train_loss: 0.1401
+lr: 0.00001259
+val_loss:   1.0323
+OA:         69.23%
+Precision:  72.39%
+Recall:     72.09%
+F1:         72.24%
+
+[epoch: 54]
+train_loss: 0.1391
+lr: 0.00001068
+val_loss:   1.0567
+OA:         69.10%
+Precision:  72.33%
+Recall:     71.83%
+F1:         72.08%
+
+[epoch: 55]
+train_loss: 0.1383
+lr: 0.00000874
+val_loss:   1.0173
+OA:         69.39%
+Precision:  72.42%
+Recall:     72.50%
+F1:         72.46%
+
+[epoch: 56]
+train_loss: 0.1378
+lr: 0.00000675
+val_loss:   1.0643
+OA:         68.84%
+Precision:  72.37%
+Recall:     71.01%
+F1:         71.68%
+
+[epoch: 57]
+train_loss: 0.1371
+lr: 0.00000468
+val_loss:   1.0578
+OA:         68.99%
+Precision:  72.30%
+Recall:     71.59%
+F1:         71.94%
+
+[epoch: 58]
+train_loss: 0.1366
+lr: 0.00000251
+val_loss:   1.0552
+OA:         69.16%
+Precision:  72.30%
+Recall:     72.09%
+F1:         72.20%
+
+[epoch: 59]
+train_loss: 0.1363
+lr: 0.00000000
+val_loss:   1.0598
+OA:         69.13%
+Precision:  72.44%
+Recall:     71.68%
+F1:         72.06%
