@@ -25,6 +25,12 @@ __pycache__/
 
 # Data split files
 data/
+SatMAE_chips_MN/
+SatMAE_chips_multitemporal/
+change_detection_chips/
+experiments/
+.refresh
+*.pdf
 
 # Claude settings
 .claude/
