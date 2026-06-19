@@ -39,3 +39,4 @@ experiments/
 *.tif
 *.pth
 *.pt
+paper/
