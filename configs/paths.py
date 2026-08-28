@@ -198,3 +198,67 @@ def save_chips_csv(df, out_csv):
     Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_csv, index=False)
     return df
+
+
+# ---------------------------------------------------------------------------
+# Segmentation: checkpoints and multitemporal stacks
+# ---------------------------------------------------------------------------
+
+SEG_WEIGHTS = WEIGHTS / "seg"
+
+# Stitched multitemporal rasters the segmentation scripts run over. These were
+# read from scripts/processed_stacks/, i.e. input data stored inside the code
+# tree, which meant they could never travel with a clone. They belong with the
+# rest of the data, under MSR_DATA_ROOT.
+STACKS = DATA_ROOT / "processed_stacks"
+
+
+def seg_checkpoint(model, region, head="", must_exist=True):
+    """Path to the segmentation checkpoint for one (model, head, region).
+
+    Searches MSR_WEIGHTS/seg first, then the run directory inside the model's
+    own tree where training originally wrote it.
+    """
+    import registry
+
+    key = (model, head, region)
+    if key not in registry.SEG_CHECKPOINTS:
+        raise SystemExit(
+            "No segmentation checkpoint recorded for model={} head={!r} region={}.\n"
+            "Known combinations:\n  {}".format(
+                model, head, region,
+                "\n  ".join("{} {!r} {}".format(*k) for k in registry.seg_pairs()))
+        )
+
+    relative = registry.SEG_CHECKPOINTS[key]
+    tree = registry.SEG_MODELS[model]["tree"]
+    candidates = [
+        SEG_WEIGHTS / model / relative,
+        MSR_ROOT / tree / relative,
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    if not must_exist:
+        return candidates[0]
+
+    raise SystemExit(
+        "Missing segmentation checkpoint for {} {} {}.\n"
+        "Looked in:\n  {}\n"
+        "Download the fine-tuned weights and place them under\n"
+        "  {}\n"
+        "or set MSR_WEIGHTS to the directory that holds them. See README.md."
+        .format(model, head or "(single head)", region,
+                "\n  ".join(str(c) for c in candidates),
+                (SEG_WEIGHTS / model / relative).parent)
+    )
+
+
+def stack_path(region, must_exist=True):
+    """Stitched multitemporal raster for one region."""
+    p = STACKS / region / "{}_multitemporal_stack.tif".format(region)
+    if must_exist:
+        require(p, "multitemporal stack for {}".format(region))
+    return p

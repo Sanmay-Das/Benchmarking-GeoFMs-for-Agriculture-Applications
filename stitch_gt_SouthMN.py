@@ -15,9 +15,9 @@ import rasterio.transform
 from tqdm import tqdm
 
 BASE      = str(MSR_ROOT)
-CHIP_DIR  = os.path.join(BASE, 'SatMAE_chips_MN/SouthMN')
-TEST_TXT  = os.path.join(BASE, 'SatMAE_chips_multitemporal/MN/test.txt')
-OUT_PATH  = os.path.join(BASE, 'predictions/GT_SouthMN.tif')
+CHIP_DIR  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_MN/SouthMN')
+TEST_TXT  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/MN/test.txt')
+OUT_PATH  = os.path.join(str(PREDICTIONS), 'GT_SouthMN.tif')
 
 CHIP_SIZE = 96
 

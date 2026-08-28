@@ -109,3 +109,73 @@ def checkpoint_dirname(model_name, region_name):
 def pairs():
     """Every (model, region) combination, for batch drivers and tests."""
     return [(m, r) for m in sorted(MODELS) for r in sorted(REGIONS)]
+
+
+# ---------------------------------------------------------------------------
+# Semantic segmentation
+#
+# The segmentation runs were trained ad hoc over a long period and their
+# checkpoints were never given a consistent naming scheme: SatMAE writes
+# output_seg_<run>[_<head>]/checkpoint-best.pth, Prithvi writes
+# experiments/.../<run>/best_mIoU_epoch_<N>.pth with the epoch number baked in,
+# and SpectralGPT writes multi_train/best_mIoU_<run>_model.pth. There is no
+# rule that derives one from the other, so the mapping is recorded explicitly
+# rather than reconstructed.
+#
+# Keys are (model, head, region); head is "" for models with a single head.
+# Values are paths relative to the model's own tree, which is what
+# paths.seg_checkpoint() falls back to when MSR_WEIGHTS has no copy.
+# ---------------------------------------------------------------------------
+
+SEG_MODELS = {
+    "satmae": {
+        "label": "SatMAE",
+        "chip": 96,
+        "stride": 48,
+        "heads": ["fcn", "fpn", "psanet"],
+        "tree": "SatMAE",
+        "num_classes": 14,
+    },
+    "spectralgpt": {
+        "label": "SpectralGPT",
+        "chip": 128,
+        "stride": 64,
+        "heads": [""],
+        "tree": "IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich",
+        "num_classes": 13,
+    },
+    "prithvi": {
+        "label": "Prithvi",
+        "chip": 224,
+        "stride": 112,
+        "heads": [""],
+        "tree": "experiments/prithvi_multi_temporal_crop_classification",
+        "num_classes": 13,
+    },
+}
+
+SEG_CHECKPOINTS = {
+    ("satmae", "fcn",    "NWIA"):    "output_seg_Iowa_fcn/checkpoint-best.pth",
+    ("satmae", "fcn",    "SouthMN"): "output_seg_MN_fcn/checkpoint-best.pth",
+    ("satmae", "fpn",    "NWIA"):    "output_seg_Iowa_fpn/checkpoint-best.pth",
+    ("satmae", "fpn",    "SouthMN"): "output_seg_MN_fpn/checkpoint-best.pth",
+    ("satmae", "psanet", "NWIA"):    "output_seg_Iowa/checkpoint-best.pth",
+    ("satmae", "psanet", "SouthMN"): "output_seg_MN/checkpoint-best.pth",
+
+    ("spectralgpt", "", "NWIA"):    "multi_train/best_mIoU_CentEastIA_model.pth",
+    ("spectralgpt", "", "SouthMN"): "multi_train/best_mIoU_NorthCentMN_model.pth",
+    ("spectralgpt", "", "EastNC"):  "multi_train/best_mIoU_NEECNC_model.pth",
+    ("spectralgpt", "", "SouthCA"): "multi_train/best_mIoU_NorthCentCA_model.pth",
+
+    # Prithvi's SouthCA run wrote to the experiment root rather than a
+    # per-region subdirectory, and each region stopped at a different epoch.
+    ("prithvi", "", "NWIA"):    "IA/best_mIoU_epoch_60.pth",
+    ("prithvi", "", "SouthMN"): "MN/best_mIoU_epoch_60.pth",
+    ("prithvi", "", "EastNC"):  "IL/best_mIoU_epoch_30.pth",
+    ("prithvi", "", "SouthCA"): "best_mIoU_epoch_15.pth",
+}
+
+
+def seg_pairs():
+    """Every (model, head, region) combination that has a checkpoint."""
+    return sorted(SEG_CHECKPOINTS)

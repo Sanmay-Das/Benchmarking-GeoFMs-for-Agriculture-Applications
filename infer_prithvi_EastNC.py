@@ -1,7 +1,7 @@
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, seg_checkpoint, stack_path
 
 import os
 import time
@@ -23,9 +23,9 @@ from mmcv.runner import load_checkpoint
 # CONFIGURATION
 # ============================================================
 # CHECKPOINT   = f'{OUTPUT_ROOT}/experiments/prithvi_multi_temporal_crop_classification/best_mIoU_epoch_20.pth'
-CHECKPOINT   = f'{OUTPUT_ROOT}/experiments/prithvi_multi_temporal_crop_classification/IL/best_mIoU_epoch_30.pth'
+CHECKPOINT   = str(seg_checkpoint('prithvi', 'EastNC', ''))
 CONFIG_FILE  = f'{MSR_ROOT}/prithvi_finetune/configs/multi_temporal_crop_classification.py'
-STACK_PATH   = f'{MSR_ROOT}/scripts/processed_stacks/EastNC/EastNC_multitemporal_stack.tif'
+STACK_PATH   = str(stack_path('EastNC'))
 OUTPUT_DIR   = f'{PREDICTIONS}/prithvi_EastNC_terratorch'
 OUTPUT_FILE  = os.path.join(OUTPUT_DIR, 'EastNC_Prithvi_Prediction_Stitched.tif')
 

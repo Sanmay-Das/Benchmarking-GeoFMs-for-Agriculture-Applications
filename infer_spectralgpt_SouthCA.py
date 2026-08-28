@@ -1,7 +1,7 @@
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, seg_checkpoint, stack_path
 
 import os
 import time
@@ -20,8 +20,8 @@ from src.models_vit_tensor_CD_2 import vit_base_patch8
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT  = f'{MSR_ROOT}/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich/multi_train/best_mIoU_NorthCentCA_model.pth'
-STACK_PATH  = f'{MSR_ROOT}/scripts/processed_stacks/SouthCA/SouthCA_multitemporal_stack.tif'
+CHECKPOINT  = str(seg_checkpoint('spectralgpt', 'SouthCA', ''))
+STACK_PATH  = str(stack_path('SouthCA'))
 OUTPUT_DIR  = f'{PREDICTIONS}/spectralgpt_SouthCA_terratorch'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'SouthCA_SpectralGPT_Prediction_Stitched.tif')
 

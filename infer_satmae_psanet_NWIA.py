@@ -9,7 +9,7 @@ Follows the same TerraTorch tiled-inference protocol as Prithvi / SpectralGPT:
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, seg_checkpoint, stack_path
 
 
 import os
@@ -33,8 +33,8 @@ import psanet
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_Iowa/checkpoint-best.pth'
-STACK_PATH  = f'{MSR_ROOT}/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
+CHECKPOINT  = str(seg_checkpoint('satmae', 'NWIA', 'psanet'))
+STACK_PATH  = str(stack_path('NWIA'))
 OUTPUT_DIR  = f'{PREDICTIONS}/satmae_psanet_NWIA'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'NWIA_SatMAE_PSANet_Prediction.tif')
 

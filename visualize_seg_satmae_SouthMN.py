@@ -38,10 +38,10 @@ COLORS = np.array([
 NODATA_COLOR = np.array([0, 0, 0], dtype=np.uint8)  # black for NoData
 
 BASE_DIR  = str(MSR_ROOT)
-PRED_DIR  = os.path.join(BASE_DIR, 'predictions')
-CHIP_DIR  = os.path.join(BASE_DIR, 'SatMAE_chips_MN/SouthMN')
-SPLITS_TXT = os.path.join(BASE_DIR, 'SatMAE_chips_multitemporal/MN/test.txt')
-OUT_DIR   = os.path.join(BASE_DIR, 'visualizations/seg_SouthMN')
+PRED_DIR  = str(PREDICTIONS)
+CHIP_DIR  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_MN/SouthMN')
+SPLITS_TXT = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/MN/test.txt')
+OUT_DIR   = os.path.join(str(OUTPUT_ROOT), 'visualizations/seg_SouthMN')
 
 PREDICTIONS = {
     'SatMAE_FCN':    os.path.join(PRED_DIR, 'satmae_fcn_SouthMN/SouthMN_SatMAE_FCN_Prediction.tif'),

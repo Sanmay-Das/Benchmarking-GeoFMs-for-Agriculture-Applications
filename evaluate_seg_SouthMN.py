@@ -20,13 +20,13 @@ CLASS_NAMES = [
 ]
 
 BASE     = str(MSR_ROOT)
-CHIP_DIR = os.path.join(BASE, 'SatMAE_chips_MN/SouthMN')
-TEST_TXT = os.path.join(BASE, 'SatMAE_chips_multitemporal/MN/test.txt')
+CHIP_DIR = os.path.join(str(DATA_ROOT), 'SatMAE_chips_MN/SouthMN')
+TEST_TXT = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/MN/test.txt')
 
 PREDICTIONS = {
-    'SatMAE_FPN': (os.path.join(BASE, 'predictions/satmae_fpn_SouthMN/SouthMN_SatMAE_FPN_Prediction.tif'), 'satmae'),
-    'SatMAE_FCN': (os.path.join(BASE, 'predictions/satmae_fcn_SouthMN/SouthMN_SatMAE_FCN_Prediction.tif'), 'satmae'),
-    'SatMAE_PSANet': (os.path.join(BASE, 'predictions/satmae_psanet_SouthMN/SouthMN_SatMAE_PSANet_Prediction.tif'), 'satmae'),
+    'SatMAE_FPN': (os.path.join(str(PREDICTIONS), 'satmae_fpn_SouthMN/SouthMN_SatMAE_FPN_Prediction.tif'), 'satmae'),
+    'SatMAE_FCN': (os.path.join(str(PREDICTIONS), 'satmae_fcn_SouthMN/SouthMN_SatMAE_FCN_Prediction.tif'), 'satmae'),
+    'SatMAE_PSANet': (os.path.join(str(PREDICTIONS), 'satmae_psanet_SouthMN/SouthMN_SatMAE_PSANet_Prediction.tif'), 'satmae'),
 }
 
 

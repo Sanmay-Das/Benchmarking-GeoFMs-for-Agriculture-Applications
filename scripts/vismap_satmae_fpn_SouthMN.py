@@ -15,8 +15,8 @@ from PIL import Image
 from pathlib import Path
 
 BASE_DIR  = Path(str(MSR_ROOT))
-VIZ_DIR   = BASE_DIR / 'visualizations/seg_SouthMN'
-OUT_DIR   = BASE_DIR / 'predictions/colored_maps'
+VIZ_DIR   = OUTPUT_ROOT / 'visualizations/seg_SouthMN'
+OUT_DIR   = PREDICTIONS / 'colored_maps'
 
 FILES = {
     'SouthMN_SatMAE_FPN_colored.png': VIZ_DIR / 'SouthMN_SatMAE_FPN_pred.tif',

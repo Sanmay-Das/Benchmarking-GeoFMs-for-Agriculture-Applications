@@ -4,7 +4,7 @@ SatMAE + FPN -- chip-based inference for SouthMN segmentation.
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, seg_checkpoint, stack_path
 
 
 import os
@@ -26,7 +26,7 @@ from models_satmae_fpn import SatMAEFPN
 # -- config --------------------------------------------------------------------
 DATA_DIR    = f'{DATA_ROOT}/SatMAE_chips_MN/SouthMN'
 SPLITS_TXT  = f'{DATA_ROOT}/SatMAE_chips_multitemporal/MN/test.txt'
-CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_MN_fpn/checkpoint-best.pth'
+CHECKPOINT  = str(seg_checkpoint('satmae', 'SouthMN', 'fpn'))
 OUTPUT_DIR  = f'{PREDICTIONS}/satmae_fpn_SouthMN'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'SouthMN_SatMAE_FPN_Prediction.tif')
 
