@@ -18,7 +18,7 @@ Three roots, each overridable by an environment variable:
 Typical use after downloading data from Hugging Face:
 
     export MSR_DATA_ROOT=/scratch/me/geofm-data
-    python infer_cd_spectralgpt_SouthMN.py
+    python infer_cd.py --model spectralgpt --region SouthMN
 
 Nothing is created until a script actually writes; importing this module has
 no side effects beyond resolving paths.
