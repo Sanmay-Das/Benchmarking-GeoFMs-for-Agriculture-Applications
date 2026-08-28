@@ -26,7 +26,7 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=29550 --use_env \
         train_cd_satmae.py \
-        --data-root $MSR_ROOT/change_detection_chips/satmae \
+        --data-root $MSR_DATA_ROOT/change_detection_chips/satmae \
         --pretrain-path $MSR_ROOT/weights/<satmae_pretrain>.pth \
         --output-dir ./cd_train_satmae
 """

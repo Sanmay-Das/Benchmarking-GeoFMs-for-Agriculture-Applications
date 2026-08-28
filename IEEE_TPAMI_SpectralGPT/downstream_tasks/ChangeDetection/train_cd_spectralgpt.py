@@ -32,7 +32,7 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=25643 --use_env \
         train_cd_spectralgpt.py \
-        --data-root $MSR_ROOT/change_detection_chips/spectralgpt \
+        --data-root $MSR_DATA_ROOT/change_detection_chips/spectralgpt \
         --pretrain-path $MSR_ROOT/weights/SpectralGPT+.pth \
         --output-dir ./cd_train_spectralgpt
 

@@ -23,7 +23,7 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=29549 --use_env \
         train_cd_prithvi.py \
-        --data-root $MSR_ROOT/change_detection_chips/prithvi \
+        --data-root $MSR_DATA_ROOT/change_detection_chips/prithvi \
         --pretrain-path $MSR_ROOT/weights/Prithvi_EO_V1_100M.pt \
         --output-dir ./cd_train_prithvi
 """

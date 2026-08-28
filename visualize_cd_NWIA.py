@@ -49,7 +49,7 @@ MODELS = [
      f'{PREDICTIONS}/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif'),
 ]
 
-OUTPUT_DIR = f'{BASE}/visualizations/cd_NWIA'
+OUTPUT_DIR = f'{OUTPUT_ROOT}/visualizations/cd_NWIA'
 SCALE      = 4      # downsample for full-scene PNGs
 STRIP_H    = 256    # strip height for GeoTIFF writing
 CROP_SIZE  = 512    # full-res crop size in pixels

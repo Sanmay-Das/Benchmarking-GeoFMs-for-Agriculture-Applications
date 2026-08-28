@@ -42,7 +42,7 @@ MODELS = [
      f'{PREDICTIONS}/cd_satmae_EastNC/EastNC_SatMAE_CD_pred.tif'),
 ]
 
-OUTPUT_DIR = f'{BASE}/visualizations/cd_EastNC'
+OUTPUT_DIR = f'{OUTPUT_ROOT}/visualizations/cd_EastNC'
 SCALE      = 4
 STRIP_H    = 256
 CROP_SIZE  = 512

@@ -43,7 +43,7 @@ MODELS = [
      f'{PREDICTIONS}/cd_prithvi_SouthMN/SouthMN_Prithvi_CD_pred.tif'),
 ]
 
-OUTPUT_DIR = f'{BASE}/visualizations/cd_SouthMN'
+OUTPUT_DIR = f'{OUTPUT_ROOT}/visualizations/cd_SouthMN'
 SCALE      = 4
 STRIP_H    = 256
 CROP_SIZE  = 512
