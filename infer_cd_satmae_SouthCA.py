@@ -11,7 +11,7 @@ Outputs:
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv, cd_checkpoint
 
 
 import os
@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 BASE       = str(MSR_ROOT)
 CHIPS_CSV  = f'{DATA_ROOT}/change_detection_chips/satmae/SouthCA_chips.csv'
-CHECKPOINT = f'{BASE}/SatMAE/ChangeDetection/cd_train_satmae_CA/best_F1_model.pth'
+CHECKPOINT = str(cd_checkpoint('satmae', 'SouthCA'))
 OUTPUT_DIR = f'{PREDICTIONS}/cd_satmae_SouthCA'
 
 CHIP_SIZE  = 96

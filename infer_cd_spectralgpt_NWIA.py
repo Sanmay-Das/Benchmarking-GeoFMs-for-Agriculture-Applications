@@ -16,7 +16,7 @@ Outputs:
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv, cd_checkpoint
 
 
 import os
@@ -32,7 +32,7 @@ from tqdm import tqdm
 # -- paths --------------------------------------------------------------------
 BASE         = str(MSR_ROOT)
 CHIPS_CSV    = f'{DATA_ROOT}/change_detection_chips/spectralgpt/NWIA_chips.csv'
-CHECKPOINT   = f'{BASE}/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection/cd_train_spectralgpt/best_F1_model.pth'
+CHECKPOINT = str(cd_checkpoint('spectralgpt', 'NWIA'))
 OUTPUT_DIR   = f'{PREDICTIONS}/cd_spectralgpt_NWIA'
 
 CHIP_SIZE    = 128

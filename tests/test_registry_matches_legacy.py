@@ -35,9 +35,16 @@ def check(model_name, region_name):
     chip = int(re.search(r"CHIP_SIZE\s*=\s*(\d+)", src).group(1))
     expect("chip", chip, spec["chip"])
 
-    ckpt = re.search(
-        r"CHECKPOINT\s*=\s*f'[^']*?/(cd_train_\w+)/best_F1_model\.pth'", src).group(1)
-    expect("ckpt_dir", ckpt, R.checkpoint_dirname(model_name, region_name))
+    # Checkpoints resolve through paths.cd_checkpoint(model, region) rather
+    # than a hardcoded path, so assert the call carries the right pair.
+    call = re.search(r"CHECKPOINT\s*=\s*str\(cd_checkpoint\(\s*'(\w+)'\s*,\s*'(\w+)'\s*\)\)", src)
+    if not call:
+        problems.append("CHECKPOINT does not use cd_checkpoint(model, region)")
+    else:
+        expect("ckpt_model", call.group(1), model_name)
+        expect("ckpt_region", call.group(2), region_name)
+    if re.search(r"best_F1_model\.pth'", src):
+        problems.append("hardcoded checkpoint path still present")
 
     csv = re.search(r"change_detection_chips/([a-z]+)/(\w+)_chips\.csv", src)
     expect("csv_model", csv.group(1), model_name)

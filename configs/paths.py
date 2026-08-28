@@ -131,3 +131,53 @@ def _relative_chip_path(value):
         cut = len(parts) - 1 - parts[::-1].index("change_detection_chips")
         return PurePosixPath(*parts[cut + 1:])
     return PurePosixPath(*[p for p in parts if p != "/"])
+
+
+# ---------------------------------------------------------------------------
+# Fine-tuned checkpoints
+#
+# Published layout (what a user gets after downloading the weights):
+#
+#     $MSR_WEIGHTS/cd/cd_train_satmae_MN/best_F1_model.pth
+#
+# Historically these were written next to the training code, inside the repo
+# itself (SatMAE/ChangeDetection/cd_train_satmae_MN/...). Those files are
+# gitignored, so a fresh clone never has them. We look in MSR_WEIGHTS first
+# and fall back to the in-tree location, which keeps an existing working copy
+# running while making a clean checkout work for everyone else.
+# ---------------------------------------------------------------------------
+
+CD_WEIGHTS = WEIGHTS / "cd"
+
+
+def cd_checkpoint(model, region, filename="best_F1_model.pth", must_exist=True):
+    """Path to the change-detection checkpoint for one (model, region) pair.
+
+    Searches MSR_WEIGHTS first, then the legacy in-repo training directory.
+    Raises with download instructions when neither exists.
+    """
+    import registry
+
+    dirname = registry.checkpoint_dirname(model, region)
+    candidates = [
+        CD_WEIGHTS / dirname / filename,
+        MSR_ROOT / registry.model(model)["ckpt_dir"] / dirname / filename,
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    if not must_exist:
+        return candidates[0]
+
+    raise SystemExit(
+        "Missing change-detection checkpoint for {} / {}.\n"
+        "Looked in:\n  {}\n"
+        "Download the fine-tuned weights and place them under\n"
+        "  {}\n"
+        "or set MSR_WEIGHTS to the directory that holds them. See README.md."
+        .format(model, region,
+                "\n  ".join(str(c) for c in candidates),
+                CD_WEIGHTS / dirname)
+    )
