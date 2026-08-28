@@ -14,10 +14,15 @@ Writes <BASE>/<REGION>_chips.csv with columns:
 """
 
 import os
+import sys
 import glob
 import argparse
 import pandas as pd
 import rasterio
+
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'configs'))
+from paths import save_chips_csv
 
 
 def generate_csv(base, region):
@@ -62,7 +67,7 @@ def generate_csv(base, region):
         })
 
     df = pd.DataFrame(rows_out)
-    df.to_csv(out_csv, index=False)
+    save_chips_csv(df, out_csv)
     print(f"  {region}: {len(df)} chips -> {out_csv}  (skipped {missing})")
 
 

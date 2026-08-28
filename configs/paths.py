@@ -181,3 +181,20 @@ def cd_checkpoint(model, region, filename="best_F1_model.pth", must_exist=True):
                 "\n  ".join(str(c) for c in candidates),
                 CD_WEIGHTS / dirname)
     )
+
+
+def save_chips_csv(df, out_csv):
+    """Write a chip manifest with portable, relative chip paths.
+
+    Counterpart to load_chips_csv(). The generators build their rows from
+    absolute glob results; relativizing on write keeps the published CSVs
+    machine-independent, so regenerating a manifest cannot reintroduce paths
+    that only resolve on the machine that produced it.
+    """
+    df = df.copy()
+    for col in CHIP_PATH_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].map(lambda v: str(_relative_chip_path(v)))
+    Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv, index=False)
+    return df

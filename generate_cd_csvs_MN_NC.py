@@ -15,7 +15,7 @@ Output CSVs (written to change_detection_chips/prithvi/):
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, save_chips_csv
 
 
 import os
@@ -83,7 +83,7 @@ def generate_csv(region):
         })
 
     df = pd.DataFrame(rows_out)
-    df.to_csv(out_csv, index=False)
+    save_chips_csv(df, out_csv)
     print(f"  {region}: {len(df)} chips -> {out_csv}  (skipped {missing})")
 
 
