@@ -1,6 +1,11 @@
 """
-SatMAE + FPN — chip-based inference for SouthMN segmentation.
+SatMAE + FPN -- chip-based inference for SouthMN segmentation.
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import sys
@@ -12,17 +17,17 @@ import numpy as np
 import rasterio
 from tqdm import tqdm
 
-SATMAE_DIR = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE'
+SATMAE_DIR = f'{MSR_ROOT}/SatMAE'
 sys.path.insert(0, SATMAE_DIR)
 
 import models_vit_group_channels
 from models_satmae_fpn import SatMAEFPN
 
-# ── config ────────────────────────────────────────────────────────────────────
-DATA_DIR    = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_MN/SouthMN'
-SPLITS_TXT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/MN/test.txt'
-CHECKPOINT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE/output_seg_MN_fpn/checkpoint-best.pth'
-OUTPUT_DIR  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/satmae_fpn_SouthMN'
+# -- config --------------------------------------------------------------------
+DATA_DIR    = f'{DATA_ROOT}/SatMAE_chips_MN/SouthMN'
+SPLITS_TXT  = f'{DATA_ROOT}/SatMAE_chips_multitemporal/MN/test.txt'
+CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_MN_fpn/checkpoint-best.pth'
+OUTPUT_DIR  = f'{PREDICTIONS}/satmae_fpn_SouthMN'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'SouthMN_SatMAE_FPN_Prediction.tif')
 
 CHIP_SIZE   = 96
@@ -90,7 +95,7 @@ def main():
     min_row, min_col = min(rows), min(cols)
     H = max(rows) - min_row + CHIP_SIZE
     W = max(cols) - min_col + CHIP_SIZE
-    print(f"Canvas: {H}×{W}")
+    print(f"Canvas: {H}x{W}")
 
     ref_chip = os.path.join(DATA_DIR, chip_names[0] + '.tif')
     with rasterio.open(ref_chip) as src:

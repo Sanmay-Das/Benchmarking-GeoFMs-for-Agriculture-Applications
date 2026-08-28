@@ -10,11 +10,13 @@
 
 set -euo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+
 echo "=========================================="
 echo "SATMAE + PSANET CROP SEGMENTATION"
-echo "main_finetune.py — Single GPU A100"
+echo "main_finetune.py -- Single GPU A100"
 echo "=========================================="
-echo "Job ID:    $SLURM_JOB_ID"
+echo "Job ID:    ${SLURM_JOB_ID:-local}"
 echo "Node:      $SLURM_NODELIST"
 echo "Start:     $(date)"
 echo ""
@@ -22,28 +24,36 @@ echo ""
 # ============================================================
 # PATHS
 # ============================================================
-SATMAE_DIR="/bigdata/eldawylab/sdas050/MS_Research/SatMAE"
+SATMAE_DIR="$MSR_ROOT/SatMAE"
 
-# Parent directory — dataset_seg.py scans subdirs (CentIA, EastIA, NWIA)
+# Parent directory -- dataset_seg.py scans subdirs (CentIA, EastIA, NWIA)
 # to find each chip. No need to copy chips into Iowa/.
-DATA_ROOT="/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal"
+DATA_ROOT="$MSR_ROOT/SatMAE_chips_multitemporal"
 
 # Split files live in Iowa/
 SPLITS_DIR="${DATA_ROOT}/Iowa"
 
-PRETRAIN_WEIGHTS="/bigdata/eldawylab/sdas050/MS_Research/weights/pretrain-vit-large-e199.pth"
+PRETRAIN_WEIGHTS="$MSR_ROOT/weights/pretrain-vit-large-e199.pth"
 OUTPUT_DIR="${SATMAE_DIR}/output_seg_Iowa"
 LOG_DIR="${OUTPUT_DIR}/logs"
 
 # ============================================================
 # Environment
 # ============================================================
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
 
 mkdir -p "${SATMAE_DIR}/logs"
 mkdir -p "${OUTPUT_DIR}"
@@ -73,9 +83,9 @@ echo "Data root:       ${DATA_ROOT}"
 echo "  CentIA/        train chips"
 echo "  EastIA/        val chips"
 echo "  NWIA/          test chips"
-echo "  Iowa/train.txt → CentIA chip names"
-echo "  Iowa/val.txt   → EastIA chip names"
-echo "  Iowa/test.txt  → NWIA chip names"
+echo "  Iowa/train.txt -> CentIA chip names"
+echo "  Iowa/val.txt   -> EastIA chip names"
+echo "  Iowa/test.txt  -> NWIA chip names"
 echo "Pretrain:        ${PRETRAIN_WEIGHTS}"
 echo "Output dir:      ${OUTPUT_DIR}"
 echo ""
@@ -106,7 +116,7 @@ cd ${SATMAE_DIR}
 MASTER_PORT=$((29500 + SLURM_JOB_ID % 1000))
 
 # ============================================================
-# Run training — single GPU (same pattern as SpectralGPT)
+# Run training -- single GPU (same pattern as SpectralGPT)
 # ============================================================
 python -m torch.distributed.launch \
     --nproc_per_node=1 \

@@ -19,6 +19,11 @@ Outputs:
         crops/informative/  crop1_T1/T2/GT/SpectralGPT/Prithvi/SatMAE.png  x3
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+
+
 import os
 import gc
 import numpy as np
@@ -28,20 +33,20 @@ import rasterio.windows
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE      = '/bigdata/eldawylab/sdas050/MS_Research'
-CHIPS_CSV = f'{BASE}/change_detection_chips/spectralgpt/NWIA_chips.csv'
+# -- paths --------------------------------------------------------------------
+BASE      = str(MSR_ROOT)
+CHIPS_CSV = f'{DATA_ROOT}/change_detection_chips/spectralgpt/NWIA_chips.csv'
 CHIP_SIZE = 128
 
-GT_PATH = f'{BASE}/predictions/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_gt.tif'
+GT_PATH = f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_gt.tif'
 
 MODELS = [
     ('SpectralGPT',
-     f'{BASE}/predictions/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_pred.tif'),
+     f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_pred.tif'),
     ('Prithvi',
-     f'{BASE}/predictions/cd_prithvi_NWIA/NWIA_Prithvi_CD_pred.tif'),
+     f'{PREDICTIONS}/cd_prithvi_NWIA/NWIA_Prithvi_CD_pred.tif'),
     ('SatMAE',
-     f'{BASE}/predictions/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif'),
+     f'{PREDICTIONS}/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif'),
 ]
 
 OUTPUT_DIR = f'{BASE}/visualizations/cd_NWIA'
@@ -50,7 +55,7 @@ STRIP_H    = 256    # strip height for GeoTIFF writing
 CROP_SIZE  = 512    # full-res crop size in pixels
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# -- helpers -------------------------------------------------------------------
 def to_binary_rgb(arr):
     rgb = np.zeros((*arr.shape, 3), dtype=np.uint8)
     rgb[arr == 1]   = [255, 255, 255]
@@ -93,7 +98,7 @@ def load_and_align(pred_path, H, W):
     return pred
 
 
-# ── downsampled T1/T2 stitching (for full-scene PNG only) ────────────────────
+# -- downsampled T1/T2 stitching (for full-scene PNG only) --------------------
 def stitch_rgb_ds(df, chip_size, scale, min_row, min_col, Hd, Wd):
     cs = chip_size // scale
     t1_sum = np.zeros((Hd, Wd, 3), dtype=np.float32)
@@ -124,7 +129,7 @@ def stitch_rgb_ds(df, chip_size, scale, min_row, min_col, Hd, Wd):
     return to_uint8(t1_sum / count[..., None]), to_uint8(t2_sum / count[..., None])
 
 
-# ── targeted T1/T2 stitching for a single crop window ────────────────────────
+# -- targeted T1/T2 stitching for a single crop window ------------------------
 def get_crop_rgb(df, r0, c0, crop_size, chip_size, min_row, min_col):
     """Load only chips overlapping [r0:r0+crop_size, c0:c0+crop_size]."""
     t1_sum = np.zeros((crop_size, crop_size, 3), dtype=np.float32)
@@ -165,7 +170,7 @@ def get_crop_rgb(df, r0, c0, crop_size, chip_size, min_row, min_col):
     return to_uint8(t1_sum/count[...,None]), to_uint8(t2_sum/count[...,None])
 
 
-# ── crop finders (operate on downsampled arrays) ──────────────────────────────
+# -- crop finders (operate on downsampled arrays) ------------------------------
 def find_highchange_crops(gt_ds, n=3, crop_ds=128):
     H, W, best = gt_ds.shape[0], gt_ds.shape[1], []
     step = crop_ds // 2
@@ -201,7 +206,7 @@ def find_informative_crops(gt_ds, preds_ds, n=3, crop_ds=128):
     return [(r*SCALE, c*SCALE) for _, r, c in scores[:n]]
 
 
-# ── legend ────────────────────────────────────────────────────────────────────
+# -- legend --------------------------------------------------------------------
 def save_legend(out_path):
     labels = [('Changed',(255,255,255)),('Unchanged',(0,0,0)),('No Data',(128,128,128))]
     box, pad, tw = 30, 10, 180
@@ -215,7 +220,7 @@ def save_legend(out_path):
     print(f"    legend.png")
 
 
-# ── main ─────────────────────────────────────────────────────────────────────
+# -- main ---------------------------------------------------------------------
 def main():
     for d in [OUTPUT_DIR,
               f'{OUTPUT_DIR}/geotiffs',
@@ -223,17 +228,17 @@ def main():
               f'{OUTPUT_DIR}/crops/informative']:
         os.makedirs(d, exist_ok=True)
 
-    df = pd.read_csv(CHIPS_CSV)
+    df = load_chips_csv(CHIPS_CSV)
     rows, cols = df['row'].values, df['col'].values
     min_row, min_col = int(rows.min()), int(cols.min())
 
-    # Read GT (38MB — stays in memory throughout)
+    # Read GT (38MB -- stays in memory throughout)
     with rasterio.open(GT_PATH) as src:
         gt = src.read(1)
     H, W = gt.shape
-    print(f"GT canvas: {H}×{W}\n")
+    print(f"GT canvas: {H}x{W}\n")
 
-    # ── Phase 1: full-scene PNGs + GeoTIFFs ──────────────────────────────────
+    # -- Phase 1: full-scene PNGs + GeoTIFFs ----------------------------------
     print("=== Phase 1: Full-scene maps ===")
     Hd, Wd = H//SCALE, W//SCALE
 
@@ -260,7 +265,7 @@ def main():
 
     save_legend(f'{OUTPUT_DIR}/legend.png')
 
-    # ── Phase 2: find crop locations (downsampled — tiny memory) ─────────────
+    # -- Phase 2: find crop locations (downsampled -- tiny memory) -------------
     print("\n=== Phase 2: Finding crop locations ===")
     crop_ds   = CROP_SIZE // SCALE   # 128 at 4x downsample
     gt_ds     = gt[::SCALE, ::SCALE]
@@ -271,7 +276,7 @@ def main():
     print(f"  High-change crops:  {hc_crops}")
     print(f"  Informative crops:  {inf_crops}")
 
-    # ── Phase 3: save crops (one pred at a time, targeted chip loading) ───────
+    # -- Phase 3: save crops (one pred at a time, targeted chip loading) -------
     for crop_type, crops in [('highchange', hc_crops), ('informative', inf_crops)]:
         print(f"\n=== Phase 3: {crop_type} crops ===")
         crop_dir = f'{OUTPUT_DIR}/crops/{crop_type}'
@@ -291,7 +296,7 @@ def main():
             save_png(to_binary_rgb(gt[r:r+CROP_SIZE, c:c+CROP_SIZE]),
                      f'{crop_dir}/{name}_GT.png')
 
-            # Pred crops — one at a time
+            # Pred crops -- one at a time
             for model_name, pred_path in MODELS:
                 pred = load_and_align(pred_path, H, W)
                 save_png(to_binary_rgb(pred[r:r+CROP_SIZE, c:c+CROP_SIZE]),

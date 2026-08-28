@@ -177,7 +177,7 @@ def main(args):
 
     device = torch.device(args.device)
 
-    # ── datasets ──────────────────────────────────────────────────────
+    # -- datasets ------------------------------------------------------
     train_csv = [os.path.join(args.data_root, 'CentIA_chips.csv')]   # train
     val_csv   = [os.path.join(args.data_root, 'EastIA_chips.csv')]   # val
     test_csv  = [os.path.join(args.data_root, 'NWIA_chips.csv')]     # test
@@ -188,7 +188,7 @@ def main(args):
 
     print("Creating data loaders")
 
-    # ── samplers ──────────────────────────────────────────────────────
+    # -- samplers ------------------------------------------------------
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
         val_sampler   = torch.utils.data.distributed.DistributedSampler(val_dataset)
@@ -213,7 +213,7 @@ def main(args):
         collate_fn=CDDataset.collate_fn,
     )
 
-    # ── model ─────────────────────────────────────────────────────────
+    # -- model ---------------------------------------------------------
     print("Creating model")
     model = build_spectralgpt_cd(
         pretrain_path=args.pretrain_path if not args.no_pretrain else None
@@ -229,13 +229,13 @@ def main(args):
             model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
 
-    # ── loss ──────────────────────────────────────────────────────────
+    # -- loss ----------------------------------------------------------
     # Class weights from training masks; ignore_index=255 for nodata pixels
     weights   = torch.FloatTensor(train_dataset.weights).to(device)
     criterion = nn.NLLLoss(weight=weights, ignore_index=255)
     print(f"Class weights: unchanged={weights[0]:.4f}, changed={weights[1]:.4f}")
 
-    # ── optimizer + scheduler ─────────────────────────────────────────
+    # -- optimizer + scheduler -----------------------------------------
     params_to_optimize = [p for p in model_without_ddp.parameters()
                           if p.requires_grad]
     optimizer = torch.optim.AdamW(
@@ -248,7 +248,7 @@ def main(args):
         warmup=(args.warmup_epochs > 0), warmup_epochs=args.warmup_epochs,
     )
 
-    # ── resume ────────────────────────────────────────────────────────
+    # -- resume --------------------------------------------------------
     if args.resume:
         checkpoint = torch.load(args.resume, map_location='cpu')
         model_without_ddp.load_state_dict(checkpoint['model'])
@@ -259,13 +259,13 @@ def main(args):
             scaler.load_state_dict(checkpoint['scaler'])
         print(f"Resumed from epoch {checkpoint['epoch']}")
 
-    # ── test only ─────────────────────────────────────────────────────
+    # -- test only -----------------------------------------------------
     if args.test_only:
         print("\n=== TEST SET (NWIA) ===")
         evaluate_cd(model, test_loader, device, criterion)
         return
 
-    # ── training loop ─────────────────────────────────────────────────
+    # -- training loop -------------------------------------------------
     best_f1      = 0.0
     results_file = "cd_results_spectralgpt.txt"
 
@@ -281,13 +281,13 @@ def main(args):
             lr_scheduler, scaler, args.print_freq, criterion,
         )
 
-        print(f"\n=== Epoch {epoch} — Val (EastIA) ===") 
+        print(f"\n=== Epoch {epoch} -- Val (EastIA) ===") 
         val_loss, prec, rec, f1, oa = evaluate_cd(
             model, val_loader, device, criterion)
 
         improved = f1 > best_f1
 
-        # logging — same pattern as SegMunich train.py
+        # logging -- same pattern as SegMunich train.py
         if args.rank in [-1, 0]:
             with open(results_file, 'a') as f:
                 f.write(
@@ -347,7 +347,7 @@ def main(args):
 
 
 # ============================================================================
-# Args — mirrors SegMunich/train_custom_spectralgpt.py argument style
+# Args -- mirrors SegMunich/train_custom_spectralgpt.py argument style
 # ============================================================================
 
 if __name__ == '__main__':

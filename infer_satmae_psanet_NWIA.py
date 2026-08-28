@@ -1,11 +1,16 @@
 """
-SatMAE + PSANet  —  Sliding-window inference on NWIA multitemporal stack
+SatMAE + PSANet  --  Sliding-window inference on NWIA multitemporal stack
 Follows the same TerraTorch tiled-inference protocol as Prithvi / SpectralGPT:
   - Reflect-padded stack
   - Cosine blend mask per chip
   - Delta=8 border discard
   - Outputs stitched GeoTIFF (uint8, nodata=255)
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import sys
@@ -18,8 +23,8 @@ import rasterio
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-# ── SatMAE module paths ───────────────────────────────────────────────────────
-SATMAE_DIR = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE'
+# -- SatMAE module paths -------------------------------------------------------
+SATMAE_DIR = f'{MSR_ROOT}/SatMAE'
 sys.path.insert(0, SATMAE_DIR)
 
 import models_vit_group_channels
@@ -28,9 +33,9 @@ import psanet
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE/output_seg_Iowa/checkpoint-best.pth'
-STACK_PATH  = '/bigdata/eldawylab/sdas050/MS_Research/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
-OUTPUT_DIR  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/satmae_psanet_NWIA'
+CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_Iowa/checkpoint-best.pth'
+STACK_PATH  = f'{MSR_ROOT}/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
+OUTPUT_DIR  = f'{PREDICTIONS}/satmae_psanet_NWIA'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'NWIA_SatMAE_PSANet_Prediction.tif')
 
 CHIP_SIZE   = 96
@@ -40,7 +45,7 @@ NUM_CLASSES = 14      # 0=NoData, 1-13=crop types
 BATCH_SIZE  = 32
 NODATA_VAL  = -9999
 
-# ── SatMAE z-score normalization (Table 10, Appendix A.2.2) ──────────────────
+# -- SatMAE z-score normalization (Table 10, Appendix A.2.2) ------------------
 _MEAN_6 = np.array([
     1184.3824625, 1120.77120066, 1136.26026392,
     1972.62420416, 1732.16362238, 1247.91870117,
@@ -53,7 +58,7 @@ _STD_6 = np.array([
 SATMAE_MEAN = np.tile(_MEAN_6, 3).reshape(18, 1, 1)   # (18, 1, 1)
 SATMAE_STD  = np.tile(_STD_6,  3).reshape(18, 1, 1)   # (18, 1, 1)
 
-# ── PSANet architecture params (must match training) ─────────────────────────
+# -- PSANet architecture params (must match training) -------------------------
 GROUPED_BANDS = [[0,1,2,3,4,5], [6,7,8,9,10,11], [12,13,14,15,16,17]]
 PATCH_SIZE    = 8
 INPUT_SIZE    = 96
@@ -144,7 +149,7 @@ def main():
     if device.type == 'cuda':
         print(f"  GPU: {torch.cuda.get_device_name(0)}")
 
-    # ── Build model ───────────────────────────────────────────────────────────
+    # -- Build model -----------------------------------------------------------
     print("\nBuilding SatMAE + PSANet model...")
     encoder = models_vit_group_channels.vit_large_patch16(
         patch_size    = PATCH_SIZE,
@@ -171,7 +176,7 @@ def main():
         psa_softmax         = True,
     )
 
-    # ── Load checkpoint ───────────────────────────────────────────────────────
+    # -- Load checkpoint -------------------------------------------------------
     print(f"Loading checkpoint: {CHECKPOINT}")
     ckpt = torch.load(CHECKPOINT, map_location='cpu')
     model.load_state_dict(ckpt['model'])
@@ -179,7 +184,7 @@ def main():
     model = model.to(device)
     model.eval()
 
-    # ── Dataset + DataLoader ──────────────────────────────────────────────────
+    # -- Dataset + DataLoader --------------------------------------------------
     dataset    = SlidingWindowDataset(STACK_PATH, CHIP_SIZE, STRIDE, DELTA)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE,
                             shuffle=False, num_workers=4, pin_memory=True)
@@ -191,8 +196,8 @@ def main():
     blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)
     inner_size = CHIP_SIZE - 2 * DELTA
 
-    print(f"\nStack: {H}×{W} | Padded: {dataset.H}×{dataset.W} | Windows: {len(dataset)}")
-    print(f"Chip: {CHIP_SIZE}×{CHIP_SIZE} | Stride: {STRIDE} | Delta: {DELTA}\n")
+    print(f"\nStack: {H}x{W} | Padded: {dataset.H}x{dataset.W} | Windows: {len(dataset)}")
+    print(f"Chip: {CHIP_SIZE}x{CHIP_SIZE} | Stride: {STRIDE} | Delta: {DELTA}\n")
 
     start = time.time()
     with torch.no_grad():
@@ -238,7 +243,7 @@ def main():
         dst.write(pred, 1)
 
     print(f"Saved: {OUTPUT_FILE}")
-    print(f"Output size: {pred.shape}  —  matches original stack: {H}×{W}")
+    print(f"Output size: {pred.shape}  --  matches original stack: {H}x{W}")
 
 
 if __name__ == '__main__':

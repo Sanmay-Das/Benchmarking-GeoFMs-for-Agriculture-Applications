@@ -9,16 +9,22 @@
 
 set -euo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+
 source /etc/profile.d/modules.sh
 module purge
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
 
-mkdir -p logs visualizations/seg_SouthMN
+mkdir -p "$MSR_OUTPUT_ROOT/logs" "$MSR_OUTPUT_ROOT/visualizations/seg_SouthMN"
 
-echo "==== Segmentation Visualization — SouthMN ===="
-echo "Job:  $SLURM_JOB_ID"
+echo "==== Segmentation Visualization -- SouthMN ===="
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname) (CPU-only)"
 echo "Start: $(date)"
 echo ""

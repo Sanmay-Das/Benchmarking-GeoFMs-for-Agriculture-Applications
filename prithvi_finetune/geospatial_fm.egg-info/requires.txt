@@ -1,8 +1,0 @@
-mmsegmentation@ file:///bigdata/eldawylab/sdas050/MS_Research/mmsegmentation
-rasterio
-rioxarray
-einops
-timm==0.4.12
-tensorboard
-imagecodecs
-yapf==0.40.1

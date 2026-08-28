@@ -249,7 +249,7 @@ class VisionTransformer(nn.Module):
         # embed patches
         # x = torch.cat([x1, x2], dim=1)
         x = x1
-        # x = x[:, :-1, :, :]  # 切片处理数据维度
+        # x = x[:, :-1, :, :]  # 
         x = torch.unsqueeze(x, dim=1)
         x = self.patch_embed(x)
         N, T, L, C = x.shape  # T: temporal; L: spatial

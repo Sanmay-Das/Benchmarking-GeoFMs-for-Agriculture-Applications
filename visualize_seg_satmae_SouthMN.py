@@ -1,7 +1,12 @@
 """
-Segmentation visualization for SouthMN — SatMAE (FCN/FPN/PSANet) vs Prithvi vs SpectralGPT vs GT.
+Segmentation visualization for SouthMN -- SatMAE (FCN/FPN/PSANet) vs Prithvi vs SpectralGPT vs GT.
 Saves colorized GeoTIFFs to visualizations/seg_SouthMN/.
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import glob
@@ -10,7 +15,7 @@ import rasterio
 import rasterio.transform
 from tqdm import tqdm
 
-# ── Color palette (class index 0-12 → RGB) ────────────────────────────────────
+# -- Color palette (class index 0-12 -> RGB) ------------------------------------
 # Class 0=Natural Veg, 1=Forest, 2=Corn, 3=Soybeans, 4=Wetlands,
 #       5=Developed/Barren, 6=Open Water, 7=Winter Wheat, 8=Alfalfa,
 #       9=Fallow/Idle, 10=Cotton, 11=Sorghum, 12=Other
@@ -32,7 +37,7 @@ COLORS = np.array([
 
 NODATA_COLOR = np.array([0, 0, 0], dtype=np.uint8)  # black for NoData
 
-BASE_DIR  = '/bigdata/eldawylab/sdas050/MS_Research'
+BASE_DIR  = str(MSR_ROOT)
 PRED_DIR  = os.path.join(BASE_DIR, 'predictions')
 CHIP_DIR  = os.path.join(BASE_DIR, 'SatMAE_chips_MN/SouthMN')
 SPLITS_TXT = os.path.join(BASE_DIR, 'SatMAE_chips_multitemporal/MN/test.txt')
@@ -98,8 +103,8 @@ def stitch_gt():
         y0, x0 = r - min_row, c - min_col
         gt[y0:y0+96, x0:x0+96] = chip
 
-    # shift 1-13 → 0-12, NoData(0) → 255
-    gt_shifted = gt.astype(np.int16) - 1          # 0-12, NoData → -1
+    # shift 1-13 -> 0-12, NoData(0) -> 255
+    gt_shifted = gt.astype(np.int16) - 1          # 0-12, NoData -> -1
     gt_out = np.where(gt_shifted < 0, 255, gt_shifted).astype(np.uint8)
 
     # Build geotransform for the stitched canvas
@@ -122,12 +127,12 @@ def stitch_gt():
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    # ── 1. Stitch and save GT ─────────────────────────────────────────────────
+    # -- 1. Stitch and save GT -------------------------------------------------
     gt, gt_profile = stitch_gt()
     rgb = labels_to_rgb(gt, nodata_val=255)
     save_rgb_tif(rgb, os.path.join(OUT_DIR, 'SouthMN_GT.tif'), gt_profile)
 
-    # ── 2. Colorize each prediction ───────────────────────────────────────────
+    # -- 2. Colorize each prediction -------------------------------------------
     for name, path in PREDICTIONS.items():
         if not os.path.exists(path):
             print(f"  MISSING: {path}")
@@ -138,7 +143,7 @@ def main():
             profile = src.profile.copy()
 
         if name.startswith('SatMAE'):
-            # Values 0-13: 0=NoData, 1-13=class → shift to 0-12, nodata=255
+            # Values 0-13: 0=NoData, 1-13=class -> shift to 0-12, nodata=255
             shifted = pred.astype(np.int16) - 1
             pred_vis = np.where(shifted < 0, 255, shifted).astype(np.uint8)
             nodata_val = 255

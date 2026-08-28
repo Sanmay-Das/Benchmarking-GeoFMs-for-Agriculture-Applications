@@ -360,7 +360,7 @@ def build_spectralgpt_cd(pretrain_path: str = None) -> SpectralGPT_CD:
 
 
 if __name__ == '__main__':
-    # Quick shape test — run from ChangeDetection/ folder:
+    # Quick shape test -- run from ChangeDetection/ folder:
     # python src/model_cd_spectralgpt.py
     model = build_spectralgpt_cd(pretrain_path=None)
     t1  = torch.rand(2, 6, 128, 128)

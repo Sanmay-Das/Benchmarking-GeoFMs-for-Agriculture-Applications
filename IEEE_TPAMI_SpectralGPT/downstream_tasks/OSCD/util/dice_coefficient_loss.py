@@ -19,14 +19,14 @@ def build_target(target: torch.Tensor, num_classes: int = 2, ignore_index: int =
 
 def dice_coeff(x: torch.Tensor, target: torch.Tensor, ignore_index: int = -100, epsilon=1e-6):
     # Average of Dice coefficient for all batches, or for a single mask
-    # 计算一个batch中所有图片某个类别的dice_coefficient
+    # batchdice_coefficient
     d = 0.
     batch_size = x.shape[0]
     for i in range(batch_size):
         x_i = x[i].reshape(-1)
         t_i = target[i].reshape(-1)
         if ignore_index >= 0:
-            # 找出mask中不为ignore_index的区域
+            # maskignore_index
             roi_mask = torch.ne(t_i, ignore_index)
             x_i = x_i[roi_mask]
             t_i = t_i[roi_mask]

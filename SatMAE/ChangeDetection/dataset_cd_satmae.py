@@ -26,7 +26,7 @@ import pandas as pd
 
 
 # ============================================================================
-# SatMAE normalization stats — Table 10 from SatMAE paper (Appendix A.2.2)
+# SatMAE normalization stats -- Table 10 from SatMAE paper (Appendix A.2.2)
 # 6 bands: B02, B03, B04, B8A, B11, B12
 # Same stats for T1 and T2 (sensor-level stats, not year-specific)
 # ============================================================================

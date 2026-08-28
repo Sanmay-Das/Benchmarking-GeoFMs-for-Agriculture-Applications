@@ -11,13 +11,18 @@ Output CSVs (written to change_detection_chips/satmae/):
     NorthMN_chips.csv, CentMN_chips.csv, SouthMN_chips.csv
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import os
 import glob
 import numpy as np
 import pandas as pd
 import rasterio
 
-BASE    = '/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/satmae'
+BASE    = f'{DATA_ROOT}/change_detection_chips/satmae'
 REGIONS = ['CentMN', 'SouthMN']  # NorthMN already done
 
 
@@ -67,7 +72,7 @@ def generate_csv(region):
 
     df = pd.DataFrame(rows_out)
     df.to_csv(out_csv, index=False)
-    print(f"  {region}: {len(df)} chips → {out_csv}  (skipped {missing})")
+    print(f"  {region}: {len(df)} chips -> {out_csv}  (skipped {missing})")
 
 
 if __name__ == '__main__':

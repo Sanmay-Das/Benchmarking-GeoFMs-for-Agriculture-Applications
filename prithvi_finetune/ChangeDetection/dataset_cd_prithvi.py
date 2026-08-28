@@ -36,7 +36,7 @@ import pandas as pd
 # (first 6 bands of T1 timestep)
 # ============================================================================
 
-# T1 (2023) stats — first 6 bands from your IA segmentation config
+# T1 (2023) stats -- first 6 bands from your IA segmentation config
 T1_MEANS = np.array([
     1861.19006065,  # B02
     2033.17032775,  # B03
@@ -55,7 +55,7 @@ T1_STDS = np.array([
     788.08159599,   # B12
 ], dtype=np.float32)
 
-# T2 (2024) stats — second 6 bands from your IA segmentation config
+# T2 (2024) stats -- second 6 bands from your IA segmentation config
 T2_MEANS = np.array([
     1704.63697798,  # B02
     1961.37926168,  # B03

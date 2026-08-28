@@ -9,13 +9,19 @@
 
 set -euo pipefail
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
 
-mkdir -p logs
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
+
+mkdir -p "$MSR_OUTPUT_ROOT/logs"
 
 echo "==== SatMAE Colored Map Generation ===="
-echo "Job:  $SLURM_JOB_ID"
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname)"
 echo ""
 

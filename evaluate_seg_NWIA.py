@@ -4,6 +4,11 @@ Computes mIoU and per-class IoU for all 5 models by comparing
 prediction TIFs against GT chip masks from test.txt.
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import os
 import numpy as np
 import rasterio
@@ -16,12 +21,13 @@ CLASS_NAMES = [
     "Fallow/Idle", "Cotton", "Sorghum", "Other"
 ]
 
-BASE      = '/bigdata/eldawylab/sdas050/MS_Research'
+BASE      = str(MSR_ROOT)
 CHIP_DIR  = os.path.join(BASE, 'SatMAE_chips_multitemporal/NWIA')
 TEST_TXT  = os.path.join(BASE, 'SatMAE_chips_multitemporal/Iowa/test.txt')
 
 PREDICTIONS = {
     'SatMAE_FPN':    (os.path.join(BASE, 'predictions/satmae_fpn_NWIA/NWIA_SatMAE_FPN_Prediction.tif'),    'satmae'),
+    'SatMAE_FCN':    (os.path.join(BASE, 'predictions/satmae_fcn_NWIA/NWIA_SatMAE_FCN_Prediction.tif'),    'satmae'),
     'SatMAE_PSANet': (os.path.join(BASE, 'predictions/satmae_psanet_NWIA/NWIA_SatMAE_PSANet_Prediction.tif'), 'satmae'),
 }
 
@@ -54,12 +60,12 @@ def evaluate(pred_path, enc, chip_names, chip_coords, min_row, min_col):
         pred_chip = pred_full[r:r+96, c:c+96].astype(np.int16)
 
         # Convert to 0-12 class index
-        # GT: 1-13 → 0-12; 0 → nodata
-        gt_cls = gt - 1          # 0-12, nodata → -1
+        # GT: 1-13 -> 0-12; 0 -> nodata
+        gt_cls = gt - 1          # 0-12, nodata -> -1
 
         if enc == 'satmae':
             # pred values 1-13=class, 0 or 255=nodata
-            pred_cls = pred_chip - 1     # 0-12, nodata → -1 or 254
+            pred_cls = pred_chip - 1     # 0-12, nodata -> -1 or 254
             pred_cls = np.where(pred_chip == 255, -1, pred_cls)
             pred_cls = np.where(pred_chip == 0,   -1, pred_cls)
         else:
@@ -110,7 +116,7 @@ def main():
             print(f"    {i:2d} {name:<20s}: {v*100:.2f}%" if not np.isnan(v) else f"    {i:2d} {name:<20s}: N/A")
 
     print(f"\n{'='*50}")
-    print("SUMMARY — NWIA Iowa Test Set")
+    print("SUMMARY -- NWIA Iowa Test Set")
     print(f"{'Model':<20s} {'mIoU':>8s} {'OA':>8s}")
     print('-' * 38)
     for model, r in results.items():

@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import numpy as np
 import rasterio
 from pathlib import Path
@@ -127,7 +132,7 @@ class SegDataset(data.Dataset):
 
 
 if __name__ == "__main__":
-    CHIPS_DIR = "/bigdata/eldawylab/sdas050/MS_Research/SpectralGPT_chips_multitemporal/NorthCentMN/ImageSets"
+    CHIPS_DIR = f"{DATA_ROOT}/SpectralGPT_chips_multitemporal/NorthCentMN/ImageSets"
     
     print("="*70)
     print("SPECTRALGPT [0,1] NORMALIZATION")

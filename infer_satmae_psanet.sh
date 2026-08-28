@@ -10,18 +10,28 @@
 
 set -euo pipefail
 
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-mkdir -p logs
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
+
+mkdir -p "$MSR_OUTPUT_ROOT/logs"
 mkdir -p predictions/satmae_psanet_NWIA
 
 echo "==== SatMAE + PSANet Sliding Window Inference - NWIA ===="
-echo "Job:  $SLURM_JOB_ID"
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname)"
 echo "GPU:  $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo ""

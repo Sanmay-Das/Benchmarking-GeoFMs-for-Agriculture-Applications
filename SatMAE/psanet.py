@@ -6,14 +6,14 @@ from einops import rearrange
 
 
 # ============================================================================
-# Pure PyTorch PSA mask — replaces lib.psa.functional (C extension)
+# Pure PyTorch PSA mask -- replaces lib.psa.functional (C extension)
 # No compilation needed
 # ============================================================================
 
 def psa_mask_fast(x, psa_type, mask_h, mask_w):
     """
     Vectorized pure PyTorch PSA mask generation.
-    Replaces lib.psa.functional.psa_mask — no C extension needed.
+    Replaces lib.psa.functional.psa_mask -- no C extension needed.
 
     Args:
         x:        (N, mask_h*mask_w, H, W) attention logits
@@ -22,7 +22,7 @@ def psa_mask_fast(x, psa_type, mask_h, mask_w):
         mask_w:   attention mask width
 
     Returns:
-        (N, mask_h*mask_w, H, W) — invalid positions zeroed out
+        (N, mask_h*mask_w, H, W) -- invalid positions zeroed out
     """
     N, C, H, W = x.shape
     assert C == mask_h * mask_w, \
@@ -50,7 +50,7 @@ def psa_mask_fast(x, psa_type, mask_h, mask_w):
         valid = ((dst_h >= 0) & (dst_h < H) &
                  (dst_w >= 0) & (dst_w < W))  # (H, W, mask_h, mask_w)
 
-    # valid: (H, W, mask_h, mask_w) → (1, mask_h*mask_w, H, W)
+    # valid: (H, W, mask_h, mask_w) -> (1, mask_h*mask_w, H, W)
     valid = valid.permute(2, 3, 0, 1).reshape(1, mask_h * mask_w, H, W).float()
 
     return x * valid
@@ -133,7 +133,7 @@ class PSA(nn.Module):
             x_dis = self.reduce_p(x)
             n, c, h, w = x_col.size()
 
-            # Removed hardcoded assert h == 51 — dynamic sizing
+            # Removed hardcoded assert h == 51 -- dynamic sizing
 
             if self.shrink_factor != 1:
                 h = (h - 1) // self.shrink_factor + 1
@@ -185,7 +185,7 @@ class PSANet(nn.Module):
         """
         PSANet for crop segmentation with GroupChannels SatMAE encoder.
 
-        Pure PyTorch — no lib.psa.functional C extension needed.
+        Pure PyTorch -- no lib.psa.functional C extension needed.
         mask_h=11, mask_w=11 for 96x96 input:
             feature map = 96//8 = 12
             after shrink by 2: (12-1)//2+1 = 6
@@ -206,7 +206,7 @@ class PSANet(nn.Module):
         if use_psa:
             self.psa = PSA(fea_dim, 512, psa_type, compact, shrink_factor,
                            mask_h, mask_w, normalization_factor, psa_softmax)
-            fea_dim *= 2  # PSA cat → 2048
+            fea_dim *= 2  # PSA cat -> 2048
 
         self.cls = nn.Sequential(
             nn.Conv2d(fea_dim, 512, kernel_size=3, padding=1, bias=False),
@@ -237,13 +237,13 @@ class PSANet(nn.Module):
     def forward(self, x, is_train=True):
         """
         Args:
-            x:        (B, 18, H, W) — 18-band stacked multi-temporal input
-            is_train: True  → (main_logits, aux_logits) for MultiIoUBCE
-                      False → main_logits only for eval/inference
+            x:        (B, 18, H, W) -- 18-band stacked multi-temporal input
+            is_train: True  -> (main_logits, aux_logits) for MultiIoUBCE
+                      False -> main_logits only for eval/inference
         """
         h, w = x.shape[2], x.shape[3]
 
-        # GroupChannels encoder → spatial feature map
+        # GroupChannels encoder -> spatial feature map
         features  = self.encoder.forward_features_seg(x)
         x_spatial = features[0]  # (B, 1024, 12, 12)
         x_tmp     = x_spatial    # save for aux head

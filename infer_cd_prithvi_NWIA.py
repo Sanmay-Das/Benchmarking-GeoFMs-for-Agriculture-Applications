@@ -10,9 +10,14 @@ Change detection inference for Prithvi on NWIA test chips.
 
 Outputs:
     predictions/cd_prithvi_NWIA/
-        NWIA_Prithvi_CD_pred.tif    — binary change map (0=unchanged,1=changed,255=nodata)
-        NWIA_Prithvi_CD_gt.tif      — GT change map (same encoding)
+        NWIA_Prithvi_CD_pred.tif    -- binary change map (0=unchanged,1=changed,255=nodata)
+        NWIA_Prithvi_CD_gt.tif      -- GT change map (same encoding)
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+
 
 import os
 import sys
@@ -23,18 +28,18 @@ import torch.nn.functional as F
 import rasterio
 from tqdm import tqdm
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE         = '/bigdata/eldawylab/sdas050/MS_Research'
-CHIPS_CSV    = f'{BASE}/change_detection_chips/prithvi/NWIA_chips.csv'
+# -- paths --------------------------------------------------------------------
+BASE         = str(MSR_ROOT)
+CHIPS_CSV    = f'{DATA_ROOT}/change_detection_chips/prithvi/NWIA_chips.csv'
 CHECKPOINT   = f'{BASE}/prithvi_finetune/ChangeDetection/cd_train_prithvi/best_F1_model.pth'
-OUTPUT_DIR   = f'{BASE}/predictions/cd_prithvi_NWIA'
+OUTPUT_DIR   = f'{PREDICTIONS}/cd_prithvi_NWIA'
 
 CHIP_SIZE    = 224
 STRIDE       = 112    # 50% overlap used during chip creation
 
 sys.path.insert(0, f'{BASE}/prithvi_finetune/ChangeDetection')
 
-# ── normalization stats (Iowa z-score — matches dataset_cd_prithvi.py) ───────
+# -- normalization stats (Iowa z-score -- matches dataset_cd_prithvi.py) -------
 T1_MEANS = np.array([
     1861.19006065,  # B02
     2033.17032775,  # B03
@@ -83,13 +88,13 @@ def normalize(img: np.ndarray, means: np.ndarray, stds: np.ndarray) -> np.ndarra
     return (img - means_) / (stds_ + 1e-8)
 
 
-# ── main ─────────────────────────────────────────────────────────────────────
+# -- main ---------------------------------------------------------------------
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
 
-    # ── load model ───────────────────────────────────────────────────────────
+    # -- load model -----------------------------------------------------------
     from src.model_cd_prithvi import build_prithvi_cd
     model = build_prithvi_cd(pretrain_path=None)
     ckpt  = torch.load(CHECKPOINT, map_location='cpu')
@@ -97,20 +102,20 @@ def main():
     model.to(device).eval()
     print(f"Loaded checkpoint: epoch={ckpt['epoch']}  best_F1={ckpt['best_f1']*100:.2f}%")
 
-    # ── read CSV ─────────────────────────────────────────────────────────────
-    df = pd.read_csv(CHIPS_CSV)
+    # -- read CSV -------------------------------------------------------------
+    df = load_chips_csv(CHIPS_CSV)
     print(f"NWIA chips: {len(df)}")
 
-    # ── determine full-scene canvas size from row/col ─────────────────────
+    # -- determine full-scene canvas size from row/col ---------------------
     rows = df['row'].values
     cols = df['col'].values
     min_row, min_col = int(rows.min()), int(cols.min())
     max_row, max_col = int(rows.max()), int(cols.max())
     H = max_row + CHIP_SIZE - min_row
     W = max_col + CHIP_SIZE - min_col
-    print(f"Canvas: {H}×{W}  (rows {min_row}–{max_row+CHIP_SIZE}, cols {min_col}–{max_col+CHIP_SIZE})")
+    print(f"Canvas: {H}x{W}  (rows {min_row}-{max_row+CHIP_SIZE}, cols {min_col}-{max_col+CHIP_SIZE})")
 
-    # ── get spatial reference from first chip ─────────────────────────────
+    # -- get spatial reference from first chip -----------------------------
     with rasterio.open(df['t1'].iloc[0]) as src:
         crs = src.crs
     first_chip_row = df.loc[df['row'] == min_row].iloc[0]
@@ -126,12 +131,12 @@ def main():
         W, H
     )
 
-    # ── accumulation buffers ─────────────────────────────────────────────
+    # -- accumulation buffers ---------------------------------------------
     prob_changed = np.zeros((H, W), dtype=np.float32)
     count_map    = np.zeros((H, W), dtype=np.float32)
     gt_canvas    = np.full((H, W), 255, dtype=np.uint8)   # 255 = nodata
 
-    # ── inference loop ───────────────────────────────────────────────────
+    # -- inference loop ---------------------------------------------------
     with torch.no_grad():
         for _, row in tqdm(df.iterrows(), total=len(df), desc='Prithvi CD Inference'):
             r = int(row['row']) - min_row
@@ -163,7 +168,7 @@ def main():
                 gt = src.read(1)   # 0=unchanged, 1=changed, 255=nodata
             gt_canvas[r:r+CHIP_SIZE, c:c+CHIP_SIZE] = gt
 
-    # ── average + threshold ──────────────────────────────────────────────
+    # -- average + threshold ----------------------------------------------
     count_map[count_map == 0] = 1
     prob_changed /= count_map
     pred = (prob_changed > 0.5).astype(np.uint8)
@@ -171,7 +176,7 @@ def main():
     # Mask GT nodata pixels
     pred[gt_canvas == 255] = 255
 
-    # ── save outputs ─────────────────────────────────────────────────────
+    # -- save outputs -----------------------------------------------------
     profile = {
         'driver':    'GTiff',
         'dtype':     'uint8',
@@ -194,7 +199,7 @@ def main():
         dst.write(gt_canvas, 1)
     print(f"Saved GT:         {gt_path}")
 
-    # ── quick stats ──────────────────────────────────────────────────────
+    # -- quick stats ------------------------------------------------------
     valid  = gt_canvas != 255
     pred_v = pred[valid]
     gt_v   = gt_canvas[valid]

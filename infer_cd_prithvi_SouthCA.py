@@ -5,9 +5,14 @@ Change detection inference for Prithvi on SouthCA test chips.
 
 Outputs:
     predictions/cd_prithvi_SouthCA/
-        SouthCA_Prithvi_CD_pred.tif   — binary change map (0=unchanged,1=changed,255=nodata)
-        SouthCA_Prithvi_CD_gt.tif     — GT change map
+        SouthCA_Prithvi_CD_pred.tif   -- binary change map (0=unchanged,1=changed,255=nodata)
+        SouthCA_Prithvi_CD_gt.tif     -- GT change map
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+
 
 import os
 import sys
@@ -17,10 +22,10 @@ import torch
 import rasterio
 from tqdm import tqdm
 
-BASE       = '/bigdata/eldawylab/sdas050/MS_Research'
-CHIPS_CSV  = f'{BASE}/change_detection_chips/prithvi/SouthCA_chips.csv'
+BASE       = str(MSR_ROOT)
+CHIPS_CSV  = f'{DATA_ROOT}/change_detection_chips/prithvi/SouthCA_chips.csv'
 CHECKPOINT = f'{BASE}/prithvi_finetune/ChangeDetection/cd_train_prithvi_CA/best_F1_model.pth'
-OUTPUT_DIR = f'{BASE}/predictions/cd_prithvi_SouthCA'
+OUTPUT_DIR = f'{PREDICTIONS}/cd_prithvi_SouthCA'
 
 CHIP_SIZE  = 224
 
@@ -55,7 +60,7 @@ def main():
     model.to(device).eval()
     print(f"Loaded checkpoint: epoch={ckpt['epoch']}  best_F1={ckpt['best_f1']*100:.2f}%")
 
-    df = pd.read_csv(CHIPS_CSV)
+    df = load_chips_csv(CHIPS_CSV)
     print(f"SouthCA chips: {len(df)}")
 
     rows = df['row'].values

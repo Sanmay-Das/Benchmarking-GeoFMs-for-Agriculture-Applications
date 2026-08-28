@@ -49,10 +49,10 @@ def main():
     # load image
     image_folder_path = "/TUM/img"
 
-    # 获取图片文件夹中的所有图片文件名
+    # 
     image_file_names = os.listdir(image_folder_path)
 
-    # 遍历图片文件名
+    # 
     for image_file_name in image_file_names:
         img = open_image(os.path.join(image_folder_path, image_file_name))
         b = np.mean(img, axis=2)
@@ -74,7 +74,7 @@ def main():
         img = torch.unsqueeze(img, dim=0)
         img = img.cuda()
 
-        model.eval()  # 进入验证模式
+        model.eval()  # 
         with torch.no_grad():
             # init model
             # img_height, img_width = img.shape[-2:]

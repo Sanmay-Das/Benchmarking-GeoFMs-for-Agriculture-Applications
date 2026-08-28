@@ -56,7 +56,7 @@ class GroupChannelsVisionTransformer(timm.models.vision_transformer.VisionTransf
 
     def forward_features(self, x):
         """
-        Original forward_features — returns CLS token only.
+        Original forward_features -- returns CLS token only.
         Used for classification tasks.
         """
         b, c, h, w = x.shape
@@ -99,7 +99,7 @@ class GroupChannelsVisionTransformer(timm.models.vision_transformer.VisionTransf
 
     def forward_features_seg(self, x):
         """
-        NEW — returns spatial patch token feature map for segmentation.
+        NEW -- returns spatial patch token feature map for segmentation.
 
         For segmentation we need ALL patch tokens, not just the CLS token.
         This method:
@@ -107,9 +107,9 @@ class GroupChannelsVisionTransformer(timm.models.vision_transformer.VisionTransf
           2. Passes through all transformer blocks
           3. Strips the CLS token
           4. Averages patch tokens across the G channel groups
-             → (B, L, D) where L = num_patches (e.g. 144 for 96×96, patch=8)
+             -> (B, L, D) where L = num_patches (e.g. 144 for 96x96, patch=8)
           5. Reshapes to spatial (B, D, H_out, W_out)
-             e.g. (B, 1024, 12, 12) for 96×96 input, patch=8
+             e.g. (B, 1024, 12, 12) for 96x96 input, patch=8
 
         Returns:
             list of one tensor: [(B, embed_dim, H_out, W_out)]
@@ -147,10 +147,10 @@ class GroupChannelsVisionTransformer(timm.models.vision_transformer.VisionTransf
             tokens = blk(tokens)
         tokens = self.norm(tokens)
 
-        # Strip CLS token → (B, G*L, D)
+        # Strip CLS token -> (B, G*L, D)
         patch_tokens = tokens[:, 1:]
 
-        # Average across G groups → (B, L, D)
+        # Average across G groups -> (B, L, D)
         # Each of the G groups contributes L spatial patch tokens
         patch_tokens = patch_tokens.view(b, G, L, D).mean(dim=1)  # (B, L, D)
 
@@ -158,7 +158,7 @@ class GroupChannelsVisionTransformer(timm.models.vision_transformer.VisionTransf
         # L = (img_size // patch_size)^2, e.g. (96//8)^2 = 144
         H_out = W_out = int(L ** 0.5)  # e.g. 12
         features = patch_tokens.reshape(b, H_out, W_out, D).permute(0, 3, 1, 2)
-        # → (B, D, H_out, W_out) e.g. (B, 1024, 12, 12)
+        # -> (B, D, H_out, W_out) e.g. (B, 1024, 12, 12)
 
         return [features]  # wrapped in list for PSANet / MMSeg compatibility
 

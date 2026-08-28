@@ -68,7 +68,7 @@ def get_args_parser():
     parser.add_argument('--drop_path',  default=0.2, type=float)
 
     # Band grouping for GroupChannels encoder
-    # Default: one group per timestep — early/mid/late
+    # Default: one group per timestep -- early/mid/late
     parser.add_argument('--grouped_bands', type=int, nargs='+', action='append',
                         default=[],
                         help='Band groups for GroupChannels ViT. '
@@ -91,7 +91,7 @@ def get_args_parser():
     parser.add_argument('--ignore_index', default=0,    type=int,
                         help='Label index to ignore (0=NoData)')
 
-    # Optimizer — SGD following SatMAE paper Appendix A.10
+    # Optimizer -- SGD following SatMAE paper Appendix A.10
     parser.add_argument('--optimizer',    default='sgd', choices=['sgd', 'adamw'])
     parser.add_argument('--lr',           default=None, type=float,
                         help='Head+PSA LR. Encoder gets 0.1x. Paper: 1e-2 head, 1e-3 encoder.')
@@ -229,7 +229,7 @@ def main(args):
         checkpoint_model = checkpoint['model'] if 'model' in checkpoint else checkpoint
         state_dict = encoder.state_dict()
 
-        # Remove head / fc_norm keys — classification head not needed for segmentation
+        # Remove head / fc_norm keys -- classification head not needed for segmentation
         keys_to_remove = []
         for k in checkpoint_model:
             if k.startswith('head') or k.startswith('fc_norm'):
@@ -291,7 +291,7 @@ def main(args):
     # Build PSANet (encoder + PSA decoder)
     # -------------------------------------------------------------------------
     shrink_factor = args.shrink_factor
-    # Compute mask_h, mask_w for 96×96 input:
+    # Compute mask_h, mask_w for 96x96 input:
     # feature map = 96//8 = 12
     # after shrink by 2: (12-1)//2 + 1 = 6
     # mask_h = 2*6 - 1 = 11
@@ -324,7 +324,7 @@ def main(args):
     print(f'Number of params (M): {n_parameters / 1e6:.2f}')
 
     # -------------------------------------------------------------------------
-    # Optimizer — paper A.10: SGD, encoder LR=1e-3, head+PSA LR=1e-2
+    # Optimizer -- paper A.10: SGD, encoder LR=1e-3, head+PSA LR=1e-2
     # Pass --lr 1e-2 so encoder gets 0.1x = 1e-3 automatically
     # -------------------------------------------------------------------------
     eff_batch_size = args.batch_size * args.accum_iter * misc.get_world_size()
@@ -349,7 +349,7 @@ def main(args):
     else:
         optimizer = torch.optim.AdamW(param_groups)
 
-    # Polynomial LR decay — paper A.10: power=0.9
+    # Polynomial LR decay -- paper A.10: power=0.9
     # LambdaLR multiplies each group's initial lr by the returned factor
     poly_fn = lambda epoch: (1.0 - epoch / args.epochs) ** args.poly_power
     scheduler = torch.optim.lr_scheduler.LambdaLR(
@@ -358,7 +358,7 @@ def main(args):
     loss_scaler = NativeScaler()
 
     # -------------------------------------------------------------------------
-    # Loss — CrossEntropy with ignore_index=0 (NoData masked from training)
+    # Loss -- CrossEntropy with ignore_index=0 (NoData masked from training)
     # Auxiliary output weighted at 0.4, matching paper's aux loss convention
     # -------------------------------------------------------------------------
     criterion = CrossEntropyAuxLoss(ignore_index=args.ignore_index, aux_weight=0.4)

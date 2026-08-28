@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import os
 from pathlib import Path
 
@@ -66,9 +71,9 @@ def create_geographic_train_test_split(train_dir, test_dir, output_dir):
 
 if __name__ == "__main__":
     
-    TRAIN_DIR = "/bigdata/eldawylab/sdas050/MS_Research/SpectralGPT_chips_multitemporal/WCIL"
-    TEST_DIR = "/bigdata/eldawylab/sdas050/MS_Research/SpectralGPT_chips_multitemporal/ECIL"
-    OUTPUT_DIR = "/bigdata/eldawylab/sdas050/MS_Research/SpectralGPT_chips_multitemporal/WCECIL"
+    TRAIN_DIR = f"{DATA_ROOT}/SpectralGPT_chips_multitemporal/WCIL"
+    TEST_DIR = f"{DATA_ROOT}/SpectralGPT_chips_multitemporal/ECIL"
+    OUTPUT_DIR = f"{DATA_ROOT}/SpectralGPT_chips_multitemporal/WCECIL"
     
     print("="*70)
     print("CREATING GEOGRAPHIC TRAIN/TEST SPLIT")

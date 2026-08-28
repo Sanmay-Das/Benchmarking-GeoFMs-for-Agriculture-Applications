@@ -10,17 +10,27 @@
 
 set -euo pipefail
 
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source spectralgptenv/bin/activate
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-mkdir -p logs predictions/cd_satmae_EastNC
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./spectralgptenv if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/spectralgptenv/bin/activate" ]; then
+    source "$MSR_ROOT/spectralgptenv/bin/activate"
+fi
 
-echo "==== SatMAE CD Inference — EastNC ===="
-echo "Job:  $SLURM_JOB_ID"
+mkdir -p "$MSR_OUTPUT_ROOT/logs" "$MSR_OUTPUT_ROOT/predictions/cd_satmae_EastNC"
+
+echo "==== SatMAE CD Inference -- EastNC ===="
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname)"
 echo ""
 

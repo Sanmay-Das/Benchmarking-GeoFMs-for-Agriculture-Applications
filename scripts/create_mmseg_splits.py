@@ -3,6 +3,11 @@ Create train.txt and val.txt for MMSegmentation
 Format: relative_image_path relative_mask_path
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import json
 from pathlib import Path
 
@@ -61,5 +66,5 @@ def create_mmseg_file_lists(chips_dir):
 
 
 if __name__ == '__main__':
-    CHIPS_DIR = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/CentIA'
+    CHIPS_DIR = f'{DATA_ROOT}/SatMAE_chips_multitemporal/CentIA'
     create_mmseg_file_lists(CHIPS_DIR)

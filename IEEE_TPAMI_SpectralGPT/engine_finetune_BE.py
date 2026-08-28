@@ -139,7 +139,7 @@ def evaluate(data_loader, model, device, args):
             loss = criterion(output, target)
         # if args.dataset_type == 'bigearthnet_finetune':
         if args.dataset_type == 'bigearthnet_finetune' or args.dataset_type == 'bigearthnet_finetune_sar':
-            # 执行你想执行的语句
+            # 
             # output_cpu = output.cpu()
             # target_cpu = target.cpu()
             target = torch.tensor(target, dtype=torch.int)

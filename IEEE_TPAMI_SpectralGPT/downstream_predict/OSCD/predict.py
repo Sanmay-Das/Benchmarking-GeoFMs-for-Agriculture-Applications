@@ -65,10 +65,10 @@ def main():
     image_folder_path1 = "/OSCD/I1"
     image_folder_path2 = "/OSCD/I2"#
 
-    # 获取图片文件夹中的所有图片文件名
+    # 
     image_file_names = os.listdir(image_folder_path1)
 
-    # 遍历图片文件名
+    # 
     for image_file_name in image_file_names:
         img1 = open_image(os.path.join(image_folder_path1, image_file_name))
         img2 = open_image(os.path.join(image_folder_path2, image_file_name))
@@ -94,7 +94,7 @@ def main():
         img1 = img1.cuda()
         img2 = img2.cuda()
 
-        model.eval()  # 进入验证模式
+        model.eval()  # 
         with torch.no_grad():
                 t_start = time_synchronized()
                 output = model(img1.to(device),img2.to(device))

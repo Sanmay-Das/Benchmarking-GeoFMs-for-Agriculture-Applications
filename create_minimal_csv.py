@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import pandas as pd
 import os
 
@@ -24,7 +29,7 @@ def create_minimal_csv(input_csv, output_csv):
     # Save
     new_df.to_csv(output_csv, index=False)
     
-    print(f"✅ Created: {output_csv}")
+    print(f"[OK] Created: {output_csv}")
     print(f"New columns: {new_df.columns.tolist()}")
     print(f"New shape: {new_df.shape}")
     print(f"\nFirst 3 rows:")
@@ -36,7 +41,7 @@ def create_minimal_csv(input_csv, output_csv):
     first_path = new_df.iloc[0]['image_path']
     exists = os.path.exists(first_path)
     print(f"\nFirst image path: {first_path}")
-    print(f"Image exists: {'✅ YES' if exists else '❌ NO'}")
+    print(f"Image exists: {'[OK] YES' if exists else '[FAIL] NO'}")
     
     return new_df
 
@@ -46,22 +51,22 @@ print("Creating CSV files WITHOUT timestamp")
 print("="*60)
 
 train_df = create_minimal_csv(
-    '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/train.csv',
-    '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/train_minimal.csv'
+    f'{DATA_ROOT}/data/EuroSAT/train.csv',
+    f'{DATA_ROOT}/data/EuroSAT/train_minimal.csv'
 )
 
 test_df = create_minimal_csv(
-    '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/test.csv',
-    '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/test_minimal.csv'
+    f'{DATA_ROOT}/data/EuroSAT/test.csv',
+    f'{DATA_ROOT}/data/EuroSAT/test_minimal.csv'
 )
 
-if os.path.exists('/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/validation.csv'):
+if os.path.exists(f'{DATA_ROOT}/data/EuroSAT/validation.csv'):
     val_df = create_minimal_csv(
-        '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/validation.csv',
-        '/bigdata/eldawylab/sdas050/MS_Research/data/EuroSAT/validation_minimal.csv'
+        f'{DATA_ROOT}/data/EuroSAT/validation.csv',
+        f'{DATA_ROOT}/data/EuroSAT/validation_minimal.csv'
     )
 
 print("\n" + "="*60)
-print("✅ All minimal CSV files created successfully!")
+print("[OK] All minimal CSV files created successfully!")
 print("="*60)
 print("\nNow try running the training command and see if it crashes!")

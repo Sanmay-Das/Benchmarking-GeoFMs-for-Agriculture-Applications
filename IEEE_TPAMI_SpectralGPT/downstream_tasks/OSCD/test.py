@@ -33,7 +33,7 @@ PATH_TO_DATASET = './OSCD/merge/'
 BATCH_SIZE = 32
 PATCH_SIDE = 96
 N_EPOCHS = 50
-TRAIN_STRIDE = int(PATCH_SIDE / 2) - 1  # 50%重叠率裁剪
+TRAIN_STRIDE = int(PATCH_SIDE / 2) - 1  # 50%
 TYPE = 3  # 0-RGB | 1-RGBIr | 2-All bands s.t. resulution <= 20m | 3-All bands
 
 test_dataset = ChangeDetectionDataset(PATH_TO_DATASET, train=False, patch_side=PATCH_SIDE, stride=TRAIN_STRIDE)
@@ -65,7 +65,7 @@ elif TYPE == 3:
 net.cuda()
 
 
-# 保存所有结果
+# 
 def save_test_results(dset):
     for name in tqdm(dset.names):
         with warnings.catch_warnings():

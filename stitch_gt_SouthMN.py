@@ -3,13 +3,18 @@ Stitch GT chip masks into a single GeoTIF for SouthMN.
 Output values: 0-12=class, 255=NoData (same encoding as prediction TIFs).
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import os
 import numpy as np
 import rasterio
 import rasterio.transform
 from tqdm import tqdm
 
-BASE      = '/bigdata/eldawylab/sdas050/MS_Research'
+BASE      = str(MSR_ROOT)
 CHIP_DIR  = os.path.join(BASE, 'SatMAE_chips_MN/SouthMN')
 TEST_TXT  = os.path.join(BASE, 'SatMAE_chips_multitemporal/MN/test.txt')
 OUT_PATH  = os.path.join(BASE, 'predictions/GT_SouthMN.tif')
@@ -48,7 +53,7 @@ for name, (r, c) in tqdm(zip(chip_names, coords), total=len(chip_names), desc='S
     y0 = r - min_row
     x0 = c - min_col
 
-    # shift 1-13 → 0-12, nodata(0) → 255
+    # shift 1-13 -> 0-12, nodata(0) -> 255
     chip_out = np.where(chip == 0, 255, chip - 1).astype(np.uint8)
     gt[y0:y0+CHIP_SIZE, x0:x0+CHIP_SIZE] = chip_out
 

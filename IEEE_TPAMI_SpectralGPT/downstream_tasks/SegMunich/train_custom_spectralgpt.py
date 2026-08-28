@@ -39,7 +39,7 @@ def create_model(nb_classes, weight_path=None, pretrain=False):
  for k in keys_to_remove:
  if k in checkpoint_model:
  if k in state_dict and checkpoint_model[k].shape != state_dict[k].shape:
- print(f" ️ Removing {k}: shape mismatch")
+ print(f"  Removing {k}: shape mismatch")
  print(f" Pretrained: {checkpoint_model[k].shape}")
  print(f" Current: {state_dict[k].shape}")
  del checkpoint_model[k]

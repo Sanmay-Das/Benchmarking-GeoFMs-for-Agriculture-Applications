@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import numpy as np
 import rasterio
 from pathlib import Path
@@ -6,7 +11,7 @@ from tqdm import tqdm
 
 def compute_stats_fast(chips_dir):
     """
-    Vectorized across ALL bands at once — no Python band loop.
+    Vectorized across ALL bands at once -- no Python band loop.
     Uses Chan's parallel algorithm for constant memory.
     """
     chips_dir = Path(chips_dir)
@@ -27,7 +32,7 @@ def compute_stats_fast(chips_dir):
     print(f"Chip specs: {n_bands} bands, {height}x{width} pixels")
     print(f"Processing {len(chip_files):,} chips...\n")
 
-    # Running stats — all bands simultaneously
+    # Running stats -- all bands simultaneously
     count = np.zeros(n_bands, dtype=np.float64)
     mean  = np.zeros(n_bands, dtype=np.float64)
     M2    = np.zeros(n_bands, dtype=np.float64)
@@ -103,7 +108,7 @@ def compute_stats_fast(chips_dir):
 
 
 if __name__ == "__main__":
-    CHIPS_DIR = "/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/CentIA"
+    CHIPS_DIR = f"{DATA_ROOT}/data/multi_temporal_crop_segmentation/CentIA"
 
     print("="*70)
     print("FAST MEAN/STD COMPUTATION")

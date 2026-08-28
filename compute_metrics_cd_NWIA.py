@@ -4,33 +4,38 @@ compute_metrics_cd_NWIA.py
 Computes full-scene change detection metrics for NWIA test set.
 
 Metrics per model:
-    OA         — Overall Accuracy
-    Precision  — for changed class
-    Recall     — for changed class
-    F1         — for changed class
-    IoU_change — IoU for changed class (TP / TP+FP+FN)
-    IoU_nochange — IoU for unchanged class
-    mIoU       — mean IoU across both classes
-    Kappa      — Cohen's Kappa coefficient
+    OA         -- Overall Accuracy
+    Precision  -- for changed class
+    Recall     -- for changed class
+    F1         -- for changed class
+    IoU_change -- IoU for changed class (TP / TP+FP+FN)
+    IoU_nochange -- IoU for unchanged class
+    mIoU       -- mean IoU across both classes
+    Kappa      -- Cohen's Kappa coefficient
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import numpy as np
 import rasterio
 import rasterio.windows
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE = '/bigdata/eldawylab/sdas050/MS_Research'
+# -- paths --------------------------------------------------------------------
+BASE = str(MSR_ROOT)
 
 MODELS = [
     ('SpectralGPT',
-     f'{BASE}/predictions/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_pred.tif',
-     f'{BASE}/predictions/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_gt.tif'),
+     f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_pred.tif',
+     f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_gt.tif'),
     ('Prithvi',
-     f'{BASE}/predictions/cd_prithvi_NWIA/NWIA_Prithvi_CD_pred.tif',
-     f'{BASE}/predictions/cd_prithvi_NWIA/NWIA_Prithvi_CD_gt.tif'),
+     f'{PREDICTIONS}/cd_prithvi_NWIA/NWIA_Prithvi_CD_pred.tif',
+     f'{PREDICTIONS}/cd_prithvi_NWIA/NWIA_Prithvi_CD_gt.tif'),
     ('SatMAE',
-     f'{BASE}/predictions/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif',
-     f'{BASE}/predictions/cd_satmae_NWIA/NWIA_SatMAE_CD_gt.tif'),
+     f'{PREDICTIONS}/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif',
+     f'{PREDICTIONS}/cd_satmae_NWIA/NWIA_SatMAE_CD_gt.tif'),
 ]
 
 
@@ -38,7 +43,7 @@ STRIP_H = 256   # read this many rows at a time
 
 
 def compute_metrics_strip(pred_path, gt_path):
-    """Compute metrics strip by strip — never loads full arrays."""
+    """Compute metrics strip by strip -- never loads full arrays."""
     tp = fp = tn = fn = 0
 
     with rasterio.open(pred_path) as psrc, rasterio.open(gt_path) as gsrc:
@@ -90,7 +95,7 @@ def compute_metrics_strip(pred_path, gt_path):
 
 def main():
     print("\n" + "="*75)
-    print("  Change Detection Metrics — NWIA Test Set")
+    print("  Change Detection Metrics -- NWIA Test Set")
     print("="*75)
 
     results = {}
@@ -99,7 +104,7 @@ def main():
         m = compute_metrics_strip(pred_path, gt_path)
         results[model_name] = m
 
-    # ── print table ──────────────────────────────────────────────────────────
+    # -- print table ----------------------------------------------------------
     metrics = ['OA', 'Precision', 'Recall', 'F1',
                'IoU_change', 'IoU_nochange', 'mIoU', 'Kappa']
 
@@ -120,7 +125,7 @@ def main():
 
     print("  " + "-" * (16 + col_w * len(results)))
 
-    # ── confusion matrix counts ───────────────────────────────────────────────
+    # -- confusion matrix counts -----------------------------------------------
     print(f"\n  {'':16}" + "".join(f"{'TP':>{col_w}}" for _ in results))
     for key in ['TP', 'FP', 'TN', 'FN']:
         row = f"  {key:<16}"

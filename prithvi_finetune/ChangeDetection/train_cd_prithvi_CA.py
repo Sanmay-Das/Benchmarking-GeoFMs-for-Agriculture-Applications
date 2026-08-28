@@ -1,7 +1,7 @@
 """
 train_cd_prithvi_CA.py
 ----------------------
-Prithvi Change Detection — California geographic split.
+Prithvi Change Detection -- California geographic split.
 
     Train : NorthCA
     Val   : CentCA
@@ -118,7 +118,7 @@ def main(args):
 
     device = torch.device(args.device)
 
-    # datasets — CA split
+    # datasets -- CA split
     train_csv = [os.path.join(args.data_root, 'NorthCA_chips.csv')]
     val_csv   = [os.path.join(args.data_root, 'CentCA_chips.csv')]
     test_csv  = [os.path.join(args.data_root, 'SouthCA_chips.csv')]
@@ -214,7 +214,7 @@ def main(args):
             lr_scheduler, scaler, args.print_freq, criterion,
         )
 
-        print(f"\n=== Epoch {epoch} — Val (CentCA) ===")
+        print(f"\n=== Epoch {epoch} -- Val (CentCA) ===")
         val_loss, prec, rec, f1, oa = evaluate_cd(
             model, val_loader, device, criterion)
 
@@ -276,7 +276,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('Prithvi CD Training — California')
+    parser = argparse.ArgumentParser('Prithvi CD Training -- California')
 
     parser.add_argument(
         '--data-root',

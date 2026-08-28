@@ -10,11 +10,17 @@
 
 set -euo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+
 module purge
 module load cuda/12.1
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source prithvifmenv/bin/activate
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./prithvifmenv if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/prithvifmenv/bin/activate" ]; then
+    source "$MSR_ROOT/prithvifmenv/bin/activate"
+fi
 
 echo "==== Node & GPU ===="
 hostname

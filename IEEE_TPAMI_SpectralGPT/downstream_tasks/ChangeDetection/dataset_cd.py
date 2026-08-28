@@ -6,7 +6,7 @@ Change Detection Dataset for SpectralGPT / Prithvi / SatMAE benchmark.
 Reads pre-chipped triplets (T1, T2, change mask) from a CSV manifest.
 
 Normalization:
-    Per-image min-max to [0, 1] per band — exactly as SpectralGPT's
+    Per-image min-max to [0, 1] per band -- exactly as SpectralGPT's
     OSCD dataset.py does for their change detection experiments.
 
 Augmentation (training only):

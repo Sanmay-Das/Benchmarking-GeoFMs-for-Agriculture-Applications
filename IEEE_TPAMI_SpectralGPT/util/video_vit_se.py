@@ -12,21 +12,21 @@ import torch.nn.functional as F
 class SEBlock(nn.Module):
     def __init__(self, in_channels, reduction_ratio=16):
         super(SEBlock, self).__init__()
-        self.global_avg_pooling = nn.AdaptiveAvgPool3d(1)  # 在深度维度上应用全局平均池化
+        self.global_avg_pooling = nn.AdaptiveAvgPool3d(1)  # 
         self.fc1 = nn.Conv3d(in_channels, in_channels // reduction_ratio, kernel_size=1)
         self.fc2 = nn.Conv3d(in_channels // reduction_ratio, in_channels, kernel_size=1)
 
     def forward(self, x):
         batch_size, num_channels, depth, height, width = x.size()
 
-        # 在深度维度上进行全局平均池化
+        # 
         out = self.global_avg_pooling(x)
 
-        # 使用1x1卷积层计算通道权重
+        # 1x1
         out = F.relu(self.fc1(out))
         out = torch.sigmoid(self.fc2(out))
 
-        # 将权重应用到深度维度上
+        # 
         out = out.view(batch_size, num_channels, 1, 1, 1)
         out = x * out
 

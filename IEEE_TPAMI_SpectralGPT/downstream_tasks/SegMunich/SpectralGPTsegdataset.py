@@ -179,7 +179,7 @@ class SegDataset(data.Dataset):
 
     Dataset for SpectralGPT semantic segmentation
 
-    Works with multi-temporal chips (18 bands = 6 bands × 3 timesteps)
+    Works with multi-temporal chips (18 bands = 6 bands x 3 timesteps)
 
     Uses [0, 1] Min-Max normalization with GLOBAL statistics
 
@@ -215,11 +215,11 @@ class SegDataset(data.Dataset):
 
        
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
-        # ✅ FIXED: Handle relative paths (../NorthCA/chip_X)
+        # [OK] FIXED: Handle relative paths (../NorthCA/chip_X)
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
         self.images = []
 
@@ -259,11 +259,11 @@ class SegDataset(data.Dataset):
 
        
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
-        # ✅ ADDED: SpectralGPT [0, 1] Min-Max Normalization with GLOBAL stats
+        # [OK] ADDED: SpectralGPT [0, 1] Min-Max Normalization with GLOBAL stats
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
         # Calculated from NorthCA training set (7,937 chips)
 
@@ -359,7 +359,7 @@ class SegDataset(data.Dataset):
 
         self.global_range = self.global_max - self.global_min
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
        
 
@@ -432,18 +432,18 @@ class SegDataset(data.Dataset):
 
 
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
-        # ✅ REPLACED: Global normalization (not per-image!)
+        # [OK] REPLACED: Global normalization (not per-image!)
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
         # SpectralGPT [0, 1] normalization using GLOBAL statistics
 
         img = (img - torch.from_numpy(self.global_min)) / torch.from_numpy(self.global_range)
         img = img.clamp(0.0, 1.0)
 
-        # ═══════════════════════════════════════════════════════════════════
+        # 
 
        
 
@@ -513,7 +513,7 @@ def open_image(img_path):
 
         if img.shape[0] in [10, 18, 24]:  # Common band counts
 
-            img = img.transpose(1, 2, 0)  # (bands, H, W) → (H, W, bands)
+            img = img.transpose(1, 2, 0)  # (bands, H, W) -> (H, W, bands)
 
         # If shape is already (H, W, bands), keep as is
 

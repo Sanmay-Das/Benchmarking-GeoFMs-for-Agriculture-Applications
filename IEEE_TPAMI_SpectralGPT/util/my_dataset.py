@@ -46,7 +46,7 @@ class SegDataset(data.Dataset):
         self.masks = [os.path.join(mask_dir, x + ".tif") for x in file_names]
         assert (len(self.images) == len(self.masks))
         self.name, self.mean, self.std, self.shuffix = mean_std_dict[data_name]
-        # 影像预处理方法
+        # 
         self.transform = iaa.Sequential([
             # iaa.Affine(scale=(0.5, 2.0)),
             iaa.Rot90([0, 1, 2, 3]),
@@ -75,12 +75,12 @@ class SegDataset(data.Dataset):
         target[target > 33] -= 1
 
         if self.training:
-            # 利用_load_maps获取得到的distance_map和angle_map
+            # _load_mapsdistance_mapangle_map
             img, target = self.transform(image=img, segmentation_maps=np.stack(
                 (target[np.newaxis, :, :], target[np.newaxis, :, :]), axis=-1))
             target = target[0, :, :, 0]
         img, target = torch.tensor(img.copy()).permute(2, 0, 1), torch.tensor(target.copy()).long()
-        # 标准化
+        # 
         img = transF.normalize(img, self.mean, self.std)
 
         return img, target
@@ -97,7 +97,7 @@ class SegDataset(data.Dataset):
 
 
 def cat_list(images, fill_value=0):
-    # 计算该batch数据中，channel, h, w的最大值
+    # batchchannel, h, w
     max_size = tuple(max(s) for s in zip(*[img.shape for img in images]))
     batch_shape = (len(images),) + max_size
     batched_imgs = images[0].new(*batch_shape).fill_(fill_value)

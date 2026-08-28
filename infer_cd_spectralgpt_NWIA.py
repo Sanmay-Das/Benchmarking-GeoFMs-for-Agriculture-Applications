@@ -10,9 +10,14 @@ Change detection inference for SpectralGPT on NWIA test chips.
 
 Outputs:
     predictions/cd_spectralgpt_NWIA/
-        NWIA_SpectralGPT_CD_pred.tif    — binary change map (0=unchanged,1=changed,255=nodata)
-        NWIA_SpectralGPT_CD_gt.tif      — GT change map (same encoding)
+        NWIA_SpectralGPT_CD_pred.tif    -- binary change map (0=unchanged,1=changed,255=nodata)
+        NWIA_SpectralGPT_CD_gt.tif      -- GT change map (same encoding)
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+
 
 import os
 import sys
@@ -24,18 +29,18 @@ import rasterio
 from rasterio.transform import from_origin
 from tqdm import tqdm
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE         = '/bigdata/eldawylab/sdas050/MS_Research'
-CHIPS_CSV    = f'{BASE}/change_detection_chips/spectralgpt/NWIA_chips.csv'
+# -- paths --------------------------------------------------------------------
+BASE         = str(MSR_ROOT)
+CHIPS_CSV    = f'{DATA_ROOT}/change_detection_chips/spectralgpt/NWIA_chips.csv'
 CHECKPOINT   = f'{BASE}/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection/cd_train_spectralgpt/best_F1_model.pth'
-OUTPUT_DIR   = f'{BASE}/predictions/cd_spectralgpt_NWIA'
+OUTPUT_DIR   = f'{PREDICTIONS}/cd_spectralgpt_NWIA'
 
 CHIP_SIZE    = 128
 STRIDE       = 64      # 50% overlap used during chip creation
 
 sys.path.insert(0, f'{BASE}/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection')
 
-# ── normalization (per-image min-max to [0,1] — matches dataset_cd.py) ──────
+# -- normalization (per-image min-max to [0,1] -- matches dataset_cd.py) ------
 def normalize(img: np.ndarray) -> np.ndarray:
     """Per-band min-max normalization to [0,1]. img: (C,H,W) float32."""
     img = img.copy()
@@ -49,13 +54,13 @@ def normalize(img: np.ndarray) -> np.ndarray:
     return np.clip(img, 0.0, 1.0)
 
 
-# ── main ─────────────────────────────────────────────────────────────────────
+# -- main ---------------------------------------------------------------------
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
 
-    # ── load model ───────────────────────────────────────────────────────────
+    # -- load model -----------------------------------------------------------
     from src.model_cd_spectralgpt import build_spectralgpt_cd
     model = build_spectralgpt_cd(pretrain_path=None)
     ckpt  = torch.load(CHECKPOINT, map_location='cpu')
@@ -63,20 +68,20 @@ def main():
     model.to(device).eval()
     print(f"Loaded checkpoint: epoch={ckpt['epoch']}  best_F1={ckpt['best_f1']*100:.2f}%")
 
-    # ── read CSV ─────────────────────────────────────────────────────────────
-    df = pd.read_csv(CHIPS_CSV)
+    # -- read CSV -------------------------------------------------------------
+    df = load_chips_csv(CHIPS_CSV)
     print(f"NWIA chips: {len(df)}")
 
-    # ── determine full-scene canvas size from row/col ─────────────────────
+    # -- determine full-scene canvas size from row/col ---------------------
     rows = df['row'].values
     cols = df['col'].values
     min_row, min_col = int(rows.min()), int(cols.min())
     max_row, max_col = int(rows.max()), int(cols.max())
     H = max_row + CHIP_SIZE - min_row
     W = max_col + CHIP_SIZE - min_col
-    print(f"Canvas: {H}×{W}  (rows {min_row}–{max_row+CHIP_SIZE}, cols {min_col}–{max_col+CHIP_SIZE})")
+    print(f"Canvas: {H}x{W}  (rows {min_row}-{max_row+CHIP_SIZE}, cols {min_col}-{max_col+CHIP_SIZE})")
 
-    # ── get spatial reference from first chip ─────────────────────────────
+    # -- get spatial reference from first chip -----------------------------
     with rasterio.open(df['t1'].iloc[0]) as src:
         chip_profile = src.profile.copy()
         chip_transform = src.transform
@@ -90,7 +95,7 @@ def main():
         origin_transform = src.transform
     # Full canvas top-left is the top-left of the minimum-row/col chip
     # but we need to account for the offset within the scene
-    # Use chip transform directly — chips are geo-referenced already
+    # Use chip transform directly -- chips are geo-referenced already
     # We'll build a pixel-space canvas and use the first chip's transform as reference
     full_transform = rasterio.transform.from_bounds(
         origin_transform.c,
@@ -100,12 +105,12 @@ def main():
         W, H
     )
 
-    # ── accumulation buffers ─────────────────────────────────────────────
+    # -- accumulation buffers ---------------------------------------------
     prob_changed  = np.zeros((H, W), dtype=np.float32)   # prob of class=1
     count_map     = np.zeros((H, W), dtype=np.float32)
     gt_canvas     = np.full((H, W), 255, dtype=np.uint8)  # 255 = nodata
 
-    # ── inference loop ───────────────────────────────────────────────────
+    # -- inference loop ---------------------------------------------------
     with torch.no_grad():
         for _, row in tqdm(df.iterrows(), total=len(df), desc='SpectralGPT CD Inference'):
             r = int(row['row']) - min_row
@@ -137,7 +142,7 @@ def main():
                 gt = src.read(1)   # 0=unchanged, 1=changed, 255=nodata
             gt_canvas[r:r+CHIP_SIZE, c:c+CHIP_SIZE] = gt
 
-    # ── average + threshold ──────────────────────────────────────────────
+    # -- average + threshold ----------------------------------------------
     count_map[count_map == 0] = 1
     prob_changed /= count_map
     pred = (prob_changed > 0.5).astype(np.uint8)
@@ -146,7 +151,7 @@ def main():
     nodata_mask = (count_map == 1) & (prob_changed == 0)
     pred[gt_canvas == 255] = 255
 
-    # ── save outputs ─────────────────────────────────────────────────────
+    # -- save outputs -----------------------------------------------------
     profile = {
         'driver':    'GTiff',
         'dtype':     'uint8',
@@ -169,7 +174,7 @@ def main():
         dst.write(gt_canvas, 1)
     print(f"Saved GT:         {gt_path}")
 
-    # ── quick stats ──────────────────────────────────────────────────────
+    # -- quick stats ------------------------------------------------------
     valid     = gt_canvas != 255
     pred_v    = pred[valid]
     gt_v      = gt_canvas[valid]

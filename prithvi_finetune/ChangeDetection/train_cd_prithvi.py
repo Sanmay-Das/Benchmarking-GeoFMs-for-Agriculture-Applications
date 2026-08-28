@@ -256,7 +256,7 @@ def main(args):
             lr_scheduler, scaler, args.print_freq, criterion,
         )
 
-        print(f"\n=== Epoch {epoch} — Val (EastIA) ===")
+        print(f"\n=== Epoch {epoch} -- Val (EastIA) ===")
         val_loss, prec, rec, f1, oa = evaluate_cd(
             model, val_loader, device, criterion)
 

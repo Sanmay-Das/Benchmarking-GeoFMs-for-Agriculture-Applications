@@ -19,7 +19,7 @@ import rasterio
 
 NORMALISE_IMGS = True
 
-FP_MODIFIER = 10 # Tuning parameter, use 1 if unsure 权重
+FP_MODIFIER = 10 # Tuning parameter, use 1 if unsure 
 TYPE = 4  # 0-RGB | 1-RGBIr | 2-All bands s.t. resulution <= 20m | 3-All bands
 
 
@@ -224,7 +224,7 @@ class ChangeDetectionDataset(Dataset):
             fname = 'test.txt'
 
         #         print(path + fname)
-        self.names = read_csv(path + fname).columns  # 所有影像的名字
+        self.names = read_csv(path + fname).columns  # 
         self.n_imgs = self.names.shape[0]
 
         n_pix = 0
@@ -239,20 +239,20 @@ class ChangeDetectionDataset(Dataset):
         self.patch_coords = []
         for im_name in tqdm(self.names):
             # load and store each image
-            I1, I2, cm = read_sentinel_img_trio(self.path + im_name)  # 根据设定的TYPE 读取N个波段的影响数据
+            I1, I2, cm = read_sentinel_img_trio(self.path + im_name)  # TYPE N
             self.imgs_1[im_name] = reshape_for_torch(I1)  # [C,H,W] tensor
             self.imgs_2[im_name] = reshape_for_torch(I2)  # [C,H,W] tensor
             self.change_maps[im_name] = cm
 
             s = cm.shape
-            n_pix += np.prod(s)  # 计算乘积 512*512
-            true_pix += cm.sum()  # cm label中标签的数量
+            n_pix += np.prod(s)  #  512*512
+            true_pix += cm.sum()  # cm label
 
             # calculate the number of patches
             s = self.imgs_1[im_name].shape
             n1 = ceil((s[1] - self.patch_side + 1) / self.stride)
             n2 = ceil((s[2] - self.patch_side + 1) / self.stride)
-            n_patches_i = n1 * n2  # 裁剪后的patch数量
+            n_patches_i = n1 * n2  # patch
 
             self.n_patches_per_image[im_name] = n_patches_i
             self.n_patches += n_patches_i

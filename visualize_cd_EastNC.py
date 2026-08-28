@@ -16,6 +16,11 @@ Outputs:
         crops/informative/  crop1_T1/T2/GT/SpectralGPT/Prithvi.png  x3
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+
+
 import os
 import gc
 import numpy as np
@@ -25,16 +30,16 @@ import rasterio.windows
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE      = '/bigdata/eldawylab/sdas050/MS_Research'
-CHIPS_CSV = f'{BASE}/change_detection_chips/spectralgpt/EastNC_chips.csv'
+# -- paths --------------------------------------------------------------------
+BASE      = str(MSR_ROOT)
+CHIPS_CSV = f'{DATA_ROOT}/change_detection_chips/spectralgpt/EastNC_chips.csv'
 CHIP_SIZE = 128
 
-GT_PATH = f'{BASE}/predictions/cd_spectralgpt_EastNC/EastNC_SpectralGPT_CD_gt.tif'
+GT_PATH = f'{PREDICTIONS}/cd_spectralgpt_EastNC/EastNC_SpectralGPT_CD_gt.tif'
 
 MODELS = [
     ('SatMAE',
-     f'{BASE}/predictions/cd_satmae_EastNC/EastNC_SatMAE_CD_pred.tif'),
+     f'{PREDICTIONS}/cd_satmae_EastNC/EastNC_SatMAE_CD_pred.tif'),
 ]
 
 OUTPUT_DIR = f'{BASE}/visualizations/cd_EastNC'
@@ -43,7 +48,7 @@ STRIP_H    = 256
 CROP_SIZE  = 512
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# -- helpers -------------------------------------------------------------------
 def to_binary_rgb(arr):
     rgb = np.zeros((*arr.shape, 3), dtype=np.uint8)
     rgb[arr == 1]   = [255, 255, 255]
@@ -193,7 +198,7 @@ def save_legend(out_path):
     print(f"    legend.png")
 
 
-# ── main ─────────────────────────────────────────────────────────────────────
+# -- main ---------------------------------------------------------------------
 def main():
     for d in [OUTPUT_DIR,
               f'{OUTPUT_DIR}/geotiffs',
@@ -201,16 +206,16 @@ def main():
               f'{OUTPUT_DIR}/crops/informative']:
         os.makedirs(d, exist_ok=True)
 
-    df = pd.read_csv(CHIPS_CSV)
+    df = load_chips_csv(CHIPS_CSV)
     rows, cols = df['row'].values, df['col'].values
     min_row, min_col = int(rows.min()), int(cols.min())
 
     with rasterio.open(GT_PATH) as src:
         gt = src.read(1)
     H, W = gt.shape
-    print(f"GT canvas: {H}×{W}\n")
+    print(f"GT canvas: {H}x{W}\n")
 
-    # ── Phase 1: full-scene PNGs + GeoTIFFs ──────────────────────────────────
+    # -- Phase 1: full-scene PNGs + GeoTIFFs ----------------------------------
     print("=== Phase 1: Full-scene maps ===")
     Hd, Wd = H//SCALE, W//SCALE
 
@@ -237,7 +242,7 @@ def main():
 
     save_legend(f'{OUTPUT_DIR}/legend.png')
 
-    # ── Phase 2: find crop locations ─────────────────────────────────────────
+    # -- Phase 2: find crop locations -----------------------------------------
     print("\n=== Phase 2: Finding crop locations ===")
     crop_ds   = CROP_SIZE // SCALE
     gt_ds     = gt[::SCALE, ::SCALE]
@@ -248,7 +253,7 @@ def main():
     print(f"  High-change crops:  {hc_crops}")
     print(f"  Informative crops:  {inf_crops}")
 
-    # ── Phase 3: save crops ───────────────────────────────────────────────────
+    # -- Phase 3: save crops ---------------------------------------------------
     for crop_type, crops in [('highchange', hc_crops), ('informative', inf_crops)]:
         print(f"\n=== Phase 3: {crop_type} crops ===")
         crop_dir = f'{OUTPUT_DIR}/crops/{crop_type}'

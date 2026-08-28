@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import os
 import time
 import math
@@ -9,7 +14,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 import sys
 
-sys.path.insert(0, '/bigdata/eldawylab/sdas050/MS_Research/prithvi_finetune')
+sys.path.insert(0, f'{MSR_ROOT}/prithvi_finetune')
 from mmcv import Config
 from mmseg.models import build_segmentor
 from mmcv.runner import load_checkpoint
@@ -17,11 +22,11 @@ from mmcv.runner import load_checkpoint
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT   = '/bigdata/eldawylab/sdas050/MS_Research/experiments/prithvi_multi_temporal_crop_classification/IA/best_mIoU_epoch_60.pth'
-# CHECKPOINT   = '/bigdata/eldawylab/sdas050/MS_Research/weights/Prithvi_EO_V1_100M.pt'
-CONFIG_FILE  = '/bigdata/eldawylab/sdas050/MS_Research/prithvi_finetune/configs/multi_temporal_crop_classification.py'
-STACK_PATH   = '/bigdata/eldawylab/sdas050/MS_Research/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
-OUTPUT_DIR   = '/bigdata/eldawylab/sdas050/MS_Research/predictions/prithvi_NWIA_terratorch'
+CHECKPOINT   = f'{OUTPUT_ROOT}/experiments/prithvi_multi_temporal_crop_classification/IA/best_mIoU_epoch_60.pth'
+# CHECKPOINT   = f'{WEIGHTS}/Prithvi_EO_V1_100M.pt'
+CONFIG_FILE  = f'{MSR_ROOT}/prithvi_finetune/configs/multi_temporal_crop_classification.py'
+STACK_PATH   = f'{MSR_ROOT}/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
+OUTPUT_DIR   = f'{PREDICTIONS}/prithvi_NWIA_terratorch'
 OUTPUT_FILE  = os.path.join(OUTPUT_DIR, 'NWIA_Prithvi_Prediction_Stitched_Updated.tif')
 
 CHIP_SIZE    = 224
@@ -168,10 +173,10 @@ def main():
     prob_accum = torch.zeros((NUM_CLASSES, H, W), dtype=torch.float32)
     count_map  = torch.zeros((1, H, W),           dtype=torch.float32)
 
-    print(f"Original stack: {H}×{W} | Padded: {dataset.H}×{dataset.W} | Windows: {len(dataset)}\n")
+    print(f"Original stack: {H}x{W} | Padded: {dataset.H}x{dataset.W} | Windows: {len(dataset)}\n")
 
     # Precompute cosine blend mask (on CPU, moved to GPU in loop)
-    blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)  # (chip-2δ, chip-2δ)
+    blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)  # (chip-2delta, chip-2delta)
     inner_size = CHIP_SIZE - 2 * DELTA                         # 208 for delta=8
 
     start = time.time()
@@ -237,14 +242,14 @@ def main():
 
     print(f"Predicted classes: {np.unique(pred)}")
 
-    # Save — use original profile (unpadded)
+    # Save -- use original profile (unpadded)
     profile = dataset.profile
     profile.update({'count': 1, 'dtype': 'uint8', 'compress': 'lzw', 'nodata': 255})
     with rasterio.open(OUTPUT_FILE, 'w', **profile) as dst:
         dst.write(pred, 1)
 
     print(f"Saved: {OUTPUT_FILE}")
-    print(f"Output size: {pred.shape} — matches original stack: {H}×{W}")
+    print(f"Output size: {pred.shape} -- matches original stack: {H}x{W}")
 
 
 if __name__ == '__main__':

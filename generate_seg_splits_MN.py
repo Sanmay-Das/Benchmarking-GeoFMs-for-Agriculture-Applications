@@ -11,10 +11,15 @@ Chip stems are written one per line (no extension, no path),
 matching the format of Iowa/train.txt used by dataset_seg.py.
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import os
 from pathlib import Path
 
-CHIPS_ROOT = Path("/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal")
+CHIPS_ROOT = Path(f"{DATA_ROOT}/SatMAE_chips_multitemporal")
 OUT_DIR    = CHIPS_ROOT / "MN"
 OUT_DIR.mkdir(exist_ok=True)
 
@@ -33,6 +38,6 @@ for fname, chip_dir in SPLITS.items():
     out_path = OUT_DIR / fname
     with open(out_path, "w") as f:
         f.write("\n".join(stems) + "\n")
-    print(f"Wrote {len(stems):>6} chips → {out_path}")
+    print(f"Wrote {len(stems):>6} chips -> {out_path}")
 
 print("\nDone. Split files written to:", OUT_DIR)

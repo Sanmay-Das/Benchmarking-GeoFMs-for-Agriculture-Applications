@@ -10,11 +10,13 @@
 
 set -euo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+
 echo "=========================================="
 echo "SATMAE + PSANET CROP SEGMENTATION"
-echo "main_finetune.py — Single GPU A100"
+echo "main_finetune.py -- Single GPU A100"
 echo "=========================================="
-echo "Job ID:    $SLURM_JOB_ID"
+echo "Job ID:    ${SLURM_JOB_ID:-local}"
 echo "Node:      $SLURM_NODELIST"
 echo "Start:     $(date)"
 echo ""
@@ -22,28 +24,36 @@ echo ""
 # ============================================================
 # PATHS
 # ============================================================
-SATMAE_DIR="/bigdata/eldawylab/sdas050/MS_Research/SatMAE"
+SATMAE_DIR="$MSR_ROOT/SatMAE"
 
-# Parent directory — dataset_seg.py scans subdirs (NorthMN, CentMN, SouthMN)
+# Parent directory -- dataset_seg.py scans subdirs (NorthMN, CentMN, SouthMN)
 # to find each chip. No need to copy chips into MN/.
-DATA_ROOT="/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_MN"
+DATA_ROOT="$MSR_ROOT/SatMAE_chips_MN"
 
 # Split files live in SatMAE_chips_multitemporal/MN/
-SPLITS_DIR="/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/MN"
+SPLITS_DIR="$MSR_ROOT/SatMAE_chips_multitemporal/MN"
 
-PRETRAIN_WEIGHTS="/bigdata/eldawylab/sdas050/MS_Research/weights/pretrain-vit-large-e199.pth"
+PRETRAIN_WEIGHTS="$MSR_ROOT/weights/pretrain-vit-large-e199.pth"
 OUTPUT_DIR="${SATMAE_DIR}/output_seg_MN"
 LOG_DIR="${OUTPUT_DIR}/logs"
 
 # ============================================================
 # Environment
 # ============================================================
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
 
 mkdir -p "${SATMAE_DIR}/logs"
 mkdir -p "${OUTPUT_DIR}"
@@ -73,9 +83,9 @@ echo "Data root:       ${DATA_ROOT}"
 echo "  NorthMN/       train chips"
 echo "  CentMN/        val chips"
 echo "  SouthMN/       test chips"
-echo "  MN/train.txt → NorthMN chip names"
-echo "  MN/val.txt   → CentMN chip names"
-echo "  MN/test.txt  → SouthMN chip names"
+echo "  MN/train.txt -> NorthMN chip names"
+echo "  MN/val.txt   -> CentMN chip names"
+echo "  MN/test.txt  -> SouthMN chip names"
 echo "Pretrain:        ${PRETRAIN_WEIGHTS}"
 echo "Output dir:      ${OUTPUT_DIR}"
 echo ""

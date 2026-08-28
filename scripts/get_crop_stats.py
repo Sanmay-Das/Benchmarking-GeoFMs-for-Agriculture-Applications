@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 #!/usr/bin/env python3
 """
 Get crop statistics using exact cdl_remap_rules.txt mapping
@@ -84,11 +89,11 @@ def get_crop_statistics(cdl_file, mapping):
             
             status = ""
             if count == 0:
-                status = "⚠️ MISSING"
+                status = "[WARN] MISSING"
             elif pct < 0.5:
-                status = "⚠️ RARE"
+                status = "[WARN] RARE"
             elif pct > 20:
-                status = "✅ DOMINANT"
+                status = "[OK] DOMINANT"
             
             print(f"{cls:<7} {crop_name:<27} {count:<15,} {pct:>6.2f}%  {status}")
         
@@ -100,16 +105,16 @@ def get_crop_statistics(cdl_file, mapping):
 # Main execution
 if __name__ == "__main__":
     # Load remap rules
-    rules_file = '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/cdl_remap_rules.txt'
+    rules_file = f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/cdl_remap_rules.txt'
     mapping = load_remap_rules(rules_file)
     
-    print(f"✅ Loaded {len(mapping)} CDL mappings from cdl_remap_rules.txt")
+    print(f"[OK] Loaded {len(mapping)} CDL mappings from cdl_remap_rules.txt")
     
     # Define regions
     regions = {
-        'NorthCA': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/NorthCA/NorthCA_cdl_epsg5070_10m.tif',
-        'CentCA': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/CentCA/CentCA_cdl_epsg5070_10m.tif',
-        'SouthCA': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/SouthCA/SouthCA_cdl_epsg5070_10m.tif'
+        'NorthCA': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/NorthCA/NorthCA_cdl_epsg5070_10m.tif',
+        'CentCA': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/CentCA/CentCA_cdl_epsg5070_10m.tif',
+        'SouthCA': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/SouthCA/SouthCA_cdl_epsg5070_10m.tif'
     }
     
     all_results = {}
@@ -120,7 +125,7 @@ if __name__ == "__main__":
             counts, total = get_crop_statistics(cdl_file, mapping)
             all_results[region_name] = (counts, total)
         else:
-            print(f"❌ File not found: {cdl_file}")
+            print(f"[FAIL] File not found: {cdl_file}")
     
     # Comparison table
     if all_results:

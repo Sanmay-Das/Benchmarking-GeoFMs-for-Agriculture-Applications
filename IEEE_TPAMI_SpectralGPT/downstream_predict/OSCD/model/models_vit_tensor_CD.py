@@ -190,7 +190,7 @@ class VisionTransformer(nn.Module):
         # self.upernet = UPerNet(num_classes=2)
         self.decoder = FPNHEAD()
         # self.pos_drop = nn.Dropout(p=drop_rate)
-        # 1024直接32*32
+        # 102432*32
         # self.conv0 = nn.Sequential(
         #     nn.Conv2d(768, 512, 1, 1),
         #     nn.GroupNorm(32, 512),
@@ -277,7 +277,7 @@ class VisionTransformer(nn.Module):
         # embed patches
         # x = torch.cat([x1, x2], dim=1)
         # x = x1 - x2
-        # x = x[:, :-1, :, :]  # 切片处理数据维度
+        # x = x[:, :-1, :, :]  # 
         x = torch.unsqueeze(x1, dim=1)
         x = self.patch_embed(x)
         N, T, L, C = x.shape  # T: temporal; L: spatial
@@ -334,7 +334,7 @@ class VisionTransformer(nn.Module):
         # xx1 = torch.stack(m, dim=1)
         # image2
         x = x2
-        # x = x[:, :-1, :, :]  # 切片处理数据维度
+        # x = x[:, :-1, :, :]  # 
         x = torch.unsqueeze(x, dim=1)
         x = self.patch_embed(x)
         N, T, L, C = x.shape  # T: temporal; L: spatial

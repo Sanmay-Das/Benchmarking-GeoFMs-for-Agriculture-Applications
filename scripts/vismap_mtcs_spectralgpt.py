@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import os
 import numpy as np
 import rasterio
@@ -53,7 +58,7 @@ def brightness_modulate(prediction, ground_truth, colors):
 
 
 def main():
-    base_dir = '/bigdata/eldawylab/sdas050/MS_Research'
+    base_dir = str(MSR_ROOT)
     gt_dir   = os.path.join(base_dir, 'SpectralGPT_chips_multitemporal/NWIA/ImageSets')
     pred_dir = os.path.join(base_dir, 'predictions/spectralgpt_NWIA')
     output_dir = os.path.join(base_dir, 'visualizations_geotiff/spectralgpt_NWIA_128x128')
@@ -63,7 +68,7 @@ def main():
     # NWIA chips: NWIA_chip_320_64_mask.tif
     mask_files = sorted(glob.glob(os.path.join(gt_dir, 'NWIA_chip_*_mask.tif')))
 
-    print(f"SpectralGPT GeoTIFF Visualization (128×128 chips)")
+    print(f"SpectralGPT GeoTIFF Visualization (128x128 chips)")
     print(f"Found {len(mask_files)} chips\n")
 
     if len(mask_files) == 0:
@@ -126,7 +131,7 @@ def main():
             )
 
         results.append(acc)
-        print(f"{chip_name}: {acc:.2f}% (valid px: {valid.sum()}) → saved")
+        print(f"{chip_name}: {acc:.2f}% (valid px: {valid.sum()}) -> saved")
 
     # Summary
     print(f"\n{'='*60}")

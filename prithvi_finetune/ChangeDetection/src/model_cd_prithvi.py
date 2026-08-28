@@ -1,13 +1,13 @@
 """
 model_cd_prithvi.py
 -------------------
-Prithvi Change Detection model — standalone PyTorch, no mmseg dependencies.
+Prithvi Change Detection model -- standalone PyTorch, no mmseg dependencies.
 
 Architecture:
     Shared TemporalViTEncoder (Prithvi pretrained)
         T1 (B,6,224,224) -> encoder -> tokens (B, 196, 768) @ 14x14
         T2 (B,6,224,224) -> encoder -> tokens (B, 196, 768) @ 14x14
-                (shared weights — Siamese)
+                (shared weights -- Siamese)
         diff = f1 - f2               (B, 768, 14, 14)
         FPN conv pyramid + FPNHEAD -> (B, 256, 224, 224)
         cls_seg                    -> (B, 2,   224, 224)
@@ -21,7 +21,7 @@ FPN conv pyramid (all branches from same diff at 14x14):
     FPNHEAD(channels=2048) fuses the 4 scales -> (B, 256, 224, 224)
 
 This mirrors the SpectralGPT CD decoder for fair benchmarking.
-Neck (ConvTransformerNeck) is bypassed — diff is computed at token level.
+Neck (ConvTransformerNeck) is bypassed -- diff is computed at token level.
 
 Place this file at:
     prithvi_finetune/ChangeDetection/src/model_cd_prithvi.py
@@ -112,7 +112,7 @@ class PatchEmbed3D(nn.Module):
 
 class TemporalViTEncoder(nn.Module):
     """
-    Prithvi ViT encoder — standalone version without mmseg dependencies.
+    Prithvi ViT encoder -- standalone version without mmseg dependencies.
     Identical forward pass to geospatial_fm.TemporalViTEncoder.
     """
 
@@ -186,7 +186,7 @@ class TemporalViTEncoder(nn.Module):
             x = blk(x)
         x = self.norm(x)
 
-        # drop CLS → spatial tokens only
+        # drop CLS -> spatial tokens only
         x = x[:, 1:, :]                          # (B, L, D)
         B, L, D = x.shape
         x = x.permute(0, 2, 1).reshape(B, D, Hp, Wp)   # (B, D, 14, 14)
@@ -194,7 +194,7 @@ class TemporalViTEncoder(nn.Module):
 
 
 # ============================================================================
-# FPN Decoder — identical to SpectralGPT model_cd_spectralgpt.py
+# FPN Decoder -- identical to SpectralGPT model_cd_spectralgpt.py
 # ============================================================================
 
 class PPM(nn.ModuleList):

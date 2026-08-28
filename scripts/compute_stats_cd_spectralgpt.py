@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import numpy as np
 import rasterio
 from pathlib import Path
@@ -41,7 +46,7 @@ def compute_minmax_cd(chips_dir, suffix="_t1"):
 
 if __name__ == "__main__":
     # Run on CentIA ONLY (training location)
-    CHIPS_DIR = "/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/spectralgpt/CentIA"
+    CHIPS_DIR = f"{DATA_ROOT}/change_detection_chips/spectralgpt/CentIA"
 
     t1_min, t1_max = compute_minmax_cd(CHIPS_DIR, suffix="_t1")
     t2_min, t2_max = compute_minmax_cd(CHIPS_DIR, suffix="_t2")

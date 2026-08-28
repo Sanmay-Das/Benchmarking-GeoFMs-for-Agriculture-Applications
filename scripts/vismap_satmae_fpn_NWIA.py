@@ -2,15 +2,20 @@
 Plain class-color PNG maps for SatMAE + FPN predictions (NWIA region).
 
 Produces:
-  NWIA_SatMAE_FPN_colored.png   — prediction color map
-  NWIA_GT_colored.png           — ground truth color map
-  legend.png                    — class color legend
+  NWIA_SatMAE_FPN_colored.png   -- prediction color map
+  NWIA_GT_colored.png           -- ground truth color map
+  legend.png                    -- class color legend
 
-Output dir: /bigdata/eldawylab/sdas050/MS_Research/predictions/colored_maps
+Output dir: {PREDICTIONS}/colored_maps
 
 Usage:
   python vismap_satmae_fpn_NWIA.py
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import numpy as np
@@ -22,11 +27,11 @@ from tqdm import tqdm
 # ============================================================
 # CONFIG
 # ============================================================
-PRED_PATH  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/satmae_fpn_NWIA/NWIA_SatMAE_FPN_Prediction.tif'
-CHIP_DIR   = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/NWIA'
-TEST_TXT   = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/Iowa/test.txt'
+PRED_PATH  = f'{PREDICTIONS}/satmae_fpn_NWIA/NWIA_SatMAE_FPN_Prediction.tif'
+CHIP_DIR   = f'{DATA_ROOT}/SatMAE_chips_multitemporal/NWIA'
+TEST_TXT   = f'{DATA_ROOT}/SatMAE_chips_multitemporal/Iowa/test.txt'
 CHIP_SIZE  = 96
-OUTPUT_DIR = '/bigdata/eldawylab/sdas050/MS_Research/predictions/colored_maps'
+OUTPUT_DIR = f'{PREDICTIONS}/colored_maps'
 
 # ============================================================
 # EXACT ESRI RGB COLORS FROM CDL EXCEL  (0-indexed)
@@ -45,7 +50,7 @@ CLASS_COLORS = {
     10:  (255,  38,  38),   # Cotton
     11:  (255, 158,  15),   # Sorghum
     12:  (204, 191, 163),   # Other
-    255: (255, 255, 255),   # NoData — white
+    255: (255, 255, 255),   # NoData -- white
 }
 
 CLASS_NAMES = [
@@ -64,7 +69,7 @@ def colorize_map(class_array):
 
 
 def to_0indexed_pred(arr):
-    """SatMAE pred: 1-13=class, 0/255=NoData → 0-12=class, 255=NoData"""
+    """SatMAE pred: 1-13=class, 0/255=NoData -> 0-12=class, 255=NoData"""
     out = np.full(arr.shape, 255, dtype=np.uint8)
     valid = (arr >= 1) & (arr <= 13)
     out[valid] = (arr[valid] - 1).astype(np.uint8)
@@ -72,7 +77,7 @@ def to_0indexed_pred(arr):
 
 
 def to_0indexed_gt(arr):
-    """GT mask: 1-13=class, 0=NoData → 0-12=class, 255=NoData"""
+    """GT mask: 1-13=class, 0=NoData -> 0-12=class, 255=NoData"""
     out = np.full(arr.shape, 255, dtype=np.uint8)
     valid = (arr >= 1) & (arr <= 13)
     out[valid] = (arr[valid] - 1).astype(np.uint8)
@@ -99,7 +104,7 @@ if __name__ == '__main__':
     output_dir = Path(OUTPUT_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Prediction ────────────────────────────────────────────────────────────
+    # -- Prediction ------------------------------------------------------------
     print("\nColorizing FPN prediction...")
     with rasterio.open(PRED_PATH) as src:
         pred = src.read(1).astype(np.int32)
@@ -111,7 +116,7 @@ if __name__ == '__main__':
     Image.fromarray(pred_rgb).save(pred_out)
     print(f"  Saved: {pred_out}")
 
-    # ── Ground Truth ──────────────────────────────────────────────────────────
+    # -- Ground Truth ----------------------------------------------------------
     print("\nAssembling ground truth from chip masks...")
     gt_full = np.zeros((H, W), dtype=np.int32)
     with open(TEST_TXT) as f:
@@ -135,7 +140,7 @@ if __name__ == '__main__':
     Image.fromarray(gt_rgb).save(gt_out)
     print(f"  Saved: {gt_out}")
 
-    # ── Legend ────────────────────────────────────────────────────────────────
+    # -- Legend ----------------------------------------------------------------
     save_legend(output_dir / 'legend.png')
 
     print(f"\nDone! Maps saved to: {OUTPUT_DIR}")

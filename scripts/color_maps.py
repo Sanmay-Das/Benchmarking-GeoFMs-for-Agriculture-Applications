@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import numpy as np
 import rasterio
 from PIL import Image, ImageDraw
@@ -7,30 +12,30 @@ from pathlib import Path
 # CONFIGURATION
 # ============================================================
 
-# GT_PATH          = "/bigdata/eldawylab/sdas050/MS_Research/predictions/gt_maps/SouthMN_gt_13class.tif"
-PRITHVI_PATH     = "/bigdata/eldawylab/sdas050/MS_Research/predictions/prithvi_NWIA_terratorch/NWIA_Prithvi_Prediction_Stitched_HLSweights.tif"
-# SPECTRALGPT_PATH = "/bigdata/eldawylab/sdas050/MS_Research/predictions/spectralgpt_SouthMN_terratorch/SouthMN_SpectralGPT_Prediction_Stitched.tif"
-OUTPUT_DIR       = "/bigdata/eldawylab/sdas050/MS_Research/predictions/colored_maps"
+# GT_PATH          = f"{PREDICTIONS}/gt_maps/SouthMN_gt_13class.tif"
+PRITHVI_PATH     = f"{PREDICTIONS}/prithvi_NWIA_terratorch/NWIA_Prithvi_Prediction_Stitched_HLSweights.tif"
+# SPECTRALGPT_PATH = f"{PREDICTIONS}/spectralgpt_SouthMN_terratorch/SouthMN_SpectralGPT_Prediction_Stitched.tif"
+OUTPUT_DIR       = f"{PREDICTIONS}/colored_maps"
 
 # ============================================================
 # EXACT ESRI RGB COLORS FROM CDL EXCEL
 # ============================================================
 
 CLASS_COLORS = {
-    0:   (233, 255, 190),  # Natural Vegetation — CDL 176 Grassland/Pasture
-    1:   (149, 206, 147),  # Forest             — CDL 141 Deciduous Forest
-    2:   (255, 212, 0),    # Corn               — CDL 1
-    3:   (38,  115, 0),    # Soybeans           — CDL 5
-    4:   (128, 179, 179),  # Wetlands           — CDL 87
-    5:   (156, 156, 156),  # Developed/Barren   — CDL 121
-    6:   (77,  112, 163),  # Open Water         — CDL 111
-    7:   (168, 112, 0),    # Winter Wheat       — CDL 24
-    8:   (255, 168, 227),  # Alfalfa            — CDL 36
-    9:   (191, 191, 122),  # Fallow/Idle        — CDL 61
-    10:  (255, 38,  38),   # Cotton             — CDL 2
-    11:  (255, 158, 15),   # Sorghum            — CDL 4
-    12:  (204, 191, 163),  # Other              — CDL 131 Barren
-    255: (255,   255,   255),    # NoData             — white
+    0:   (233, 255, 190),  # Natural Vegetation -- CDL 176 Grassland/Pasture
+    1:   (149, 206, 147),  # Forest             -- CDL 141 Deciduous Forest
+    2:   (255, 212, 0),    # Corn               -- CDL 1
+    3:   (38,  115, 0),    # Soybeans           -- CDL 5
+    4:   (128, 179, 179),  # Wetlands           -- CDL 87
+    5:   (156, 156, 156),  # Developed/Barren   -- CDL 121
+    6:   (77,  112, 163),  # Open Water         -- CDL 111
+    7:   (168, 112, 0),    # Winter Wheat       -- CDL 24
+    8:   (255, 168, 227),  # Alfalfa            -- CDL 36
+    9:   (191, 191, 122),  # Fallow/Idle        -- CDL 61
+    10:  (255, 38,  38),   # Cotton             -- CDL 2
+    11:  (255, 158, 15),   # Sorghum            -- CDL 4
+    12:  (204, 191, 163),  # Other              -- CDL 131 Barren
+    255: (255,   255,   255),    # NoData             -- white
 }
 
 CLASS_NAMES = [
@@ -71,7 +76,7 @@ def save_legend(output_path):
         draw.text((padding + box_size + 8, y + 6), f"{i}: {name}", fill=(0, 0, 0))
 
     legend.save(output_path)
-    print(f"  ✅ Legend saved: {output_path}")
+    print(f"  [OK] Legend saved: {output_path}")
 
 
 def colorize_tif(tif_path, output_png_path, label):
@@ -83,7 +88,7 @@ def colorize_tif(tif_path, output_png_path, label):
 
     rgb = colorize_map(data)
     Image.fromarray(rgb).save(output_png_path)
-    print(f"  ✅ Saved: {output_png_path}")
+    print(f"  [OK] Saved: {output_png_path}")
 
 
 # ============================================================
@@ -100,4 +105,4 @@ if __name__ == "__main__":
 
     save_legend(output_dir / "legend.png")
 
-    print(f"\n✅ All done! Colored maps saved to: {OUTPUT_DIR}")
+    print(f"\n[OK] All done! Colored maps saved to: {OUTPUT_DIR}")

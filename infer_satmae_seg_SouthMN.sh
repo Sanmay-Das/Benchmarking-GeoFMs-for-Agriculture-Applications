@@ -10,25 +10,35 @@
 
 set -euo pipefail
 
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source satmae_env/bin/activate
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-mkdir -p logs \
-         predictions/satmae_fcn_SouthMN \
-         predictions/satmae_fpn_SouthMN \
-         predictions/satmae_psanet_SouthMN
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./satmae_env if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/satmae_env/bin/activate" ]; then
+    source "$MSR_ROOT/satmae_env/bin/activate"
+fi
 
-echo "==== SatMAE Segmentation Inference — SouthMN ===="
-echo "Job:  $SLURM_JOB_ID"
+mkdir -p "$MSR_OUTPUT_ROOT/logs" \
+         "$MSR_OUTPUT_ROOT/predictions/satmae_fcn_SouthMN" \
+         "$MSR_OUTPUT_ROOT/predictions/satmae_fpn_SouthMN" \
+         "$MSR_OUTPUT_ROOT/predictions/satmae_psanet_SouthMN"
+
+echo "==== SatMAE Segmentation Inference -- SouthMN ===="
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname)"
 echo "GPU:  $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo ""
 
-echo "====== [1/3] FCN — already done, skipping ======"
+echo "====== [1/3] FCN -- already done, skipping ======"
 echo ""
 
 echo "====== [2/3] FPN ======"

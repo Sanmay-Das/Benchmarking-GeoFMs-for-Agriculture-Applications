@@ -45,7 +45,7 @@ PATCH_SIDE = 128
 N_EPOCHS = 300
 L = 1024
 N = 2
-TRAIN_STRIDE = int(PATCH_SIDE / 2) - 1  # 50%重叠率裁剪
+TRAIN_STRIDE = int(PATCH_SIDE / 2) - 1  # 50%
 TYPE = 4  # 0-RGB | 1-RGBIr | 2-All bands s.t. resulution <= 20m | 3-All bands
 LOAD_TRAINED = False
 DATA_AUG = True
@@ -295,7 +295,7 @@ def train(n_epochs=N_EPOCHS, save=True):
         print('train_Fmeasure:', pr_rec[2])
 
         with open(results_file, "a") as f:
-            # 记录每个epoch对应的train_loss、lr以及验证集各指标
+            # epochtrain_losslr
             print('\n', file=f)
             print('Epoch: ' + str(epoch_index + 1) + ' of ' + str(N_EPOCHS), file=f)
             print('train_loss: %s' % epoch_test_loss[epoch_index], file=f)
@@ -319,7 +319,7 @@ def train(n_epochs=N_EPOCHS, save=True):
         print('test_Fmeasure:', pr_rec[2])
 
         with open(results_file, "a") as f:
-            # 记录每个epoch对应的train_loss、lr以及验证集各指标
+            # epochtrain_losslr
             print('test_loss: %s' % epoch_test_loss[epoch_index], file=f)
             print('test_nochange_accuracy: %s' % cl_acc[0], file=f)
             print('test_change_accuracy: %s' % cl_acc[1], file=f)

@@ -7,7 +7,7 @@ Architecture:
     Shared GroupChannelsVisionTransformer encoder (SatMAE pretrained)
         T1 (B, 6, 96, 96) -> forward_features_seg() -> f1 (B, 1024, 12, 12)
         T2 (B, 6, 96, 96) -> forward_features_seg() -> f2 (B, 1024, 12, 12)
-                (shared weights — Siamese)
+                (shared weights -- Siamese)
         diff = f1 - f2               (B, 1024, 12, 12)
         FPN conv pyramid + FPNHEAD -> (B, 256, 96, 96)
         cls_seg                    -> (B, 2,   96, 96)
@@ -23,8 +23,8 @@ FPN conv pyramid (all branches from same diff):
 This mirrors the SpectralGPT CD decoder (model_cd_spectralgpt.py) for fair benchmarking.
 
 Key adaptation from segmentation:
-    Original channel groups: (0,1,2,6), (3,4,5,7), (8,9) — needs 10 bands
-    CD channel groups:       (0,1,2),   (3,4,5)           — 6 bands only
+    Original channel groups: (0,1,2,6), (3,4,5,7), (8,9) -- needs 10 bands
+    CD channel groups:       (0,1,2),   (3,4,5)           -- 6 bands only
     2 groups x 3 bands = 6 bands total, matching your CD chips
 
     Token count: L = (96/8)^2 = 144 spatial tokens
@@ -42,7 +42,7 @@ import torch.nn.functional as F
 import timm.models.vision_transformer
 from timm.models.vision_transformer import PatchEmbed
 
-# These come from SatMAE/util/ — copy util/ into ChangeDetection/
+# These come from SatMAE/util/ -- copy util/ into ChangeDetection/
 from util.pos_embed import get_2d_sincos_pos_embed, get_1d_sincos_pos_embed_from_grid
 
 
@@ -57,7 +57,7 @@ from util.pos_embed import get_2d_sincos_pos_embed, get_1d_sincos_pos_embed_from
 class GroupChannelsViTCD(timm.models.vision_transformer.VisionTransformer):
     """
     SatMAE GroupChannels ViT adapted for 6-band CD input.
-    Channel groups: (0,1,2) and (3,4,5) — 2 groups of 3 bands each.
+    Channel groups: (0,1,2) and (3,4,5) -- 2 groups of 3 bands each.
     """
 
     def __init__(self, channel_embed=256,
@@ -139,10 +139,10 @@ class GroupChannelsViTCD(timm.models.vision_transformer.VisionTransformer):
             tokens = blk(tokens)
         tokens = self.norm(tokens)
 
-        # Strip CLS → (B, G*L, D)
+        # Strip CLS -> (B, G*L, D)
         patch_tokens = tokens[:, 1:]
 
-        # Average across G groups → (B, L, D)
+        # Average across G groups -> (B, L, D)
         patch_tokens = patch_tokens.view(b, G, L, D).mean(dim=1)
 
         # Reshape to spatial feature map
@@ -152,7 +152,7 @@ class GroupChannelsViTCD(timm.models.vision_transformer.VisionTransformer):
 
 
 # ============================================================================
-# FPN Decoder — identical to SpectralGPT model_cd_spectralgpt.py
+# FPN Decoder -- identical to SpectralGPT model_cd_spectralgpt.py
 # ============================================================================
 
 class PPM(nn.ModuleList):
@@ -349,7 +349,7 @@ def build_satmae_cd(pretrain_path: str = None) -> SatMAE_CD:
 
         # Adapt patch_embed weights via channel averaging.
         # Pretrained has 3 groups (e.g. 4+4+2 bands), CD model has 2 groups (3+3 bands).
-        # Average pretrained channels → expand to target channel count per group.
+        # Average pretrained channels -> expand to target channel count per group.
         state_dict = model.state_dict()
         channel_groups = ((0, 1, 2), (3, 4, 5))
         for i in range(len(channel_groups)):

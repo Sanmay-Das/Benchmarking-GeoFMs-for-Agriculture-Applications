@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import os
 import time
 import math
@@ -9,15 +14,15 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 import sys
 
-sys.path.insert(0, '/bigdata/eldawylab/sdas050/MS_Research/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich')
+sys.path.insert(0, f'{MSR_ROOT}/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich')
 from src.models_vit_tensor_CD_2 import vit_base_patch8
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT  = '/bigdata/eldawylab/sdas050/MS_Research/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich/multi_train/best_mIoU_CentEastIA_model.pth'
-STACK_PATH  = '/bigdata/eldawylab/sdas050/MS_Research/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
-OUTPUT_DIR  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/spectralgpt_NWIA_terratorch'
+CHECKPOINT  = f'{MSR_ROOT}/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich/multi_train/best_mIoU_CentEastIA_model.pth'
+STACK_PATH  = f'{MSR_ROOT}/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
+OUTPUT_DIR  = f'{PREDICTIONS}/spectralgpt_NWIA_terratorch'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'NWIA_SpectralGPT_Prediction_Stitched.tif')
 
 CHIP_SIZE   = 128
@@ -151,10 +156,10 @@ def main():
     prob_accum = torch.zeros((NUM_CLASSES, H, W), dtype=torch.float32)
     count_map  = torch.zeros((1, H, W),           dtype=torch.float32)
 
-    print(f"Original stack: {H}×{W} | Padded: {dataset.H}×{dataset.W} | Windows: {len(dataset)}\n")
+    print(f"Original stack: {H}x{W} | Padded: {dataset.H}x{dataset.W} | Windows: {len(dataset)}\n")
 
     # Precompute cosine blend mask
-    blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)  # (chip-2δ, chip-2δ)
+    blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)  # (chip-2delta, chip-2delta)
     inner_size = CHIP_SIZE - 2 * DELTA                         # 112 for delta=8
 
     start = time.time()
@@ -214,7 +219,7 @@ def main():
         dst.write(pred, 1)
 
     print(f"Saved: {OUTPUT_FILE}")
-    print(f"Output size: {pred.shape} — matches original stack: {H}×{W}")
+    print(f"Output size: {pred.shape} -- matches original stack: {H}x{W}")
 
 
 if __name__ == '__main__':

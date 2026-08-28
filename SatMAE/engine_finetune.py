@@ -98,7 +98,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 # ============================================================================
-# SEGMENTATION TRAINING — NEW
+# SEGMENTATION TRAINING -- NEW
 # ============================================================================
 
 def train_one_epoch_seg(model: torch.nn.Module, criterion: torch.nn.Module,
@@ -172,7 +172,7 @@ def train_one_epoch_seg(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 # ============================================================================
-# SEGMENTATION EVALUATION — NEW
+# SEGMENTATION EVALUATION -- NEW
 # ============================================================================
 
 def compute_miou(preds: torch.Tensor, targets: torch.Tensor,

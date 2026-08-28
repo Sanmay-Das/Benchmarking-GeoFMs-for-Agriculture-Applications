@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import numpy as np
 import rasterio
 import glob
@@ -7,32 +12,32 @@ from pathlib import Path
 from tqdm import tqdm
 
 # ============================================================================
-# CONFIGURATION — change these
+# CONFIGURATION -- change these
 # ============================================================================
 
 LOCATIONS = {
     'NWIA': {
-        'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/NWIA',
+        'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/NWIA',
         'prefix': 'chip_'
     },
     'EastNC': {
-        'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/EastNC',
+        'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/EastNC',
         'prefix': 'chip_'
     },
     'SouthMN': {
-        'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/SouthMN',
+        'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/SouthMN',
         'prefix': 'chip_'
     },
     'SouthCA': {
-        'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/SouthCA',
+        'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/SouthCA',
         'prefix': 'chip_'
     }
     # 'SCIL': {
-    #     'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/SCIL',
+    #     'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/SCIL',
     #     'prefix': 'chip_'
     # },
     # 'WCIL': {
-    #     'chip_dir': '/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation/WCIL',
+    #     'chip_dir': f'{DATA_ROOT}/data/multi_temporal_crop_segmentation/WCIL',
     #     'prefix': 'chip_'
     
 }
@@ -88,7 +93,7 @@ def print_stats(location, class_counts, total_pixels, num_chips):
     valid_pixels = total_pixels - class_counts[0]  # exclude NoData
 
     print(f"\n{'='*65}")
-    print(f"  {location} — {num_chips} chips | {total_pixels:,} total px | {valid_pixels:,} valid px")
+    print(f"  {location} -- {num_chips} chips | {total_pixels:,} total px | {valid_pixels:,} valid px")
     print(f"{'='*65}")
     print(f"  {'Class':<22} {'Pixels':>12} {'% of Valid':>12} {'Present':>8}")
     print(f"  {'-'*58}")
@@ -134,7 +139,7 @@ def main():
         }
 
     # Save JSON
-    out_path = '/bigdata/eldawylab/sdas050/MS_Research/dataset_statistics.json'
+    out_path = f'{DATA_ROOT}/dataset_statistics.json'
     with open(out_path, 'w') as f:
         json.dump(all_stats, f, indent=2)
     print(f"Statistics saved to: {out_path}")

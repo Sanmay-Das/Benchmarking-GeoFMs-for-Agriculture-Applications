@@ -1,7 +1,7 @@
 """
 main_finetune_fpn.py
 --------------------
-SatMAE + SpectralGPT FPN decoder — crop segmentation fine-tuning.
+SatMAE + SpectralGPT FPN decoder -- crop segmentation fine-tuning.
 
 Separate from main_finetune.py (PSANet decoder). Does NOT modify any
 existing files. Uses the same dataset (dataset_seg.py) and evaluation
@@ -9,8 +9,8 @@ metrics (engine_finetune.py:compute_miou / evaluate_seg).
 
 Key differences vs PSANet run:
   - Decoder  : SatMAEFPN (SpectralGPT-style FPN) instead of PSANet
-  - Loss      : CrossEntropyLoss(ignore_index=0)  — properly masks NoData
-  - Optimizer : AdamW  — better for from-scratch decoder heads
+  - Loss      : CrossEntropyLoss(ignore_index=0)  -- properly masks NoData
+  - Optimizer : AdamW  -- better for from-scratch decoder heads
   - Output    : output_seg_Iowa_fpn/
 """
 
@@ -38,7 +38,7 @@ from dataset_seg import build_seg_dataset
 from engine_finetune import compute_miou
 
 
-# ── Args ──────────────────────────────────────────────────────────────────────
+# -- Args ----------------------------------------------------------------------
 
 def get_args_parser():
     parser = argparse.ArgumentParser('SatMAE FPN Segmentation', add_help=False)
@@ -61,7 +61,7 @@ def get_args_parser():
     parser.add_argument('--grouped_bands', type=int, nargs='+', action='append',
                         default=[])
 
-    # Optimizer — SGD following SatMAE paper A.10 (same encoder, same protocol)
+    # Optimizer -- SGD following SatMAE paper A.10 (same encoder, same protocol)
     parser.add_argument('--lr',            default=None,  type=float,
                         help='Head LR. Encoder gets 0.1x. Paper: 1e-2 head, 1e-3 encoder.')
     parser.add_argument('--blr',           default=1e-2,  type=float)
@@ -108,7 +108,7 @@ def get_args_parser():
     return parser
 
 
-# ── Training loop ─────────────────────────────────────────────────────────────
+# -- Training loop -------------------------------------------------------------
 
 def train_one_epoch(model, criterion, data_loader, optimizer, device,
                     epoch, loss_scaler, log_writer=None, args=None):
@@ -153,7 +153,7 @@ def train_one_epoch(model, criterion, data_loader, optimizer, device,
     return {k: m.global_avg for k, m in metric_logger.meters.items()}
 
 
-# ── Evaluation ────────────────────────────────────────────────────────────────
+# -- Evaluation ----------------------------------------------------------------
 
 @torch.no_grad()
 def evaluate(data_loader, model, device, num_classes=13, ignore_index=0):
@@ -211,7 +211,7 @@ def evaluate(data_loader, model, device, num_classes=13, ignore_index=0):
     }
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# -- Main ----------------------------------------------------------------------
 
 def main(args):
     misc.init_distributed_mode(args)
@@ -223,7 +223,7 @@ def main(args):
     np.random.seed(args.seed + misc.get_rank())
     cudnn.benchmark = True
 
-    # ── Dataset ───────────────────────────────────────────────────────────────
+    # -- Dataset ---------------------------------------------------------------
     dataset_train = build_seg_dataset(is_train=True,  args=args)
     dataset_val   = build_seg_dataset(is_train=False, args=args)
 
@@ -249,7 +249,7 @@ def main(args):
         batch_size=args.batch_size, num_workers=args.num_workers,
         pin_memory=args.pin_mem, drop_last=False)
 
-    # ── Band groups ───────────────────────────────────────────────────────────
+    # -- Band groups -----------------------------------------------------------
     if len(args.grouped_bands) == 0:
         args.grouped_bands = [
             [0, 1, 2, 3, 4, 5],
@@ -258,7 +258,7 @@ def main(args):
         ]
     print(f'Band groups: {args.grouped_bands}')
 
-    # ── Build encoder ─────────────────────────────────────────────────────────
+    # -- Build encoder ---------------------------------------------------------
     encoder = models_vit_group_channels.__dict__[args.model](
         patch_size=args.patch_size,
         img_size=args.input_size,
@@ -269,7 +269,7 @@ def main(args):
         global_pool=False,
     )
 
-    # ── Load pretrained weights ───────────────────────────────────────────────
+    # -- Load pretrained weights -----------------------------------------------
     if args.finetune:
         ckpt = torch.load(args.finetune, map_location='cpu')
         print(f'Loading pretrained weights: {args.finetune}')
@@ -293,7 +293,7 @@ def main(args):
                     C_ft  = model_w.shape[1]
                     new_w = ckpt_w.mean(dim=1, keepdim=True).expand(-1, C_ft, -1, -1).clone()
                     ckpt_model[w_key] = new_w
-                    print(f'  patch_embed.{i}: adapted {ckpt_w.shape[1]}→{C_ft} ch')
+                    print(f'  patch_embed.{i}: adapted {ckpt_w.shape[1]}->{C_ft} ch')
                 else:
                     del ckpt_model[w_key]
                     print(f'  patch_embed.{i}: incompatible shape, skipped')
@@ -308,14 +308,14 @@ def main(args):
         msg = encoder.load_state_dict(ckpt_model, strict=False)
         print(f'Pretrained weights loaded. Missing: {msg.missing_keys[:5]}')
 
-    # ── Build full model ───────────────────────────────────────────────────────
+    # -- Build full model -------------------------------------------------------
     model = SatMAEFPN(encoder=encoder, nb_classes=args.nb_classes)
     model.to(device)
 
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'Trainable params: {n_params/1e6:.2f}M')
 
-    # ── Optimizer — SGD following SatMAE paper A.10 ──────────────────────────────
+    # -- Optimizer -- SGD following SatMAE paper A.10 ------------------------------
     # Same encoder, same protocol: enc LR=1e-3, head LR=1e-2, poly decay p=0.9
     eff_batch = args.batch_size * args.accum_iter * misc.get_world_size()
     if args.lr is None:
@@ -335,36 +335,36 @@ def main(args):
     ]
     optimizer = torch.optim.SGD(param_groups, momentum=args.momentum)
 
-    # Polynomial LR decay — paper A.10: power=0.9
+    # Polynomial LR decay -- paper A.10: power=0.9
     poly_fn   = lambda epoch: (1.0 - epoch / args.epochs) ** args.poly_power
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lr_lambda=[poly_fn, poly_fn])
 
     loss_scaler = NativeScaler()
 
-    # ── Loss — CrossEntropy with ignore_index=0 (NoData masked) ──────────────
+    # -- Loss -- CrossEntropy with ignore_index=0 (NoData masked) --------------
     criterion = torch.nn.CrossEntropyLoss(ignore_index=args.ignore_index)
     print(f'Loss: CrossEntropyLoss(ignore_index={args.ignore_index})')
 
-    # ── Resume ────────────────────────────────────────────────────────────────
+    # -- Resume ----------------------------------------------------------------
     misc.load_model(args=args, model_without_ddp=model,
                     optimizer=optimizer, loss_scaler=loss_scaler)
 
-    # ── DDP ───────────────────────────────────────────────────────────────────
+    # -- DDP -------------------------------------------------------------------
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(
             model, device_ids=[args.gpu])
         model_without_ddp = model.module
 
-    # ── Eval only ─────────────────────────────────────────────────────────────
+    # -- Eval only -------------------------------------------------------------
     if args.eval:
         stats = evaluate(data_loader_val, model, device,
                          num_classes=13, ignore_index=args.ignore_index)
         print(f'mIoU: {stats["miou"]*100:.2f}%')
         return
 
-    # ── Training loop ─────────────────────────────────────────────────────────
+    # -- Training loop ---------------------------------------------------------
     print(f'\nStart training for {args.epochs} epochs')
     start_time = time.time()
     best_miou  = 0.0

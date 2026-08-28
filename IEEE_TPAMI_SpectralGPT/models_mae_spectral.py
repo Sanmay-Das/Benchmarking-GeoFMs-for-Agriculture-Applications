@@ -255,8 +255,8 @@ class MaskedAutoencoderViT(nn.Module):
         return x_masked, mask, ids_restore, ids_keep
 
     def forward_encoder(self, x, mask_ratio):
-        # 维度转换
-        # x = x[:, :-1, :, :]  # 切片处理数据维度
+        # 
+        # x = x[:, :-1, :, :]  # 
         x = torch.unsqueeze(x, dim=1)
         # embed patches
         x = self.patch_embed(x)
@@ -402,9 +402,9 @@ class MaskedAutoencoderViT(nn.Module):
         return x
 
     def calculate_metrics_per_pixel(self, original_spectrum, reconstructed_spectrum):
-        epsilon = 1e-10  # 避免除零错误
+        epsilon = 1e-10  # 
 
-        # 计算光谱角（Spectral Angle）逐像素
+        # Spectral Angle
         spectral_angle_per_pixel = torch.acos(torch.sum(original_spectrum * reconstructed_spectrum, dim=1) /
                                               (torch.norm(original_spectrum, dim=1) * torch.norm(reconstructed_spectrum,
                                                                                                  dim=1)+ epsilon ))#
@@ -416,8 +416,8 @@ class MaskedAutoencoderViT(nn.Module):
         pred: [N, t*h*w, u*p*p*3]
         mask: [N*t, h*w], 0 is keep, 1 is remove,
         """
-        # 维度转换
-        # imgs = imgs[:, :-1, :, :]  # 切片处理数据维度
+        # 
+        # imgs = imgs[:, :-1, :, :]  # 
         imgs = torch.unsqueeze(imgs, dim=1)
 
         _imgs = torch.index_select(

@@ -1,7 +1,12 @@
 """
-SatMAE + FPN  —  Sliding-window inference on NWIA multitemporal stack
+SatMAE + FPN  --  Sliding-window inference on NWIA multitemporal stack
 Follows the same TerraTorch tiled-inference protocol as Prithvi / SpectralGPT.
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import sys
@@ -14,7 +19,7 @@ import rasterio
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-SATMAE_DIR = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE'
+SATMAE_DIR = f'{MSR_ROOT}/SatMAE'
 sys.path.insert(0, SATMAE_DIR)
 
 import models_vit_group_channels
@@ -23,9 +28,9 @@ from models_satmae_fpn import SatMAEFPN
 # ============================================================
 # CONFIGURATION
 # ============================================================
-CHECKPOINT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE/output_seg_Iowa_fpn/checkpoint-best.pth'
-STACK_PATH  = '/bigdata/eldawylab/sdas050/MS_Research/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
-OUTPUT_DIR  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/satmae_fpn_NWIA'
+CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_Iowa_fpn/checkpoint-best.pth'
+STACK_PATH  = f'{MSR_ROOT}/scripts/processed_stacks/NWIA/NWIA_multitemporal_stack.tif'
+OUTPUT_DIR  = f'{PREDICTIONS}/satmae_fpn_NWIA'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'NWIA_SatMAE_FPN_Prediction.tif')
 
 CHIP_SIZE   = 96
@@ -145,8 +150,8 @@ def main():
     blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA)
     inner_size = CHIP_SIZE - 2 * DELTA
 
-    print(f"\nStack: {H}×{W} | Padded: {dataset.H}×{dataset.W} | Windows: {len(dataset)}")
-    print(f"Chip: {CHIP_SIZE}×{CHIP_SIZE} | Stride: {STRIDE} | Delta: {DELTA}\n")
+    print(f"\nStack: {H}x{W} | Padded: {dataset.H}x{dataset.W} | Windows: {len(dataset)}")
+    print(f"Chip: {CHIP_SIZE}x{CHIP_SIZE} | Stride: {STRIDE} | Delta: {DELTA}\n")
 
     start = time.time()
     with torch.no_grad():
@@ -189,7 +194,7 @@ def main():
         dst.write(pred, 1)
 
     print(f"Saved: {OUTPUT_FILE}")
-    print(f"Output size: {pred.shape}  —  matches original stack: {H}×{W}")
+    print(f"Output size: {pred.shape}  --  matches original stack: {H}x{W}")
 
 
 if __name__ == '__main__':

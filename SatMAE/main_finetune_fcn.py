@@ -73,7 +73,7 @@ def get_args_parser():
     # Loss
     parser.add_argument('--ignore_index', default=0, type=int)
 
-    # Optimizer — SGD following SatMAE paper A.10 (same encoder, same protocol)
+    # Optimizer -- SGD following SatMAE paper A.10 (same encoder, same protocol)
     parser.add_argument('--lr',           default=None,  type=float,
                         help='Head LR. Encoder gets 0.1x. Paper: 1e-2 head, 1e-3 encoder.')
     parser.add_argument('--blr',          default=1e-2,  type=float)
@@ -223,7 +223,7 @@ def main(args):
                     C_ft  = model_w.shape[1]
                     avg_w = ckpt_w.mean(dim=1, keepdim=True)
                     checkpoint_model[w_key] = avg_w.expand(-1, C_ft, -1, -1).clone()
-                    print(f"  patch_embed.{i}: adapted {ckpt_w.shape[1]} → {C_ft} ch")
+                    print(f"  patch_embed.{i}: adapted {ckpt_w.shape[1]} -> {C_ft} ch")
                 else:
                     del checkpoint_model[w_key]
                     print(f"  patch_embed.{i}: incompatible, skipping")
@@ -251,7 +251,7 @@ def main(args):
     print(f'Number of params (M): {n_parameters / 1e6:.2f}')
 
     # -------------------------------------------------------------------------
-    # Optimizer — SGD following SatMAE paper A.10
+    # Optimizer -- SGD following SatMAE paper A.10
     # Same encoder, same protocol: enc LR=1e-3, head LR=1e-2, poly decay p=0.9
     # -------------------------------------------------------------------------
     eff_batch_size = args.batch_size * args.accum_iter * misc.get_world_size()
@@ -272,7 +272,7 @@ def main(args):
     ]
     optimizer = torch.optim.SGD(param_groups, momentum=args.momentum)
 
-    # Polynomial LR decay — paper A.10: power=0.9
+    # Polynomial LR decay -- paper A.10: power=0.9
     poly_fn   = lambda epoch: (1.0 - epoch / args.epochs) ** args.poly_power
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lr_lambda=[poly_fn, poly_fn])
@@ -280,7 +280,7 @@ def main(args):
     loss_scaler = NativeScaler()
 
     # -------------------------------------------------------------------------
-    # Loss — CrossEntropy + ignore_index=0 (NoData masked)
+    # Loss -- CrossEntropy + ignore_index=0 (NoData masked)
     # -------------------------------------------------------------------------
     criterion = CrossEntropyAuxLoss(ignore_index=args.ignore_index, aux_weight=0.4)
     print(f"Criterion: CrossEntropyAuxLoss(ignore_index={args.ignore_index}, aux_weight=0.4)")

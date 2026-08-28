@@ -2,6 +2,11 @@
 Evaluate SatMAE PSANet segmentation on SouthMN test set.
 """
 
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
+
 import os
 import numpy as np
 import rasterio
@@ -14,12 +19,14 @@ CLASS_NAMES = [
     "Fallow/Idle", "Cotton", "Sorghum", "Other"
 ]
 
-BASE     = '/bigdata/eldawylab/sdas050/MS_Research'
+BASE     = str(MSR_ROOT)
 CHIP_DIR = os.path.join(BASE, 'SatMAE_chips_MN/SouthMN')
 TEST_TXT = os.path.join(BASE, 'SatMAE_chips_multitemporal/MN/test.txt')
 
 PREDICTIONS = {
     'SatMAE_FPN': (os.path.join(BASE, 'predictions/satmae_fpn_SouthMN/SouthMN_SatMAE_FPN_Prediction.tif'), 'satmae'),
+    'SatMAE_FCN': (os.path.join(BASE, 'predictions/satmae_fcn_SouthMN/SouthMN_SatMAE_FCN_Prediction.tif'), 'satmae'),
+    'SatMAE_PSANet': (os.path.join(BASE, 'predictions/satmae_psanet_SouthMN/SouthMN_SatMAE_PSANet_Prediction.tif'), 'satmae'),
 }
 
 
@@ -50,11 +57,11 @@ def evaluate(pred_path, enc, chip_names, coords):
         if pred_chip.shape != (96, 96):
             continue
 
-        # GT: 1-13 → 0-12, 0 → -1 (nodata)
+        # GT: 1-13 -> 0-12, 0 -> -1 (nodata)
         gt_cls = gt - 1
 
         if enc == 'satmae':
-            # values 0-13: 0=NoData, 1-13=class → shift to 0-12
+            # values 0-13: 0=NoData, 1-13=class -> shift to 0-12
             pred_cls = pred_chip - 1
             pred_cls = np.where(pred_chip == 0, -1, pred_cls)
             pred_cls = np.where(pred_chip == 255, -1, pred_cls)

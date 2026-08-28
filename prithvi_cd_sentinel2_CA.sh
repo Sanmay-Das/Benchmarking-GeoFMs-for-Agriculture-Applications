@@ -10,21 +10,31 @@
 
 set -euo pipefail
 
-source /etc/profile.d/modules.sh
-module purge
-module load cuda/12.1
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
 
-cd /bigdata/eldawylab/sdas050/MS_Research
-source spectralgptenv/bin/activate
+# Cluster module system (UCR HPCC). Skipped when unavailable, e.g. on a
+# workstation where CUDA is already on the path.
+if command -v module >/dev/null 2>&1; then
+    source /etc/profile.d/modules.sh
+    module purge
+    module load cuda/12.1
+fi
 
-cd /bigdata/eldawylab/sdas050/MS_Research/prithvi_finetune/ChangeDetection
+cd "$MSR_ROOT"
+# Python environment. Set MSR_VENV to your venv built from
+# requirements/; falls back to ./spectralgptenv if present.
+if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/spectralgptenv/bin/activate" ]; then
+    source "$MSR_ROOT/spectralgptenv/bin/activate"
+fi
 
-mkdir -p logs
+cd $MSR_ROOT/prithvi_finetune/ChangeDetection
+
+mkdir -p "$MSR_OUTPUT_ROOT/logs"
 
 MASTER_PORT=$((29500 + SLURM_JOB_ID % 1000))
 
-echo "==== Prithvi CD Training — California ===="
-echo "Job:  $SLURM_JOB_ID"
+echo "==== Prithvi CD Training -- California ===="
+echo "Job:  ${SLURM_JOB_ID:-local}"
 echo "Node: $(hostname)"
 echo "GPU:  $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Train: NorthCA  |  Val: CentCA  |  Test: SouthCA"
@@ -32,8 +42,8 @@ echo ""
 
 python -m torch.distributed.launch --nproc_per_node=1 \
     --master_port=$MASTER_PORT --use_env train_cd_prithvi_CA.py \
-    --data-root /bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/prithvi \
-    --pretrain-path /bigdata/eldawylab/sdas050/MS_Research/weights/Prithvi_EO_V1_100M.pt \
+    --data-root $MSR_ROOT/change_detection_chips/prithvi \
+    --pretrain-path $MSR_ROOT/weights/Prithvi_EO_V1_100M.pt \
     --output-dir ./cd_train_prithvi_CA \
     --lr 0.0001 \
     --warmup-epochs 0 \

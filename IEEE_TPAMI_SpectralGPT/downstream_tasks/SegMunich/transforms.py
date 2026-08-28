@@ -7,7 +7,7 @@ from torchvision.transforms import functional as F
 
 
 def pad_if_smaller(img, size, fill=0):
-    # 如果图像最小边长小于给定size，则用数值fill进行padding
+    # sizefillpadding
     min_size = min(img.size)
     if min_size < size:
         ow, oh = img.size
@@ -36,10 +36,10 @@ class RandomResize(object):
 
     def __call__(self, image, target):
         size = random.randint(self.min_size, self.max_size)
-        # 这里size传入的是int类型，所以是将图像的最小边长缩放到size大小
+        # sizeintsize
         image = F.resize(image, size)
-        # 这里的interpolation注意下，在torchvision(0.9.0)以后才有InterpolationMode.NEAREST
-        # 如果是之前的版本需要使用PIL.Image.NEAREST
+        # interpolationtorchvision(0.9.0)InterpolationMode.NEAREST
+        # PIL.Image.NEAREST
         target = F.resize(target, size, interpolation=T.InterpolationMode.NEAREST)
         return image, target
 
@@ -91,7 +91,7 @@ class CenterCrop(object):
 
 class ToTensor(object):
     def __call__(self, image, target):
-        # 缩放到0-1之间
+        # 0-1
         image = F.to_tensor(image)
         target = torch.as_tensor(np.array(target), dtype=torch.int64)
         return image, target

@@ -1,8 +1,13 @@
 """
-SatMAE + FCNHead — chip-based inference for SouthMN segmentation.
+SatMAE + FCNHead -- chip-based inference for SouthMN segmentation.
 Reads chips from SatMAE_chips_MN/SouthMN/, stitches with cosine blending,
 computes per-class IoU against mask files, saves prediction GeoTIFF.
 """
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 
 import os
 import sys
@@ -14,17 +19,17 @@ import numpy as np
 import rasterio
 from tqdm import tqdm
 
-SATMAE_DIR = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE'
+SATMAE_DIR = f'{MSR_ROOT}/SatMAE'
 sys.path.insert(0, SATMAE_DIR)
 
 import models_vit_group_channels
 from models_satmae_fcn import SatMAEFCN
 
-# ── config ────────────────────────────────────────────────────────────────────
-DATA_DIR    = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_MN/SouthMN'
-SPLITS_TXT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/MN/test.txt'
-CHECKPOINT  = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE/output_seg_MN_fcn/checkpoint-best.pth'
-OUTPUT_DIR  = '/bigdata/eldawylab/sdas050/MS_Research/predictions/satmae_fcn_SouthMN'
+# -- config --------------------------------------------------------------------
+DATA_DIR    = f'{DATA_ROOT}/SatMAE_chips_MN/SouthMN'
+SPLITS_TXT  = f'{DATA_ROOT}/SatMAE_chips_multitemporal/MN/test.txt'
+CHECKPOINT  = f'{MSR_ROOT}/SatMAE/output_seg_MN_fcn/checkpoint-best.pth'
+OUTPUT_DIR  = f'{PREDICTIONS}/satmae_fcn_SouthMN'
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'SouthMN_SatMAE_FCN_Prediction.tif')
 
 CHIP_SIZE   = 96
@@ -85,12 +90,12 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {device}")
 
-    # ── load chip list ────────────────────────────────────────────────────────
+    # -- load chip list --------------------------------------------------------
     with open(SPLITS_TXT) as f:
         chip_names = [l.strip() for l in f if l.strip()]
     print(f"Test chips: {len(chip_names)}")
 
-    # ── parse row/col, compute canvas ─────────────────────────────────────────
+    # -- parse row/col, compute canvas -----------------------------------------
     coords = []
     for name in chip_names:
         parts = name.split('_')
@@ -101,9 +106,9 @@ def main():
     max_row, max_col = max(rows), max(cols)
     H = max_row - min_row + CHIP_SIZE
     W = max_col - min_col + CHIP_SIZE
-    print(f"Canvas: {H}×{W}  (min_row={min_row}, min_col={min_col})")
+    print(f"Canvas: {H}x{W}  (min_row={min_row}, min_col={min_col})")
 
-    # ── get reference profile and compute canvas transform ───────────────────
+    # -- get reference profile and compute canvas transform -------------------
     ref_chip = os.path.join(DATA_DIR, chip_names[0] + '.tif')
     with rasterio.open(ref_chip) as src:
         ref_profile = src.profile.copy()
@@ -119,7 +124,7 @@ def main():
         res, res
     )
 
-    # ── build model ───────────────────────────────────────────────────────────
+    # -- build model -----------------------------------------------------------
     print(f"\nBuilding SatMAE + FCNHead...")
     encoder = models_vit_group_channels.vit_large_patch16(
         patch_size=PATCH_SIZE, img_size=CHIP_SIZE, in_chans=IN_CHANS,
@@ -132,7 +137,7 @@ def main():
     print(f"  Loaded epoch: {ckpt.get('epoch', '?')}")
     model = model.to(device).eval()
 
-    # ── inference with cosine blend ───────────────────────────────────────────
+    # -- inference with cosine blend -------------------------------------------
     blend_mask = cosine_blend_mask(CHIP_SIZE, STRIDE, DELTA).to(device)
     inner      = CHIP_SIZE - 2 * DELTA
 
@@ -195,16 +200,16 @@ def main():
     flush_batch()
     print(f"\nInference done in {time.time()-start:.1f}s")
 
-    # ── stitch prediction ─────────────────────────────────────────────────────
+    # -- stitch prediction -----------------------------------------------------
     count_map[count_map == 0] = 1
     prob_accum /= count_map.unsqueeze(0)
     pred = torch.argmax(prob_accum, dim=0).numpy().astype(np.uint8)
 
-    # ── GT from majority vote ─────────────────────────────────────────────────
+    # -- GT from majority vote -------------------------------------------------
     gt_count[gt_count == 0] = 1
     gt_final = np.round(gt_canvas.astype(np.float32) / gt_count).astype(np.uint8)
 
-    # ── compute IoU ───────────────────────────────────────────────────────────
+    # -- compute IoU -----------------------------------------------------------
     ious = compute_iou(pred, gt_final, NUM_CLASSES)
     valid_ious = [v for v in ious if not math.isnan(v)]
     miou = sum(valid_ious) / len(valid_ious) if valid_ious else 0.0
@@ -216,7 +221,7 @@ def main():
         name = CLASS_NAMES[i+1]
         print(f"    {name:20s}: {iou:.2f}%" if not math.isnan(iou) else f"    {name:20s}: NaN")
 
-    # ── save GeoTIFF ─────────────────────────────────────────────────────────
+    # -- save GeoTIFF ---------------------------------------------------------
     out_profile = ref_profile.copy()
     out_profile.update({'count': 1, 'dtype': 'uint8', 'compress': 'lzw',
                         'nodata': 255, 'width': W, 'height': H,

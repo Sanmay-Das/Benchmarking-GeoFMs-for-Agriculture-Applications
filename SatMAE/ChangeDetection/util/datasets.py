@@ -692,7 +692,7 @@ class CropSegmentationDataset(SatelliteDataset):
     """
     Multi-temporal crop segmentation dataset for SatMAE
     Follows same structure as SentinelIndividualImageDataset
-    Bands: B02, B03, B04, B8A, B11, B12 (6 bands × 3 timesteps = 18 bands)
+    Bands: B02, B03, B04, B8A, B11, B12 (6 bands x 3 timesteps = 18 bands)
     """
     
     # SatMAE pre-trained statistics for 6 bands: B02, B03, B04, B8A, B11, B12
@@ -729,7 +729,7 @@ class CropSegmentationDataset(SatelliteDataset):
             masked_bands: Bands to mask (not used for segmentation)
             dropped_bands: Bands to drop (not used for segmentation)
         """
-        super().__init__(in_c=18)  # 6 bands × 3 timesteps
+        super().__init__(in_c=18)  # 6 bands x 3 timesteps
         
         self.n_timesteps = n_timesteps
         self.df = pd.read_csv(csv_path)

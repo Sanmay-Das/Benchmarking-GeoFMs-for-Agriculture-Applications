@@ -1,7 +1,7 @@
 """
 train_cd_satmae_NC.py
 ---------------------
-SatMAE Change Detection — North Carolina geographic split.
+SatMAE Change Detection -- North Carolina geographic split.
 
     Train : NENC
     Val   : ECNC
@@ -134,7 +134,7 @@ def main(args):
 
     device = torch.device(args.device)
 
-    # datasets — NC split
+    # datasets -- NC split
     train_csv = [os.path.join(args.data_root, 'NENC_chips.csv')]
     val_csv   = [os.path.join(args.data_root, 'ECNC_chips.csv')]
     test_csv  = [os.path.join(args.data_root, 'EastNC_chips.csv')]
@@ -230,7 +230,7 @@ def main(args):
             lr_scheduler, scaler, args.print_freq, criterion,
         )
 
-        print(f"\n=== Epoch {epoch} — Val (ECNC) ===")
+        print(f"\n=== Epoch {epoch} -- Val (ECNC) ===")
         val_loss, prec, rec, f1, oa = evaluate_cd(
             model, val_loader, device, criterion)
 
@@ -296,7 +296,7 @@ def main(args):
 # ============================================================================
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('SatMAE CD Training — North Carolina')
+    parser = argparse.ArgumentParser('SatMAE CD Training -- North Carolina')
 
     parser.add_argument(
         '--data-root',

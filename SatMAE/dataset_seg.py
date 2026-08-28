@@ -1,18 +1,18 @@
 """
 SatMAE Crop Segmentation Dataset
-Reads 96×96 chips (18-band Int16 GeoTIFF) + mask (Uint8 GeoTIFF)
+Reads 96x96 chips (18-band Int16 GeoTIFF) + mask (Uint8 GeoTIFF)
 Applies SatMAE normalization during __getitem__
 Labels: 0=NoData (ignored in loss), 1-13=crop classes
 
 Your directory structure:
     SatMAE_chips_multitemporal/
-        CentIA/          ← train chips (actual .tif files)
-        EastIA/          ← val chips   (actual .tif files)
-        NWIA/            ← test chips  (actual .tif files)
+        CentIA/          <- train chips (actual .tif files)
+        EastIA/          <- val chips   (actual .tif files)
+        NWIA/            <- test chips  (actual .tif files)
         Iowa/
-            train.txt    ← chip stems from CentIA
-            val.txt      ← chip stems from EastIA
-            test.txt     ← chip stems from NWIA
+            train.txt    <- chip stems from CentIA
+            val.txt      <- chip stems from EastIA
+            test.txt     <- chip stems from NWIA
 
 Pass data_path = SatMAE_chips_multitemporal/
 The dataset scans ALL subdirectories to find each chip by name.
@@ -28,9 +28,9 @@ from pathlib import Path
 
 
 # ============================================================================
-# SatMAE normalization stats — Table 10 from SatMAE paper (Appendix A.2.2)
+# SatMAE normalization stats -- Table 10 from SatMAE paper (Appendix A.2.2)
 # 6 bands per timestep: B02, B03, B04, B8A, B11, B12
-# Repeated 3x for 3 timesteps → 18 values total
+# Repeated 3x for 3 timesteps -> 18 values total
 # ============================================================================
 
 _MEAN_6 = np.array([
@@ -51,7 +51,7 @@ _STD_6 = np.array([
     1087.6020813,   # B12
 ], dtype=np.float32)
 
-# Repeat for 3 timesteps → 18 values
+# Repeat for 3 timesteps -> 18 values
 SATMAE_MEAN = np.tile(_MEAN_6, 3).astype(np.float32)  # (18,)
 SATMAE_STD  = np.tile(_STD_6,  3).astype(np.float32)  # (18,)
 
@@ -65,7 +65,7 @@ def build_chip_index(root_dir: Path) -> dict:
 
     e.g. {'chip_0_0': Path('.../CentIA/chip_0_0.tif'), ...}
 
-    Mask files (_mask.tif) are excluded from index —
+    Mask files (_mask.tif) are excluded from index --
     mask path is derived from image path at load time.
     """
     index = {}
@@ -80,7 +80,7 @@ def build_chip_index(root_dir: Path) -> dict:
                 else:
                     duplicates += 1
     if duplicates:
-        print(f"  WARNING: {duplicates} duplicate chip names found across subdirectories — kept first occurrence of each.")
+        print(f"  WARNING: {duplicates} duplicate chip names found across subdirectories -- kept first occurrence of each.")
     return index
 
 
@@ -88,7 +88,7 @@ class SatMAESegDataset(Dataset):
     """
     Dataset for SatMAE multi-temporal crop segmentation.
 
-    Chips can be in subdirectories — dataset scans recursively
+    Chips can be in subdirectories -- dataset scans recursively
     so no need to copy/merge chips into one flat directory.
 
     Args:
@@ -128,32 +128,37 @@ class SatMAESegDataset(Dataset):
         chip_name = self.chip_names[idx]
 
         # Resolve paths from index
+        if chip_name not in self.chip_index:
+            # Return a zero sample for missing chips -- will be ignored by ignore_index=0
+            image = np.zeros((18, 96, 96), dtype=np.float32)
+            mask  = np.zeros((96, 96), dtype=np.int64)
+            return torch.from_numpy(image), torch.from_numpy(mask)
         img_path  = self.chip_index[chip_name]
         mask_path = img_path.parent / f"{chip_name}_mask.tif"
 
-        # Load image chip (18, 96, 96) — raw Int16
+        # Load image chip (18, 96, 96) -- raw Int16
         with rasterio.open(img_path) as src:
             image = src.read().astype(np.float32)
 
-        # Load mask (96, 96) — Uint8 labels 0-13
+        # Load mask (96, 96) -- Uint8 labels 0-13
         with rasterio.open(mask_path) as src:
             mask = src.read(1).astype(np.int64)  # (96, 96)
 
-        # Clamp to valid range — any label >13 gets mapped to 0 (NoData/ignore)
+        # Clamp to valid range -- any label >13 gets mapped to 0 (NoData/ignore)
         mask = np.where(mask > 13, 0, mask)
         mask = np.where(mask < 0, 0, mask)
 
         # Replace nodata (-9999) with 0 before normalizing
         image = np.where(image == -9999, 0.0, image)
 
-        # SatMAE z-score normalization — paper Table 10 stats
+        # SatMAE z-score normalization -- paper Table 10 stats
         image = (image - SATMAE_MEAN[:, None, None]) / (SATMAE_STD[:, None, None] + 1e-8)
 
         # Convert to tensors
         image_tensor = torch.from_numpy(image).float()  # (18, 96, 96)
         mask_tensor  = torch.from_numpy(mask).long()    # (96, 96)
 
-        # Augmentation — random horizontal flip for train split
+        # Augmentation -- random horizontal flip for train split
         if self.augment and torch.rand(1).item() > 0.5:
             image_tensor = torch.flip(image_tensor, dims=[-1])
             mask_tensor  = torch.flip(mask_tensor,  dims=[-1])
@@ -173,10 +178,10 @@ def build_seg_dataset(is_train: bool, args) -> SatMAESegDataset:
     """
     Builds SatMAESegDataset from args.
 
-    args.data_path  — root dir to scan for chips
-                      (e.g. SatMAE_chips_multitemporal/ — parent of CentIA, EastIA etc.)
-    args.train_path — path to train.txt (e.g. Iowa/train.txt)
-    args.test_path  — path to val.txt   (e.g. Iowa/val.txt)
+    args.data_path  -- root dir to scan for chips
+                      (e.g. SatMAE_chips_multitemporal/ -- parent of CentIA, EastIA etc.)
+    args.train_path -- path to train.txt (e.g. Iowa/train.txt)
+    args.test_path  -- path to val.txt   (e.g. Iowa/val.txt)
     """
     split_file = args.train_path if is_train else args.test_path
     dataset    = SatMAESegDataset(

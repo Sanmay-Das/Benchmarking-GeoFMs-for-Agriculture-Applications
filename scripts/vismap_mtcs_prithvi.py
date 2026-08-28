@@ -1,3 +1,8 @@
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+
 import os
 import numpy as np
 import rasterio
@@ -54,7 +59,7 @@ def brightness_modulate(prediction, ground_truth, colors):
 
 
 def main():
-    base_dir = '/bigdata/eldawylab/sdas050/MS_Research'
+    base_dir = str(MSR_ROOT)
     gt_dir = os.path.join(base_dir, 'data/multi_temporal_crop_segmentation/NWIA')
     pred_dir = os.path.join(base_dir, 'predictions/prithvi_NWIA')
     output_dir = os.path.join(base_dir, 'visualizations_geotiff/prithvi__NWIA_224x224')
@@ -63,7 +68,7 @@ def main():
 
     mask_files = sorted(glob.glob(os.path.join(gt_dir, 'chip_*.mask.tif')))
 
-    print(f"Prithvi GeoTIFF Visualization (224×224 chips)")
+    print(f"Prithvi GeoTIFF Visualization (224x224 chips)")
     print(f"Found {len(mask_files)} chips\n")
 
     if len(mask_files) == 0:
@@ -80,12 +85,12 @@ def main():
         chip_path = os.path.join(gt_dir, f'{chip_name}_merged.tif')
 
         if not os.path.exists(pred_path):
-            print(f"⚠️  Prediction not found: {chip_name}")
+            print(f"[WARN]  Prediction not found: {chip_name}")
             missing_pred += 1
             continue
 
         if not os.path.exists(chip_path):
-            print(f"⚠️  Image chip not found: {chip_name}")
+            print(f"[WARN]  Image chip not found: {chip_name}")
             missing_chip += 1
             continue
 
@@ -125,7 +130,7 @@ def main():
             )
 
         results.append(acc)
-        print(f"{chip_name}: {acc:.2f}% (valid px: {valid.sum()}) → saved")
+        print(f"{chip_name}: {acc:.2f}% (valid px: {valid.sum()}) -> saved")
 
     # Summary
     print(f"\n{'='*60}")

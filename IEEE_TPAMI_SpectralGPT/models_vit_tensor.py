@@ -140,7 +140,7 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x):
         # embed patches
-        # x = x[:, :-1, :, :]  # 切片处理数据维度
+        # x = x[:, :-1, :, :]  # 
         # print(x.shape)
 
         x = torch.unsqueeze(x, dim=1)
