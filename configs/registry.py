@@ -74,11 +74,15 @@ MODELS = {
 
 # region -> the training run whose checkpoint scores it.
 # "" means the un-suffixed checkpoint directory (the original Iowa run).
+# "train_run" names the change-detection checkpoint directory ("" is the
+# original un-suffixed Iowa run). "seg_split" names the directory holding that
+# region's segmentation train/val/test lists, which uses the state's own name
+# rather than the CD run key.
 REGIONS = {
-    "NWIA":    {"label": "Northwest Iowa",    "train_run": ""},
-    "SouthMN": {"label": "Southern Minnesota", "train_run": "MN"},
-    "EastNC":  {"label": "Eastern N. Carolina", "train_run": "NC"},
-    "SouthCA": {"label": "Southern California", "train_run": "CA"},
+    "NWIA":    {"label": "Northwest Iowa",     "train_run": "",   "seg_split": "Iowa"},
+    "SouthMN": {"label": "Southern Minnesota", "train_run": "MN", "seg_split": "MN"},
+    "EastNC":  {"label": "Eastern N. Carolina", "train_run": "NC", "seg_split": "NC"},
+    "SouthCA": {"label": "Southern California", "train_run": "CA", "seg_split": "CA"},
 }
 
 

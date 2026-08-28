@@ -277,7 +277,7 @@ def run_chips(model_name, region, head, batch, out_dir, spec):
     num_classes = spec["num_classes"]
     suffix = "_{}".format(head) if head else ""
 
-    run_name = R.region(region)["train_run"]
+    run_name = R.region(region)["seg_split"]
     data_dir = DATA_ROOT / spec["chips_dir"].format(region=region, run=run_name)
     splits = DATA_ROOT / spec["splits"].format(region=region, run=run_name)
 

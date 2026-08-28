@@ -1,35 +1,89 @@
 """
-Evaluate segmentation predictions for NWIA (Iowa) test set.
-Computes mIoU and per-class IoU for all 5 models by comparing
-prediction TIFs against GT chip masks from test.txt.
+Evaluate segmentation predictions for any region.
+
+Replaces evaluate_seg_NWIA.py and evaluate_seg_SouthMN.py, which were the same
+routine over different regions and a different hardcoded list of models.
+Computes mIoU and per-class IoU by comparing prediction GeoTIFFs against the
+ground-truth chip masks named in that region's test split.
+
+    python evaluate_seg.py --region NWIA
+    python evaluate_seg.py --region SouthMN --models SatMAE_FPN SatMAE_PSANet
+
+Every prediction present on disk is evaluated by default; --models pins an
+explicit list.
 """
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
 from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
-
+import registry as R
 
 import os
+import argparse
 import numpy as np
 import rasterio
 from tqdm import tqdm
 
 NUM_CLASSES = 13
 CLASS_NAMES = [
-    "Natural Veg", "Forest", "Corn", "Soybeans", "Wetlands",
+    "Natural Vegetation", "Forest", "Corn", "Soybeans", "Wetlands",
     "Developed/Barren", "Open Water", "Winter Wheat", "Alfalfa",
     "Fallow/Idle", "Cotton", "Sorghum", "Other"
 ]
 
-BASE      = str(MSR_ROOT)
-CHIP_DIR  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/NWIA')
-TEST_TXT  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/Iowa/test.txt')
+# Region-dependent, filled in by configure().
+CHIP_DIR = None
+TEST_TXT = None
+PRED_MAP = {}
 
-PREDICTIONS = {
-    'SatMAE_FPN':    (os.path.join(str(PREDICTIONS), 'satmae_fpn_NWIA/NWIA_SatMAE_FPN_Prediction.tif'),    'satmae'),
-    'SatMAE_FCN':    (os.path.join(str(PREDICTIONS), 'satmae_fcn_NWIA/NWIA_SatMAE_FCN_Prediction.tif'),    'satmae'),
-    'SatMAE_PSANet': (os.path.join(str(PREDICTIONS), 'satmae_psanet_NWIA/NWIA_SatMAE_PSANet_Prediction.tif'), 'satmae'),
-}
+
+def configure(region, wanted=None):
+    """Resolve chip/split paths and discover which predictions exist."""
+    global CHIP_DIR, TEST_TXT, PRED_MAP
+
+    R.region(region)
+    spec = R.SEG_MODELS["satmae"]
+    run = R.region(region)["train_run"]
+    seg_split = R.region(region)["seg_split"]
+
+    # SatMAE keeps a per-state chip set for MN and the shared multitemporal
+    # set for Iowa; both split files live under the multitemporal tree.
+    chips_tmpl = spec["chips_dir"].format(region=region, run=run)
+    candidate = DATA_ROOT / chips_tmpl
+    if not candidate.is_dir():
+        candidate = DATA_ROOT / "SatMAE_chips_multitemporal" / region
+    CHIP_DIR = str(candidate)
+    TEST_TXT = str(DATA_ROOT / "SatMAE_chips_multitemporal" / seg_split / "test.txt")
+
+    found = {}
+    for model, head, reg in R.seg_pairs():
+        if reg != region:
+            continue
+        label = R.SEG_MODELS[model]["label"]
+        name = "{}_{}".format(label, head.upper()) if head else label
+        suffix = "_{}".format(head) if head else ""
+        path = (PREDICTIONS / "{}{}_{}".format(model, suffix, region)
+                / "{}_{}{}_Prediction.tif".format(
+                    region, label, "_" + head.upper() if head else ""))
+        if os.path.exists(path):
+            found[name] = (str(path), model)
+
+    if wanted:
+        missing = set(wanted) - set(found)
+        if missing:
+            raise SystemExit("No prediction for: {}. Available: {}".format(
+                ", ".join(sorted(missing)), ", ".join(sorted(found)) or "none"))
+        found = {k: v for k, v in found.items() if k in wanted}
+
+    if not found:
+        raise SystemExit(
+            "No segmentation predictions found for {} under {}.\n"
+            "Run infer_seg.py first, e.g.\n"
+            "    python infer_seg.py --model satmae --head fpn --region {}".format(
+                region, PREDICTIONS, region))
+
+    PRED_MAP = found
+    print("Evaluating: {}".format(", ".join(sorted(PRED_MAP))))
 
 
 def compute_iou(conf_matrix):
@@ -96,7 +150,7 @@ def main():
     print(f"Canvas origin: row={min_row}, col={min_col}\n")
 
     results = {}
-    for model, (path, enc) in PREDICTIONS.items():
+    for model, (path, enc) in PRED_MAP.items():
         if not os.path.exists(path):
             print(f"MISSING: {path}")
             continue
@@ -123,5 +177,18 @@ def main():
         print(f"{model:<20s} {r['miou']*100:>7.2f}% {r['oa']*100:>7.2f}%")
 
 
-if __name__ == '__main__':
+
+
+def cli():
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--region', required=True, choices=sorted(R.REGIONS))
+    ap.add_argument('--models', nargs='+', default=None,
+                    help='restrict to these predictions (default: all found)')
+    args = ap.parse_args()
+    configure(args.region, args.models)
     main()
+
+
+if __name__ == '__main__':
+    cli()
