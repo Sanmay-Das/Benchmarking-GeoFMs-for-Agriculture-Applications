@@ -1,7 +1,16 @@
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS  # noqa: E402
+
 import pandas as pd
 
 OLD_ROOT = "C:/MS_Research/scripts/change_detection_chips"
-NEW_ROOT = "/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips"
+NEW_ROOT = f"{CD_CHIPS}"
 
 MODELS    = ["spectralgpt", "prithvi", "satmae"]
 LOCATIONS = ["CentIA", "EastIA", "NWIA"]

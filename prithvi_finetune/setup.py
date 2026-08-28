@@ -1,3 +1,12 @@
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS  # noqa: E402
+
 from setuptools import setup
 
 setup(
@@ -9,7 +18,7 @@ setup(
     license="Apache 2",
     long_description=open("README.md").read(),
     install_requires=[
-        "mmsegmentation @ file:///bigdata/eldawylab/sdas050/MS_Research/mmsegmentation",
+        "mmsegmentation @ file://$MSR_ROOT/mmsegmentation",
         "rasterio",
         "rioxarray",
         "einops",

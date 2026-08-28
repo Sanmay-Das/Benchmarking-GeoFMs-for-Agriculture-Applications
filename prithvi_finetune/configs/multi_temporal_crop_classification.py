@@ -1,3 +1,12 @@
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import DATA_ROOT, OUTPUT_ROOT, WEIGHTS, MSR_ROOT, PREDICTIONS  # noqa: E402
+
 import os
 import sys
 import torch
@@ -32,7 +41,7 @@ num_workers = 2
 
 # model
 # TO BE DEFINED BY USER: model path
-pretrained_weights_path = os.path.expanduser("/bigdata/eldawylab/sdas050/MS_Research/weights/Prithvi_EO_V1_100M.pt")
+pretrained_weights_path = os.path.expanduser(f"{WEIGHTS}/Prithvi_EO_V1_100M.pt")
 num_layers = 6
 patch_size = 16
 embed_dim = 768
@@ -70,14 +79,14 @@ experiment = "prithvi_multi_temporal_crop_classification"
 #project_dir = r"C:\MS_Research\experiments"
 # work_dir = os.path.join(project_dir, experiment)
 
-work_dir = os.path.expanduser("/bigdata/eldawylab/sdas050/MS_Research/experiments/prithvi_multi_temporal_crop_classification/IA")
+work_dir = os.path.expanduser(f"{OUTPUT_ROOT}/experiments/prithvi_multi_temporal_crop_classification/IA")
 save_path = work_dir
 
 
 dataset_type = "GeospatialDataset"
 
 # TO BE DEFINED BY USER: data directory
-data_root = os.path.expanduser("/bigdata/eldawylab/sdas050/MS_Research/data/multi_temporal_crop_segmentation")
+data_root = os.path.expanduser(f"{DATA_ROOT}/multi_temporal_crop_segmentation")
 
 # HLS stats
 # img_norm_cfg = dict(

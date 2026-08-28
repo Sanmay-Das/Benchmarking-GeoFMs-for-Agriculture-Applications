@@ -8,6 +8,15 @@ SpectralGPT Change Detection -- California geographic split.
     Test  : SouthCA
 """
 
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+
+
 import time
 import os
 import datetime
@@ -279,11 +288,11 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--data-root',
-        default='/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/spectralgpt',
+        default=f'{CD_CHIPS}/spectralgpt',
     )
     parser.add_argument(
         '--pretrain-path',
-        default='/bigdata/eldawylab/sdas050/MS_Research/weights/SpectralGPT+.pth',
+        default=f'{WEIGHTS}/SpectralGPT+.pth',
     )
     parser.add_argument('--no-pretrain', action='store_true')
     parser.add_argument('--output-dir', default='./cd_train_spectralgpt_CA')

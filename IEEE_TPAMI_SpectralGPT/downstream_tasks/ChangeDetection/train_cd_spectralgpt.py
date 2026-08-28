@@ -27,13 +27,13 @@ Folder structure expected:
         train_cd_spectralgpt.py   <- THIS FILE
 
 Run:
-    cd /bigdata/eldawylab/sdas050/MS_Research/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection
+    cd $MSR_ROOT/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection
 
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=25643 --use_env \
         train_cd_spectralgpt.py \
-        --data-root /bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/spectralgpt \
-        --pretrain-path /bigdata/eldawylab/sdas050/MS_Research/weights/SpectralGPT+.pth \
+        --data-root $MSR_ROOT/change_detection_chips/spectralgpt \
+        --pretrain-path $MSR_ROOT/weights/SpectralGPT+.pth \
         --output-dir ./cd_train_spectralgpt
 
 Test only (EastIA):
@@ -46,6 +46,15 @@ Test only (EastIA):
         --resume ./cd_train_spectralgpt/best_F1_model.pth \
         --test-only
 """
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+
 
 import time
 import os
@@ -355,12 +364,12 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--data-root',
-        default='/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/spectralgpt',
+        default=f'{CD_CHIPS}/spectralgpt',
         help='folder containing CentIA_chips.csv, NWIA_chips.csv, EastIA_chips.csv',
     )
     parser.add_argument(
         '--pretrain-path',
-        default='/bigdata/eldawylab/sdas050/MS_Research/weights/SpectralGPT+.pth',
+        default=f'{WEIGHTS}/SpectralGPT+.pth',
     )
     parser.add_argument(
         '--no-pretrain', action='store_true',

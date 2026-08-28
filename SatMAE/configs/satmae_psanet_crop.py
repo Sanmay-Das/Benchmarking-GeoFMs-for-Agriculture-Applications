@@ -2,6 +2,15 @@
 MMSegmentation Config: SatMAE + PSANet for Crop Segmentation
 Using MMSeg 0.30.0 + MMCV 1.7.1
 """
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import DATA_ROOT, WEIGHTS, MSR_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+
 custom_imports = dict(
     imports=['satmae_backbone', 'geospatial_fm', 'custom_pipelines'],
     allow_failed_imports=False
@@ -19,7 +28,7 @@ custom_imports = dict(
 
 # Dataset settings
 dataset_type = 'CustomDataset'
-data_root = '/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/CentIA'
+data_root = f'{DATA_ROOT}/SatMAE_chips_multitemporal/CentIA'
 img_norm_cfg = dict(means=[0]*18, stds=[1]*18)
 crop_size = (96, 96)
 num_classes = 13
@@ -50,7 +59,7 @@ model = dict(
     # SatMAE ViT-Large Backbone
     backbone=dict(
         type='SatMAEBackbone',
-        pretrained='/bigdata/eldawylab/sdas050/MS_Research/weights/pretrain-vit-large-e199.pth',
+        pretrained=f'{WEIGHTS}/pretrain-vit-large-e199.pth',
         img_size=96,
         patch_size=8,
         in_chans=18,

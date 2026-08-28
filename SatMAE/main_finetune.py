@@ -2,6 +2,15 @@
 # SatMAE Crop Segmentation Fine-tuning
 # GroupChannels ViT-Large + PSANet
 # --------------------------------------------------------
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import DATA_ROOT, MSR_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS  # noqa: E402
+
 import argparse
 import datetime
 import json
@@ -111,13 +120,13 @@ def get_args_parser():
 
     # Dataset paths
     parser.add_argument('--data_path',
-                        default='/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal',
+                        default=f'{DATA_ROOT}/SatMAE_chips_multitemporal',
                         type=str)
     parser.add_argument('--train_path',
-                        default='/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/Iowa/train.txt',
+                        default=f'{DATA_ROOT}/SatMAE_chips_multitemporal/Iowa/train.txt',
                         type=str)
     parser.add_argument('--test_path',
-                        default='/bigdata/eldawylab/sdas050/MS_Research/SatMAE_chips_multitemporal/Iowa/val.txt',
+                        default=f'{DATA_ROOT}/SatMAE_chips_multitemporal/Iowa/val.txt',
                         type=str)
 
     # Output

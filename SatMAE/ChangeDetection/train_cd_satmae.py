@@ -26,10 +26,19 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=29550 --use_env \
         train_cd_satmae.py \
-        --data-root /bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/satmae \
-        --pretrain-path /bigdata/eldawylab/sdas050/MS_Research/weights/<satmae_pretrain>.pth \
+        --data-root $MSR_ROOT/change_detection_chips/satmae \
+        --pretrain-path $MSR_ROOT/weights/<satmae_pretrain>.pth \
         --output-dir ./cd_train_satmae
 """
+
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+
 
 import time
 import os
@@ -330,11 +339,11 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--data-root',
-        default='/bigdata/eldawylab/sdas050/MS_Research/change_detection_chips/satmae',
+        default=f'{CD_CHIPS}/satmae',
     )
     parser.add_argument(
         '--pretrain-path',
-        default='/bigdata/eldawylab/sdas050/MS_Research/weights/pretrain-vit-large-e199.pth',
+        default=f'{WEIGHTS}/pretrain-vit-large-e199.pth',
         help='Path to SatMAE pretrained checkpoint'
     )
     parser.add_argument('--no-pretrain', action='store_true')
