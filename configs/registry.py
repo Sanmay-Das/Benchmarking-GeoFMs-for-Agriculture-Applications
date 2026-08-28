@@ -225,3 +225,34 @@ SEG_CHECKPOINTS = {
 def seg_pairs():
     """Every (model, head, region) combination that has a checkpoint."""
     return sorted(SEG_CHECKPOINTS)
+
+
+# ---------------------------------------------------------------------------
+# Change-detection training splits
+#
+# Each run trains on one sub-region, validates on a second and tests on a
+# third, all within the same state. These were previously hardcoded three
+# times per state -- once in train_cd_satmae_<S>.py, once in
+# train_cd_spectralgpt_<S>.py and once in train_cd_prithvi_<S>.py -- which is
+# why the per-state training scripts existed at all.
+#
+# Keyed by split name; the test region is the one the paper reports.
+# ---------------------------------------------------------------------------
+
+CD_SPLITS = {
+    "IA": {"train": "CentIA",  "val": "EastIA", "test": "NWIA",
+           "label": "Iowa"},
+    "CA": {"train": "NorthCA", "val": "CentCA", "test": "SouthCA",
+           "label": "California"},
+    "MN": {"train": "NorthMN", "val": "CentMN", "test": "SouthMN",
+           "label": "Minnesota"},
+    "NC": {"train": "NENC",    "val": "ECNC",   "test": "EastNC",
+           "label": "North Carolina"},
+}
+
+
+def split(name):
+    if name not in CD_SPLITS:
+        raise SystemExit("Unknown split '{}'. Choose from: {}".format(
+            name, ", ".join(sorted(CD_SPLITS))))
+    return CD_SPLITS[name]

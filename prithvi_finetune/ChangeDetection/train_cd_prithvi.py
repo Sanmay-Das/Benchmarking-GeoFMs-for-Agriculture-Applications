@@ -34,6 +34,7 @@ while _d != _os.path.dirname(_d) and not _os.path.isfile(
         _os.path.join(_d, 'configs', 'paths.py')):
     _d = _os.path.dirname(_d)
 _sys.path.insert(0, _os.path.join(_d, 'configs'))
+import registry  # noqa: E402
 from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
 
 
@@ -164,14 +165,22 @@ def main(args):
     device = torch.device(args.device)
 
     # datasets
-    train_csv = [os.path.join(args.data_root, 'CentIA_chips.csv')]
-    val_csv   = [os.path.join(args.data_root, 'EastIA_chips.csv')]
-    test_csv  = [os.path.join(args.data_root, 'NWIA_chips.csv')]
+    # Regions come from registry.CD_SPLITS, selected by --split.
+    regions   = registry.split(args.split)
+    train_csv = [os.path.join(args.data_root, regions['train'] + '_chips.csv')]
+    val_csv   = [os.path.join(args.data_root, regions['val']   + '_chips.csv')]
+    test_csv  = [os.path.join(args.data_root, regions['test']  + '_chips.csv')]
+    # The MN runs were trained before the SouthMN chips existed and were
+    # scored afterwards with infer_cd.py, so a missing test manifest is not
+    # an error: training and validation proceed without it.
+    has_test  = all(os.path.exists(c) for c in test_csv)
+    if not has_test:
+        print('No test manifest for split {}; score it with infer_cd.py.'
+              .format(args.split))
 
     train_dataset = CDDatasetPrithvi(train_csv, training=True)
     val_dataset   = CDDatasetPrithvi(val_csv,   training=False)
-    test_dataset  = CDDatasetPrithvi(test_csv,  training=False)
-
+    test_dataset  = CDDatasetPrithvi(test_csv,  training=False) if has_test else None
     print("Creating data loaders")
 
     if args.distributed:
@@ -191,12 +200,14 @@ def main(args):
         sampler=val_sampler, num_workers=args.workers,
         collate_fn=CDDatasetPrithvi.collate_fn,
     )
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=1,
-        sampler=torch.utils.data.SequentialSampler(test_dataset),
-        num_workers=args.workers,
-        collate_fn=CDDatasetPrithvi.collate_fn,
-    )
+    test_loader = None
+    if has_test:
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=1,
+            sampler=torch.utils.data.SequentialSampler(test_dataset),
+            num_workers=args.workers,
+            collate_fn=CDDatasetPrithvi.collate_fn,
+        )
 
     # model
     print("Creating model")
@@ -246,7 +257,8 @@ def main(args):
     # test only
     if args.test_only:
         print("\n=== TEST SET (NWIA) ===")
-        evaluate_cd(model, test_loader, device, criterion)
+        if test_loader is not None:
+            evaluate_cd(model, test_loader, device, criterion)
         return
 
     # training loop
@@ -324,7 +336,8 @@ def main(args):
     best_ckpt = torch.load(
         os.path.join(args.output_dir, 'best_F1_model.pth'), map_location='cpu')
     model_without_ddp.load_state_dict(best_ckpt['model'])
-    evaluate_cd(model, test_loader, device, criterion)
+    if test_loader is not None:
+        evaluate_cd(model, test_loader, device, criterion)
 
 
 # ============================================================================
@@ -334,6 +347,10 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Prithvi Change Detection Training')
 
+    parser.add_argument(
+        '--split', default='IA',
+        choices=sorted(registry.CD_SPLITS),
+        help='geographic split to train on (see registry.CD_SPLITS)')
     parser.add_argument(
         '--data-root',
         default=f'{CD_CHIPS}/prithvi',

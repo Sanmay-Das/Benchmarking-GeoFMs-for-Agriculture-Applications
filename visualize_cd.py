@@ -1,31 +1,38 @@
 """
-visualize_cd_NWIA.py
---------------------
-Change detection visualization for NWIA following SpectralGPT Fig. 7(d).
-Memory-efficient: never holds more than one full-res pred at a time.
-For crops: loads only the chips overlapping that crop window.
+Change-detection visualization for any region.
 
-Binary maps: white=changed, black=unchanged, gray=nodata
+Replaces the four visualize_cd_<region>.py scripts, which were copies of this
+one differing in a region name and a hardcoded list of models. Following
+SpectralGPT Fig. 7(d): full-scene colored maps plus full-resolution crops.
 
-Outputs:
-    visualizations/cd_NWIA/
-        NWIA_CD_GT_colored.png
-        NWIA_CD_SpectralGPT_colored.png
-        NWIA_CD_Prithvi_colored.png
-        NWIA_CD_SatMAE_colored.png
-        legend.png
-        geotiffs/  NWIA_CD_GT.tif / SpectralGPT.tif / Prithvi.tif / SatMAE.tif
-        crops/highchange/   crop1_T1/T2/GT/SpectralGPT/Prithvi/SatMAE.png  x3
-        crops/informative/  crop1_T1/T2/GT/SpectralGPT/Prithvi/SatMAE.png  x3
+    python visualize_cd.py --region NWIA
+    python visualize_cd.py --region SouthMN --models Prithvi SatMAE
+
+Memory-efficient: never holds more than one full-resolution prediction at a
+time, and for crops loads only the chips overlapping the crop window.
+
+By default every backbone with a prediction on disk is included. The original
+per-region scripts each hardcoded a different subset -- NWIA listed all three,
+EastNC only SatMAE, SouthCA and SouthMN only Prithvi -- which reflected which
+runs had finished at the time rather than a deliberate choice. Discovering
+them makes the figure follow the predictions that actually exist; pass
+--models to pin an explicit list.
+
+Outputs under $MSR_OUTPUT_ROOT/visualizations/cd_<region>/:
+    <region>_CD_GT_colored.png, <region>_CD_<Model>_colored.png
+    crops/     full-resolution crop panels
+    geotiffs/  colored GeoTIFFs
 """
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv
+from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv, chips_csv
+import registry as R
 
 
 import os
 import gc
+import argparse
 import numpy as np
 import pandas as pd
 import rasterio
@@ -33,26 +40,62 @@ import rasterio.windows
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 
-# -- paths --------------------------------------------------------------------
-BASE      = str(MSR_ROOT)
-CHIPS_CSV = f'{DATA_ROOT}/change_detection_chips/spectralgpt/NWIA_chips.csv'
+# Manifests are read from the SpectralGPT chip set: the T1/T2 imagery is the
+# same for every backbone, only the chip size differs, and 128 px tiles give
+# the cleanest downsampled mosaic.
+MANIFEST_MODEL = 'spectralgpt'
 CHIP_SIZE = 128
 
-GT_PATH = f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_gt.tif'
-
-MODELS = [
-    ('SpectralGPT',
-     f'{PREDICTIONS}/cd_spectralgpt_NWIA/NWIA_SpectralGPT_CD_pred.tif'),
-    ('Prithvi',
-     f'{PREDICTIONS}/cd_prithvi_NWIA/NWIA_Prithvi_CD_pred.tif'),
-    ('SatMAE',
-     f'{PREDICTIONS}/cd_satmae_NWIA/NWIA_SatMAE_CD_pred.tif'),
-]
-
-OUTPUT_DIR = f'{OUTPUT_ROOT}/visualizations/cd_NWIA'
 SCALE      = 4      # downsample for full-scene PNGs
 STRIP_H    = 256    # strip height for GeoTIFF writing
 CROP_SIZE  = 512    # full-res crop size in pixels
+
+# Filled in by main() once the region is known.
+REGION = None
+CHIPS_CSV = None
+GT_PATH = None
+MODELS = []
+OUTPUT_DIR = None
+
+
+def configure(region, wanted=None):
+    """Resolve every region-dependent path and discover available predictions."""
+    global REGION, CHIPS_CSV, GT_PATH, MODELS, OUTPUT_DIR
+
+    R.region(region)
+    REGION = region
+    CHIPS_CSV = str(chips_csv(MANIFEST_MODEL, region))
+    OUTPUT_DIR = f'{OUTPUT_ROOT}/visualizations/cd_{region}'
+
+    candidates = []
+    for model in sorted(R.MODELS):
+        label = R.model(model)['label']
+        pred = PREDICTIONS / f'cd_{model}_{region}' / f'{region}_{label}_CD_pred.tif'
+        gt = PREDICTIONS / f'cd_{model}_{region}' / f'{region}_{label}_CD_gt.tif'
+        candidates.append((label, str(pred), str(gt)))
+
+    if wanted:
+        missing = set(wanted) - {c[0] for c in candidates}
+        if missing:
+            raise SystemExit(
+                "Unknown model(s): {}. Choose from: {}".format(
+                    ', '.join(sorted(missing)),
+                    ', '.join(c[0] for c in candidates)))
+        candidates = [c for c in candidates if c[0] in wanted]
+
+    available = [(label, pred, gt) for label, pred, gt in candidates
+                 if os.path.exists(pred)]
+    if not available:
+        raise SystemExit(
+            "No change-detection predictions found for {} under {}.\n"
+            "Run infer_cd.py first, e.g.\n"
+            "    python infer_cd.py --model satmae --region {}".format(
+                region, PREDICTIONS, region))
+
+    MODELS = [(label, pred) for label, pred, _ in available]
+    # Any backbone's GT canvas covers the scene; use the first available.
+    GT_PATH = available[0][2]
+    print("Models: {}".format(', '.join(label for label, _ in MODELS)))
 
 
 # -- helpers -------------------------------------------------------------------
@@ -248,17 +291,17 @@ def main():
 
     print("\nGround Truth:")
     save_png(to_binary_rgb(gt[::SCALE, ::SCALE]),
-             f'{OUTPUT_DIR}/NWIA_CD_GT_colored.png')
-    save_geotiff_strip(gt, GT_PATH, f'{OUTPUT_DIR}/geotiffs/NWIA_CD_GT.tif')
+             f'{OUTPUT_DIR}/{REGION}_CD_GT_colored.png')
+    save_geotiff_strip(gt, GT_PATH, f'{OUTPUT_DIR}/geotiffs/{REGION}_CD_GT.tif')
 
     preds_ds = {}
     for model_name, pred_path in MODELS:
         print(f"\n{model_name}:")
         pred = load_and_align(pred_path, H, W)
         save_png(to_binary_rgb(pred[::SCALE, ::SCALE]),
-                 f'{OUTPUT_DIR}/NWIA_CD_{model_name}_colored.png')
+                 f'{OUTPUT_DIR}/{REGION}_CD_{model_name}_colored.png')
         save_geotiff_strip(pred, GT_PATH,
-                           f'{OUTPUT_DIR}/geotiffs/NWIA_CD_{model_name}.tif')
+                           f'{OUTPUT_DIR}/geotiffs/{REGION}_CD_{model_name}.tif')
         preds_ds[model_name] = pred[::SCALE, ::SCALE].copy()
         del pred
         gc.collect()
@@ -307,5 +350,16 @@ def main():
     print(f"\nAll done. Outputs: {OUTPUT_DIR}")
 
 
-if __name__ == '__main__':
+def cli():
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--region', required=True, choices=sorted(R.REGIONS))
+    ap.add_argument('--models', nargs='+', default=None,
+                    help='restrict to these backbones (default: all with predictions)')
+    args = ap.parse_args()
+    configure(args.region, args.models)
     main()
+
+
+if __name__ == '__main__':
+    cli()
