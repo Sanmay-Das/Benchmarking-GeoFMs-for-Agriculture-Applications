@@ -26,13 +26,19 @@ Check what a run will download before committing to it:
 
 ## The benchmark grid
 
-A **cell** is one `(task, model, state)` triple and one row of results.
+A **cell** is one `(task, model, state)` triple, and one row of results:
 
-| | | |
-|---|---|---|
-| **tasks** | `cd` | change detection |
-| **models** | `satmae`, `spectralgpt`, `prithvi` | |
-| **states** | `iowa`, `minnesota`, `north_carolina`, `california` | |
+- **tasks** — `cd` (change detection), `seg` (semantic segmentation)
+- **models** — `satmae`, `spectralgpt`, `prithvi`
+- **states** — `iowa`, `minnesota`, `north_carolina`, `california`
+
+That is 2 x 3 x 4 = 24 cells. Every command takes the same three flags:
+
+```bash
+./reproduce.sh --task cd --model satmae --state minnesota
+```
+
+Omit `--model` or `--state` to run every one of them.
 
 State is the unit everything is organised by. Each state has three sub-regions —
 train, validation and test — and the reported number is computed on the test
@@ -50,7 +56,7 @@ region. You never name regions directly; `--state iowa` resolves to them.
 Six of the twelve change-detection cells have both chips and a checkpoint
 published:
 
-| | iowa | minnesota | north_carolina | california |
+| model | iowa | minnesota | north_carolina | california |
 |---|---|---|---|---|
 | **satmae** | — | ✅ | ✅ | ✅ |
 | **prithvi** | — | — | ✅ | ✅ |
@@ -68,7 +74,7 @@ of a cell that cannot run.
 
 Seven of the twelve segmentation cells are reproducible:
 
-| | iowa | minnesota | north_carolina | california |
+| model | iowa | minnesota | north_carolina | california |
 |---|---|---|---|---|
 | **satmae** | — | ✅ | ✅ | no checkpoint |
 | **prithvi** | — | ✅ | ✅ | no chips |
@@ -105,13 +111,13 @@ Split files are not published either. They are derivable from the chips, so
 ## Commands
 
 ```bash
-./setup.sh [model ...]                      # environments; default all three
-./reproduce.sh --task cd [options]          # fetch + score + table
-python scripts/fetch.py --task cd [options]  # download only
-python infer_cd.py --model M --region R      # score one region directly
-./benchmark-gfm manifests [model]            # rebuild chip manifests
-./benchmark-gfm infer --task cd --model M --state S
-./benchmark-gfm train --task cd --model M --state S
+./setup.sh [model ...]                            # environments; all three by default
+./reproduce.sh --task {cd,seg} [options]          # fetch + score + table
+python scripts/fetch.py --task {cd,seg} [options] # download only
+./benchmark-gfm infer --task {cd,seg} --model M --state S
+./benchmark-gfm train --task {cd,seg} --model M --state S
+./benchmark-gfm eval --task seg --region R        # segmentation metrics
+./benchmark-gfm manifests [model]                 # rebuild chip manifests
 ```
 
 `reproduce.sh` options: `--model`, `--state`, `--threshold`, `--dry-run`,
