@@ -6,7 +6,7 @@
 #
 # Override any root from the environment before submitting, e.g.
 #     export MSR_DATA_ROOT=/scratch/me/geofm-data
-#     sbatch run_cd.sh --model spectralgpt --region SouthMN
+#     ./benchmark-gfm --sbatch infer --task cd --model spectralgpt --state minnesota
 
 # Repository root: parent of the directory holding this file.
 _this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

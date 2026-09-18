@@ -224,7 +224,7 @@ def main():
         print("Warning: {} not importable, so chip manifests cannot be built.\n"
               "         The download will still run; finish with\n"
               "             pip install -r requirements/{}.txt\n"
-              "             ./make_manifests.sh {}\n"
+              "             ./benchmark-gfm manifests {}\n"
               .format(", ".join(lacking), models[0],
                       "" if args.model == "all" else args.model))
 
@@ -329,7 +329,7 @@ def main():
     print("Weights:         {}".format(P.WEIGHTS))
     if not manifests_ok:
         print("\nChips are in place but manifests were not built. Install the "
-              "requirements and run:\n    ./make_manifests.sh")
+              "requirements and run:\n    ./benchmark-gfm manifests")
         return 1
     if missing:
         print("\n{} file(s) were not published; those cells remain "

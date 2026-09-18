@@ -18,7 +18,10 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-VENVS="${MSR_VENVS:-$ROOT/venvs}"
+# shellcheck disable=SC1091
+source "$ROOT/configs/paths.sh"
+# shellcheck disable=SC1091
+source "$ROOT/configs/env.sh"
 
 TASK=cd
 MODEL=all
@@ -46,18 +49,8 @@ if [ "$TASK" != "cd" ]; then
     exit 2
 fi
 
-# Which interpreter runs a given model. Falls back to whatever is on PATH so
-# an existing environment can be used without rebuilding one.
-pick_python() {
-    local model="$1"
-    if [ -x "$VENVS/$model/bin/python" ]; then
-        echo "$VENVS/$model/bin/python"
-    elif [ -n "${MSR_VENV:-}" ] && [ -x "$MSR_VENV/bin/python" ]; then
-        echo "$MSR_VENV/bin/python"
-    else
-        command -v python3
-    fi
-}
+# Interpreter selection lives in configs/env.sh, shared with benchmark-gfm.
+pick_python() { msr_python "$1"; }
 
 # Expand "all" using the registry rather than a second copy of the lists.
 list_of() {
@@ -98,14 +91,10 @@ for model in "${MODELS[@]}"; do
             fi
         fi
 
-        region=$(python3 -c "
-import sys; sys.path.insert(0,'configs')
-import registry as R; print(R.test_region('$state'))")
-
-        args=(--model "$model" --region "$region")
+        args=(infer --task "$TASK" --model "$model" --state "$state")
         [ -n "$THRESHOLD" ] && args+=(--threshold "$THRESHOLD")
 
-        if "$PY" infer_cd.py "${args[@]}"; then
+        if ./benchmark-gfm "${args[@]}"; then
             ok+=("$cell")
         else
             echo "-- $cell: inference failed"

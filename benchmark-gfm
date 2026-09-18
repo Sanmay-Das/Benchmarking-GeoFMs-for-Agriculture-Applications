@@ -1,0 +1,338 @@
+#!/bin/bash
+#
+# Benchmarking geospatial foundation models for agriculture.
+#
+#     ./benchmark-gfm <command> [options]
+#
+# Commands:
+#     infer      run inference          --task {cd,seg} --model M --state S
+#     train      fine-tune a backbone   --task {cd,seg} --model M --state S
+#     viz        render prediction maps --task cd --state S
+#     eval       segmentation metrics   --task seg
+#     manifests  rebuild chip manifests [model ...]
+#     help       this text
+#
+# Add --sbatch before the command to submit it to SLURM with the resources
+# that command needs, instead of running it here:
+#
+#     ./benchmark-gfm --sbatch train --task cd --model satmae --state minnesota
+#
+# Replaces run_cd.sh, run_seg.sh, run_viz_cd.sh, run_eval_seg.sh, train_cd.sh,
+# train_seg.sh, train_seg_prithvi.sh and make_manifests.sh, which shared the
+# same four lines of setup and differed only in what they launched.
+#
+# The two entry points a new user needs are still their own scripts:
+# ./setup.sh builds the environments and ./reproduce.sh produces the results.
+
+set -euo pipefail
+
+HERE="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+# shellcheck disable=SC1091
+source "$HERE/configs/paths.sh"
+# shellcheck disable=SC1091
+source "$HERE/configs/env.sh"
+
+usage() { sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; }
+
+die() { echo "$*" >&2; exit 2; }
+
+# SLURM resources per command. Previously eight copies of #SBATCH headers.
+sbatch_resources() {
+    case "$1" in
+        train)     echo "--partition=gpu --gres=gpu:a100:1 --cpus-per-task=16 --mem=128G --time=24:00:00" ;;
+        infer)     echo "--partition=gpu --gres=gpu:1 --cpus-per-task=8 --mem=64G --time=08:00:00" ;;
+        viz|eval)  echo "--partition=batch --cpus-per-task=4 --mem=32G --time=04:00:00" ;;
+        manifests) echo "--partition=batch --cpus-per-task=4 --mem=32G --time=06:00:00" ;;
+        *)         echo "--partition=batch --cpus-per-task=4 --mem=16G --time=02:00:00" ;;
+    esac
+}
+
+# Resolve --state to the internal split code for a task.
+state_to_split() {
+    local state="$1" task="$2"
+    python3 -c "
+import sys; sys.path.insert(0, '$MSR_ROOT/configs')
+import registry as R
+print(R.state('$state')['${task}'])" || die "unknown state: $state"
+}
+
+state_to_region() {
+    python3 -c "
+import sys; sys.path.insert(0, '$MSR_ROOT/configs')
+import registry as R
+print(R.test_region('$1'))" || die "unknown state: $1"
+}
+
+# ---------------------------------------------------------------- inference
+
+cmd_infer() {
+    local task=cd model="" state="" all=0 rest=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --task)  task="$2"; shift 2 ;;
+            --model) model="$2"; shift 2 ;;
+            --state) state="$2"; shift 2 ;;
+            --all)   all=1; shift ;;
+            *) rest+=("$1"); shift ;;
+        esac
+    done
+
+    msr_load_cuda
+    cd "$MSR_ROOT"
+
+    local script
+    case "$task" in
+        cd)  script=infer_cd.py ;;
+        seg) script=infer_seg.py ;;
+        *)   die "unknown task: $task (expected cd or seg)" ;;
+    esac
+
+    # --state is the documented form; the scripts themselves take --region.
+    if [ -n "$state" ]; then
+        rest+=(--region "$(state_to_region "$state")")
+    fi
+
+    if [ "$all" = 1 ]; then
+        for m in satmae spectralgpt prithvi; do
+            echo "=============================="
+            echo "$m"
+            echo "=============================="
+            if [ "$task" = seg ] && [ "$m" = satmae ]; then
+                # SatMAE segmentation has three heads; the others have one.
+                for head in fcn fpn psanet; do
+                    "$(msr_python "$m")" "$script" --model satmae --head "$head" "${rest[@]}"
+                done
+            else
+                "$(msr_python "$m")" "$script" --model "$m" "${rest[@]}"
+            fi
+        done
+    else
+        [ -n "$model" ] || die "--model is required (or pass --all)"
+        "$(msr_python "$model")" "$script" --model "$model" "${rest[@]}"
+    fi
+
+    echo ""
+    echo "Outputs under $MSR_OUTPUT_ROOT/predictions/"
+}
+
+# ----------------------------------------------------------------- training
+
+train_cd() {
+    local model="$1" split="$2"; shift 2
+    local code_dir script pretrain hyper=()
+    case "$model" in
+        satmae)
+            code_dir="SatMAE/ChangeDetection"
+            script="train_cd_satmae.py"
+            pretrain="$MSR_WEIGHTS/pretrain-vit-large-e199.pth"
+            hyper=(--lr 0.0001 --warmup-epochs 0 --batch_size 16 --epochs 60) ;;
+        spectralgpt)
+            code_dir="IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection"
+            script="train_cd_spectralgpt.py"
+            pretrain="$MSR_WEIGHTS/SpectralGPT+.pth"
+            hyper=(--lr 0.0001 --warmup-epochs 0) ;;
+        prithvi)
+            code_dir="prithvi_finetune/ChangeDetection"
+            script="train_cd_prithvi.py"
+            pretrain="$MSR_WEIGHTS/Prithvi_EO_V1_100M.pt"
+            hyper=(--lr 0.0001 --warmup-epochs 0 --batch_size 16 --epochs 60) ;;
+        *) die "unknown model: $model" ;;
+    esac
+
+    local out_dir="$MSR_OUTPUT_ROOT/checkpoints/cd/cd_train_${model}_${split}"
+    mkdir -p "$MSR_OUTPUT_ROOT/logs" "$out_dir"
+
+    msr_banner "${model} CD training -- split ${split}"
+    echo "Out:  $out_dir"
+    echo ""
+
+    local py; py="$(msr_python "$model")"
+    cd "$MSR_ROOT/$code_dir"
+    "$py" -m torch.distributed.launch --nproc_per_node=1 \
+        --master_port="$(msr_master_port)" --use_env "$script" \
+        --split "$split" \
+        --data-root "$MSR_DATA_ROOT/change_detection_chips/$model" \
+        --pretrain-path "$pretrain" \
+        --output-dir "$out_dir" \
+        "${hyper[@]}" "$@"
+
+    echo ""
+    echo "==== Done ===="
+    ls -lh "$out_dir"
+}
+
+train_seg_satmae() {
+    local split="$1" head="$2"; shift 2
+    local entry head_args=() chips
+    case "$head" in
+        fcn)    entry="main_finetune_fcn.py" ;;
+        fpn)    entry="main_finetune_fpn.py" ;;
+        psanet) entry="main_finetune.py"
+                head_args=(--optimizer sgd --shrink_factor 2 --zoom_factor 8) ;;
+        *) die "unknown head: $head (expected fcn, fpn or psanet)" ;;
+    esac
+    case "$split" in
+        Iowa) chips="$MSR_DATA_ROOT/SatMAE_chips_multitemporal" ;;
+        MN)   chips="$MSR_DATA_ROOT/SatMAE_chips_MN" ;;
+        *) die "unsupported segmentation split: $split (expected Iowa or MN)" ;;
+    esac
+
+    local splits_dir="$MSR_DATA_ROOT/SatMAE_chips_multitemporal/$split"
+    local suffix=""; [ "$head" != psanet ] && suffix="_$head"
+    local out_dir="$MSR_OUTPUT_ROOT/checkpoints/seg/output_seg_${split}${suffix}"
+    mkdir -p "$MSR_OUTPUT_ROOT/logs" "$out_dir/logs"
+
+    msr_banner "SatMAE segmentation -- head=$head split=$split"
+    echo "Chips: $chips"
+    echo "Out:   $out_dir"
+    echo ""
+
+    local py; py="$(msr_python satmae)"
+    cd "$MSR_ROOT/SatMAE"
+    "$py" -m torch.distributed.launch --nproc_per_node=1 \
+        --master_port="$(msr_master_port)" --use_env "$entry" \
+        --model vit_large_patch16 \
+        --input_size 96 --patch_size 8 --nb_classes 14 --drop_path 0.2 \
+        --epochs 100 --batch_size 8 --accum_iter 16 \
+        --finetune "$MSR_WEIGHTS/pretrain-vit-large-e199.pth" \
+        --data_path "$chips" \
+        --train_path "$splits_dir/train.txt" \
+        --test_path "$splits_dir/val.txt" \
+        --output_dir "$out_dir" \
+        --log_dir "$out_dir/logs" \
+        --dist_url env:// \
+        "${head_args[@]}" "$@"
+
+    echo ""
+    echo "==== Done ===="
+    ls -lh "$out_dir"
+}
+
+train_seg_prithvi() {
+    # Prithvi segmentation runs through mmsegmentation's launcher rather than
+    # torch.distributed, and takes its settings from a config file.
+    msr_banner "Prithvi segmentation (multi-temporal crop classification)"
+    local py; py="$(msr_python prithvi)"
+    "$py" - <<'PY'
+import torch
+print("PyTorch:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+PY
+    export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-16}
+    cd "$MSR_ROOT"
+    mim train mmsegmentation \
+        prithvi_finetune/configs/multi_temporal_crop_classification.py \
+        --launcher none --gpus 1 "$@"
+}
+
+cmd_train() {
+    local task=cd model="" state="" split="" head=psanet rest=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --task)  task="$2"; shift 2 ;;
+            --model) model="$2"; shift 2 ;;
+            --state) state="$2"; shift 2 ;;
+            --split) split="$2"; shift 2 ;;
+            --head)  head="$2"; shift 2 ;;
+            *) rest+=("$1"); shift ;;
+        esac
+    done
+    [ -n "$model" ] || die "--model is required"
+
+    msr_load_cuda
+
+    case "$task" in
+        cd)
+            [ -n "$split" ] || split="$(state_to_split "${state:-iowa}" cd)"
+            train_cd "$model" "$split" "${rest[@]+"${rest[@]}"}" ;;
+        seg)
+            case "$model" in
+                satmae)
+                    [ -n "$split" ] || split="$(state_to_split "${state:-iowa}" seg)"
+                    train_seg_satmae "$split" "$head" "${rest[@]+"${rest[@]}"}" ;;
+                prithvi)
+                    train_seg_prithvi "${rest[@]+"${rest[@]}"}" ;;
+                *) die "segmentation training is wired for satmae and prithvi only" ;;
+            esac ;;
+        *) die "unknown task: $task (expected cd or seg)" ;;
+    esac
+}
+
+# ------------------------------------------------- visualization and metrics
+
+cmd_viz() {
+    local state="" rest=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --task)  shift 2 ;;   # cd is the only one implemented
+            --state) state="$2"; shift 2 ;;
+            *) rest+=("$1"); shift ;;
+        esac
+    done
+    [ -n "$state" ] && rest+=(--region "$(state_to_region "$state")")
+
+    msr_load_cuda
+    cd "$MSR_ROOT"
+    "$(msr_python spectralgpt)" visualize_cd.py "${rest[@]+"${rest[@]}"}"
+    echo ""
+    echo "Outputs under $MSR_OUTPUT_ROOT/visualizations/"
+}
+
+cmd_eval() {
+    local rest=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --task) shift 2 ;;    # seg is the only one implemented
+            *) rest+=("$1"); shift ;;
+        esac
+    done
+    msr_load_cuda
+    cd "$MSR_ROOT"
+    "$(msr_python satmae)" evaluate_seg.py "${rest[@]+"${rest[@]}"}"
+}
+
+cmd_manifests() {
+    cd "$MSR_ROOT"
+    local models=("$@")
+    [ ${#models[@]} -eq 0 ] && models=(satmae spectralgpt prithvi)
+    for model in "${models[@]}"; do
+        local base="$MSR_DATA_ROOT/change_detection_chips/$model"
+        if [ ! -d "$base" ]; then
+            echo "skip $model: $base not found"
+            continue
+        fi
+        echo "==== manifests for $model ===="
+        "$(msr_python "$model")" scripts/generate_cd_csv.py --base "$base" --region all
+    done
+    echo "Done."
+}
+
+# --------------------------------------------------------------- dispatch
+
+SBATCH=0
+if [ "${1:-}" = "--sbatch" ]; then SBATCH=1; shift; fi
+
+COMMAND="${1:-help}"; shift || true
+
+if [ "$SBATCH" = 1 ]; then
+    command -v sbatch >/dev/null || die "sbatch not found; run without --sbatch"
+    mkdir -p "$MSR_OUTPUT_ROOT/logs"
+    # shellcheck disable=SC2046
+    exec sbatch $(sbatch_resources "$COMMAND") \
+        --job-name="gfm_$COMMAND" \
+        --output="$MSR_OUTPUT_ROOT/logs/${COMMAND}_%j.out" \
+        --error="$MSR_OUTPUT_ROOT/logs/${COMMAND}_%j.err" \
+        --wrap "$(printf '%q ' "$HERE/benchmark-gfm" "$COMMAND" "$@")"
+fi
+
+case "$COMMAND" in
+    infer)     cmd_infer "$@" ;;
+    train)     cmd_train "$@" ;;
+    viz)       cmd_viz "$@" ;;
+    eval)      cmd_eval "$@" ;;
+    manifests) cmd_manifests "$@" ;;
+    help|-h|--help) usage ;;
+    *) echo "unknown command: $COMMAND" >&2; echo ""; usage; exit 2 ;;
+esac

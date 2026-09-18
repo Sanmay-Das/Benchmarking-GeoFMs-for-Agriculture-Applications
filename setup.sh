@@ -9,7 +9,7 @@
 # needs torch 2.5.1+cu121 while SatMAE and Prithvi need 1.11.0+cu113. A single
 # shared environment cannot satisfy both, so do not try to merge them.
 #
-# Environments are created under ./venvs/<model>/ and are what run_cd.sh and
+# Environments are created under ./venvs/<model>/ and are what benchmark-gfm and
 # reproduce.sh look for. Set MSR_VENVS to put them elsewhere (a scratch
 # filesystem, say -- they total several GB).
 

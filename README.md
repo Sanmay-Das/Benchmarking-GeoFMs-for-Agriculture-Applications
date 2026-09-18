@@ -73,7 +73,9 @@ cannot currently run it.
 ./reproduce.sh --task cd [options]          # fetch + score + table
 python scripts/fetch.py --task cd [options]  # download only
 python infer_cd.py --model M --region R      # score one region directly
-./make_manifests.sh [model]                  # rebuild chip manifests
+./benchmark-gfm manifests [model]            # rebuild chip manifests
+./benchmark-gfm infer --task cd --model M --state S
+./benchmark-gfm train --task cd --model M --state S
 ```
 
 `reproduce.sh` options: `--model`, `--state`, `--threshold`, `--dry-run`,
@@ -84,7 +86,7 @@ python infer_cd.py --model M --region R      # score one region directly
 Training runs as a SLURM job:
 
 ```bash
-sbatch train_cd.sh --model satmae --state minnesota
+./benchmark-gfm --sbatch train --task cd --model satmae --state minnesota
 ```
 
 Training needs all three regions of a state:
@@ -107,11 +109,8 @@ infer_seg.py           segmentation inference
 evaluate_seg.py        segmentation metrics
 visualize_cd.py        change-detection maps
 
-train_cd.sh            change-detection training (any model, any state)
-train_seg.sh           SatMAE segmentation training
-train_seg_prithvi.sh   Prithvi segmentation training
-run_cd.sh run_seg.sh   inference launchers
-make_manifests.sh      rebuild chip manifests from the chips
+benchmark-gfm          infer, train, viz, eval, manifests
+                       add --sbatch to submit to SLURM
 
 scripts/fetch.py       download one cell from Hugging Face
 scripts/               region-specific helpers and analysis one-offs
@@ -149,7 +148,7 @@ Published at
 downloads only what a cell needs.
 
 Chip manifests are **not** published: they contain absolute paths, and are
-rebuilt from the chips after unpacking. `make_manifests.sh` does this if you
+rebuilt from the chips after unpacking. `./benchmark-gfm manifests` does this if you
 ever need to redo it.
 
 ## Environments
