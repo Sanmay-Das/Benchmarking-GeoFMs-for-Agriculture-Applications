@@ -40,3 +40,7 @@ experiments/
 *.pth
 *.pt
 paper/
+
+# IDE configuration
+.idea/
+*.iml

@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# NOTE: broken independently of this refactor. It launches
+# train_multi_GPU_new.py, which does not parse at all (IndentationError) in the
+# vendored SegMunich tree. Kept for reference, not an entry point.
 #SBATCH --job-name=spectralgpt_mn
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:a100:1
@@ -10,7 +14,7 @@
 
 set -euo pipefail
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+source "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/configs/paths.sh"
 
 module purge
 module load cuda/12.1

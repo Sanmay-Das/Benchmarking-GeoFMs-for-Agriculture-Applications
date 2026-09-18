@@ -8,6 +8,10 @@
 #SBATCH --output=logs/prithvi_IA_%j.out
 #SBATCH --error=logs/prithvi_IA_%j.err
 
+#
+# Prithvi segmentation training (multi-temporal crop classification).
+# Named train.sh until this rename, which said nothing about what it trains;
+# train_seg.sh is the SatMAE equivalent.
 set -euo pipefail
 
 source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"

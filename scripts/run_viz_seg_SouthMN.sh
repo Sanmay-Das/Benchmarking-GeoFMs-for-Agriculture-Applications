@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+source "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/configs/paths.sh"
 
 source /etc/profile.d/modules.sh
 module purge
@@ -29,7 +29,7 @@ echo "Node: $(hostname) (CPU-only)"
 echo "Start: $(date)"
 echo ""
 
-python visualize_seg_satmae_SouthMN.py
+python scripts/visualize_seg_satmae_SouthMN.py
 
 echo ""
 echo "Done: $(date)"

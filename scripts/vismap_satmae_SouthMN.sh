@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/configs/paths.sh"
+source "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")/configs/paths.sh"
 
 cd "$MSR_ROOT"
 # Python environment. Set MSR_VENV to your venv built from

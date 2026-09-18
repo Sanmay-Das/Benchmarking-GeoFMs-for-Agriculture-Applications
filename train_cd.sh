@@ -15,11 +15,14 @@
 # the output directory. The geographic split is now an argument, resolved from
 # registry.CD_SPLITS.
 #
-#     sbatch train_cd.sh --model prithvi --split CA
-#     sbatch train_cd.sh --model satmae  --split MN
+#     sbatch train_cd.sh --model prithvi --state california
+#     sbatch train_cd.sh --model satmae  --state minnesota
 #
-# Splits: IA (CentIA/EastIA/NWIA), CA (NorthCA/CentCA/SouthCA),
-#         MN (NorthMN/CentMN/SouthMN), NC (NENC/ECNC/EastNC).
+# --state is the documented form, matching reproduce.sh and fetch.py. --split
+# still takes the internal codes (IA, CA, MN, NC) for existing job scripts.
+#
+# States: iowa (CentIA/EastIA/NWIA), california (NorthCA/CentCA/SouthCA),
+#         minnesota (NorthMN/CentMN/SouthMN), north_carolina (NENC/ECNC/EastNC).
 #
 # Checkpoints are written under $MSR_OUTPUT_ROOT/checkpoints/cd/, not into the
 # source tree as the original wrappers did.
@@ -35,12 +38,18 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --model) MODEL="$2"; shift 2 ;;
         --split) SPLIT="$2"; shift 2 ;;
+        --state)
+            SPLIT=$(python3 -c "
+import sys; sys.path.insert(0, '$MSR_ROOT/configs')
+import registry as R; print(R.state('$2')['cd'])") || exit 2
+            shift 2 ;;
         *) EXTRA+=("$1"); shift ;;
     esac
 done
 
 if [ -z "$MODEL" ]; then
-    echo "usage: sbatch train_cd.sh --model {satmae|spectralgpt|prithvi} --split {IA|CA|MN|NC}" >&2
+    echo "usage: sbatch train_cd.sh --model {satmae|spectralgpt|prithvi}" \
+         "--state {iowa|minnesota|north_carolina|california}" >&2
     exit 2
 fi
 
