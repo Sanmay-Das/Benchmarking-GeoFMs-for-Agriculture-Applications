@@ -1,4 +1,4 @@
-# Benchmarking Geospatial Foundation Models for Agriculture
+# Benchmarking Geospatial Foundation Models for Agriculture Applications
 
 Change detection and semantic segmentation with three geospatial foundation
 model backbones — **SatMAE**, **SpectralGPT** and **Prithvi** — evaluated across
@@ -14,7 +14,7 @@ cd Benchmarking-GeoFMs-for-Agriculture-Applications
 ./reproduce.sh --task cd --state iowa       # download data, score, print results
 ```
 
-That is the whole workflow. Data and checkpoints are downloaded automatically
+Data and checkpoints are downloaded automatically
 from [Hugging Face](https://huggingface.co/datasets/sanmay4119/geofm-agriculture-benchmark)
 on first use; no paths or environment variables need to be set.
 
