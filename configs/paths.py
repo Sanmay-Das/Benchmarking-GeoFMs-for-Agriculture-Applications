@@ -256,6 +256,63 @@ def seg_checkpoint(model, region, head="", must_exist=True):
     )
 
 
+def seg_chips_dir(model, region, must_exist=True):
+    """Directory of segmentation chips for one (model, region).
+
+    Prefers the published layout, segmentation_chips/<model>/<region>/, and
+    falls back to the ad hoc directories the original runs used so an existing
+    working copy keeps running.
+    """
+    import registry
+
+    candidates = [SEG_CHIPS / model / region]
+    spec = registry.SEG_MODELS.get(model, {})
+    legacy = spec.get("chips_dir")
+    if legacy:
+        run = registry.region(region)["seg_split"]
+        candidates.append(DATA_ROOT / legacy.format(region=region, run=run))
+
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    if not must_exist:
+        return candidates[0]
+    raise SystemExit(
+        "No segmentation chips for {} / {}.\n"
+        "Looked in:\n  {}\n"
+        "Download them with\n"
+        "  python scripts/fetch.py --task seg --model {} --state {}"
+        .format(model, region, "\n  ".join(str(c) for c in candidates),
+                model, registry.state_of_region(region)))
+
+
+def seg_splits_file(model, region, must_exist=True):
+    """File listing the test chip basenames for one (model, region).
+
+    Written by fetch.py after unpacking, since the original split files were
+    never published. The legacy per-run test.txt is accepted as a fallback.
+    """
+    import registry
+
+    candidates = [SEG_CHIPS / model / "{}_test.txt".format(region)]
+    spec = registry.SEG_MODELS.get(model, {})
+    legacy = spec.get("splits")
+    if legacy:
+        run = registry.region(region)["seg_split"]
+        candidates.append(DATA_ROOT / legacy.format(region=region, run=run))
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    if not must_exist:
+        return candidates[0]
+    raise SystemExit(
+        "No test split for {} / {}.\n"
+        "Looked in:\n  {}\n"
+        "fetch.py writes this when it unpacks the chips."
+        .format(model, region, "\n  ".join(str(c) for c in candidates)))
+
+
 def stack_path(region, must_exist=True):
     """Stitched multitemporal raster for one region."""
     p = STACKS / region / "{}_multitemporal_stack.tif".format(region)

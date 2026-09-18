@@ -15,7 +15,8 @@ explicit list.
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import (MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS,
+                   seg_chips_dir, seg_splits_file)
 import registry as R
 
 import os
@@ -42,18 +43,13 @@ def configure(region, wanted=None):
     global CHIP_DIR, TEST_TXT, PRED_MAP
 
     R.region(region)
-    spec = R.SEG_MODELS["satmae"]
-    run = R.region(region)["train_run"]
-    seg_split = R.region(region)["seg_split"]
 
-    # SatMAE keeps a per-state chip set for MN and the shared multitemporal
-    # set for Iowa; both split files live under the multitemporal tree.
-    chips_tmpl = spec["chips_dir"].format(region=region, run=run)
-    candidate = DATA_ROOT / chips_tmpl
-    if not candidate.is_dir():
-        candidate = DATA_ROOT / "SatMAE_chips_multitemporal" / region
-    CHIP_DIR = str(candidate)
-    TEST_TXT = str(DATA_ROOT / "SatMAE_chips_multitemporal" / seg_split / "test.txt")
+    # Ground truth comes from the chip masks named in the test split, so these
+    # must be the same chips and the same split file infer_seg.py used. Both
+    # resolvers prefer the published layout and fall back to the ad hoc
+    # directories the original runs wrote.
+    CHIP_DIR = str(seg_chips_dir("satmae", region))
+    TEST_TXT = str(seg_splits_file("satmae", region))
 
     found = {}
     for model, head, reg in R.seg_pairs():

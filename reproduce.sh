@@ -43,11 +43,16 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-if [ "$TASK" != "cd" ]; then
-    echo "Only --task cd is reproducible from the published data." >&2
-    echo "Segmentation needs processed_stacks/, which is not on the Hub." >&2
-    exit 2
-fi
+case "$TASK" in
+    cd) ;;
+    seg)
+        echo "Note: most segmentation cells infer over a stitched raster" >&2
+        echo "      (processed_stacks/), which is not published. Only SatMAE" >&2
+        echo "      minnesota runs from chips. Cells without their input are" >&2
+        echo "      reported and skipped." >&2
+        echo "" >&2 ;;
+    *) echo "unknown task: $TASK (expected cd or seg)" >&2; exit 2 ;;
+esac
 
 # Interpreter selection lives in configs/env.sh, shared with benchmark-gfm.
 pick_python() { msr_python "$1"; }
@@ -105,31 +110,51 @@ done
 
 echo
 echo "############### results ###############"
-python3 - <<'PY'
+MSR_TASK="$TASK" python3 - <<'PY'
 import json, os, sys
 sys.path.insert(0, "configs")
 import paths as P
 
+task = os.environ.get("MSR_TASK", "cd")
+
 rows = []
 if P.PREDICTIONS.is_dir():
-    for f in sorted(P.PREDICTIONS.rglob("*_CD_metrics.json")):
+    for f in sorted(P.PREDICTIONS.rglob("*_metrics.json")):
         try:
-            rows.append(json.load(open(f)))
+            r = json.load(open(f))
         except (ValueError, OSError):
-            pass
+            continue
+        # A change-detection record reports F1, a segmentation record mIoU.
+        kind = "cd" if "F1" in r else "seg"
+        if kind == task:
+            rows.append(r)
 
 if not rows:
-    print("No metrics found under {}".format(P.PREDICTIONS))
+    print("No {} metrics found under {}".format(task, P.PREDICTIONS))
     raise SystemExit
 
-hdr = "{:<13} {:<16} {:<9} {:>7} {:>7} {:>7} {:>7}"
-print(hdr.format("model", "state", "region", "OA%", "Prec%", "Rec%", "F1%"))
-print("-" * 72)
-for r in sorted(rows, key=lambda r: (r.get("model", ""), r.get("state", ""))):
-    print("{:<13} {:<16} {:<9} {:>7.2f} {:>7.2f} {:>7.2f} {:>7.2f}".format(
-        r.get("model", "?"), r.get("state", "?"), r.get("region", "?"),
-        r.get("OA", float("nan")), r.get("precision", float("nan")),
-        r.get("recall", float("nan")), r.get("F1", float("nan"))))
+def key(r):
+    return (r.get("model", ""), r.get("state", ""), r.get("head", ""))
+
+if task == "cd":
+    hdr = "{:<13} {:<16} {:<9} {:>7} {:>7} {:>7} {:>7}"
+    print(hdr.format("model", "state", "region", "OA%", "Prec%", "Rec%", "F1%"))
+    print("-" * 72)
+    for r in sorted(rows, key=key):
+        print("{:<13} {:<16} {:<9} {:>7.2f} {:>7.2f} {:>7.2f} {:>7.2f}".format(
+            r.get("model", "?"), r.get("state", "?"), r.get("region", "?"),
+            r.get("OA", float("nan")), r.get("precision", float("nan")),
+            r.get("recall", float("nan")), r.get("F1", float("nan"))))
+else:
+    hdr = "{:<13} {:<16} {:<9} {:<7} {:>8} {:>8}"
+    print(hdr.format("model", "state", "region", "head", "mIoU%", "classes"))
+    print("-" * 68)
+    for r in sorted(rows, key=key):
+        print("{:<13} {:<16} {:<9} {:<7} {:>8.2f} {:>8}".format(
+            r.get("model", "?"), r.get("state", "?"), r.get("region", "?"),
+            r.get("head", "") or "-", r.get("mIoU", float("nan")),
+            r.get("classes_present", "?")))
+
 print("\nPredictions and metrics: {}".format(P.PREDICTIONS))
 PY
 

@@ -97,14 +97,7 @@ cmd_infer() {
             echo "=============================="
             echo "$m"
             echo "=============================="
-            if [ "$task" = seg ] && [ "$m" = satmae ]; then
-                # SatMAE segmentation has three heads; the others have one.
-                for head in fcn fpn psanet; do
-                    "$(msr_python "$m")" "$script" --model satmae --head "$head" "${rest[@]}"
-                done
-            else
-                "$(msr_python "$m")" "$script" --model "$m" "${rest[@]}"
-            fi
+            "$(msr_python "$m")" "$script" --model "$m" "${rest[@]}"
         done
     else
         [ -n "$model" ] || die "--model is required (or pass --all)"
@@ -165,11 +158,12 @@ train_seg_satmae() {
     local split="$1" head="$2"; shift 2
     local entry head_args=() chips
     case "$head" in
-        fcn)    entry="main_finetune_fcn.py" ;;
-        fpn)    entry="main_finetune_fpn.py" ;;
-        psanet) entry="main_finetune.py"
-                head_args=(--optimizer sgd --shrink_factor 2 --zoom_factor 8) ;;
-        *) die "unknown head: $head (expected fcn, fpn or psanet)" ;;
+        fpn) entry="main_finetune_fpn.py" ;;
+        # The FCN and PSANet heads were trained historically
+        # (main_finetune_fcn.py, and main_finetune.py with
+        # --optimizer sgd --shrink_factor 2 --zoom_factor 8) but are not part of
+        # what this benchmark reports, and their checkpoints are not published.
+        *) die "unknown head: $head (fpn is the only head this reports)" ;;
     esac
     case "$split" in
         Iowa) chips="$MSR_DATA_ROOT/SatMAE_chips_multitemporal" ;;
@@ -178,7 +172,7 @@ train_seg_satmae() {
     esac
 
     local splits_dir="$MSR_DATA_ROOT/SatMAE_chips_multitemporal/$split"
-    local suffix=""; [ "$head" != psanet ] && suffix="_$head"
+    local suffix="_$head"
     local out_dir="$MSR_OUTPUT_ROOT/checkpoints/seg/output_seg_${split}${suffix}"
     mkdir -p "$MSR_OUTPUT_ROOT/logs" "$out_dir/logs"
 
@@ -228,7 +222,7 @@ PY
 }
 
 cmd_train() {
-    local task=cd model="" state="" split="" head=psanet rest=()
+    local task=cd model="" state="" split="" head=fpn rest=()
     while [ $# -gt 0 ]; do
         case "$1" in
             --task)  task="$2"; shift 2 ;;

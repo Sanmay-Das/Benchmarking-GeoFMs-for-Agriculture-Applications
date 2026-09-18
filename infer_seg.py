@@ -23,6 +23,7 @@ $MSR_OUTPUT_ROOT/predictions/.
 
 import os
 import sys
+import json
 import math
 import argparse
 
@@ -35,7 +36,8 @@ from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs'))
 from paths import (MSR_ROOT, DATA_ROOT, PREDICTIONS,  # noqa: E402
-                   seg_checkpoint, stack_path)
+                   seg_checkpoint, stack_path, seg_chips_dir,
+                   seg_splits_file)
 import registry as R  # noqa: E402
 
 
@@ -277,9 +279,8 @@ def run_chips(model_name, region, head, batch, out_dir, spec):
     num_classes = spec["num_classes"]
     suffix = "_{}".format(head) if head else ""
 
-    run_name = R.region(region)["seg_split"]
-    data_dir = DATA_ROOT / spec["chips_dir"].format(region=region, run=run_name)
-    splits = DATA_ROOT / spec["splits"].format(region=region, run=run_name)
+    data_dir = seg_chips_dir(model_name, region)
+    splits = seg_splits_file(model_name, region)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Device: {}".format(device))
@@ -320,12 +321,14 @@ def run_chips(model_name, region, head, batch, out_dir, spec):
         for start in tqdm(range(0, len(names), batch), desc=label):
             block = names[start:start + batch]
             chips, metas = [], []
-            for name in block:
+            for offset, name in enumerate(block):
                 with rasterio.open(os.path.join(data_dir, name + '.tif')) as src:
                     arr = src.read().astype(np.float32)
                 arr[arr == -9999] = 0.0
                 chips.append(normalize(arr))
-                r, c = coords[names.index(name)]
+                # Index directly: names.index() here was a linear scan per
+                # chip, quadratic over a region with 33,000 of them.
+                r, c = coords[start + offset]
                 metas.append((r - min_row, c - min_col))
 
                 mask_file = os.path.join(data_dir, name + '_mask.tif')
@@ -363,35 +366,74 @@ def run_chips(model_name, region, head, batch, out_dir, spec):
 
     ious = compute_iou(pred, gt_canvas, num_classes)
     valid = [v for v in ious if not math.isnan(v)]
+    miou = sum(valid) / len(valid) if valid else float('nan')
     if valid:
-        print("mIoU: {:.2f}%  over {} classes".format(
-            sum(valid) / len(valid), len(valid)))
+        print("mIoU: {:.2f}%  over {} classes".format(miou, len(valid)))
+
+    # Recorded as well as printed, so reproduce.sh can tabulate it. The change
+    # detection path does the same.
+    metrics = {
+        "model": model_name, "region": region, "head": head,
+        "state": R.state_of_region(region), "mIoU": miou,
+        "classes_present": len(valid), "num_classes": num_classes,
+        "per_class_iou": ious, "prediction": str(out_file),
+    }
+    metrics_path = out_dir / (out_file.stem + "_metrics.json")
+    with open(metrics_path, "w") as fh:
+        json.dump(metrics, fh, indent=2, sort_keys=True)
+    print("Saved metrics: {}".format(metrics_path))
     return out_file
 
 
-def input_mode(spec, region):
-    """Which inference path this (model, region) uses."""
-    mode = spec.get("input_mode", "stack")
-    return mode.get(region, "stack") if isinstance(mode, dict) else mode
+def input_mode(spec, region, model_name=None, requested="auto"):
+    """Which inference path this (model, region) uses.
+
+    Two protocols exist. The published results slid a window over a stitched
+    multitemporal raster; SatMAE/SouthMN was scored against its own test chips
+    instead. The rasters were never published and the chips cover only about
+    13% of a region non-contiguously, so they cannot be reconstructed -- which
+    leaves chips as the only protocol available to someone who clones this.
+
+    "auto" therefore prefers whichever input is actually present, favouring the
+    stack when both are, so an existing working copy reproduces its own
+    numbers. Pass --input to force one.
+
+    Chip-based and stack-based numbers are not interchangeable: per-chip
+    inference has no overlap averaging and no surrounding context.
+    """
+    if requested in ("chips", "stack"):
+        return requested
+
+    if model_name is not None:
+        if stack_path(region, must_exist=False).exists():
+            return "stack"
+        if seg_chips_dir(model_name, region, must_exist=False).is_dir():
+            return "chips"
+
+    declared = spec.get("input_mode", "chips")
+    return declared.get(region, "chips") if isinstance(declared, dict) else declared
 
 
-def run(model_name, region, head="", batch=None):
+def run(model_name, region, head="", batch=None, requested="auto"):
     spec = R.SEG_MODELS[model_name]
 
     if head and head not in spec["heads"]:
         raise SystemExit("{} has no head {!r}; choose from {}".format(
             model_name, head, spec["heads"]))
     if not head:
-        head = spec["heads"][0]
+        # The published head, not heads[0]: for SatMAE those differ -- fcn is
+        # listed first but fpn is the checkpoint on the Hub, so defaulting to
+        # the list order downloaded one file and then looked for another.
+        head = R.seg_published_head(model_name) or spec["heads"][0]
 
     batch = batch or spec["batch"]
     suffix = "_{}".format(head) if head else ""
     out_dir = PREDICTIONS / "{}{}_{}".format(model_name, suffix, region)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    mode = input_mode(spec, region)
-    runner = run_chips if mode == "chips" else run_stack
+    mode = input_mode(spec, region, model_name, requested)
     print("Input mode: {}".format(mode))
+    runner = run_chips if mode == "chips" else run_stack
     return runner(model_name, region, head, batch, out_dir, spec)
 
 
@@ -400,11 +442,17 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--model', required=True, choices=sorted(R.SEG_MODELS))
     ap.add_argument('--head', default='',
-                    help="SatMAE decoder: fcn, fpn or psanet (ignored otherwise)")
+                    help="SatMAE decoder head; fpn is the only one published "
+                         "(ignored for other backbones)")
     ap.add_argument('--region', required=True,
                     help="region name, or 'all' for every region with a checkpoint")
     ap.add_argument('--batch', type=int, default=None,
                     help='override the per-model batch size (memory only)')
+    ap.add_argument('--input', default='auto', choices=['auto', 'chips', 'stack'],
+                    dest='requested',
+                    help="inference input: chips is what the published data "
+                         "supports, stack reproduces the paper's protocol but "
+                         "needs processed_stacks/ (default: auto)")
     args = ap.parse_args()
 
     if args.region == 'all':
@@ -415,7 +463,7 @@ def main():
 
     for region in regions:
         print("\n==== {} {} / {} ====".format(args.model, args.head or '', region))
-        run(args.model, region, args.head, args.batch)
+        run(args.model, region, args.head, args.batch, args.requested)
 
 
 if __name__ == '__main__':

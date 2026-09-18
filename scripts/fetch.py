@@ -62,6 +62,57 @@ def cd_weight_dest(model, state):
     return P.CD_WEIGHTS / R.checkpoint_dirname(model, region) / CD_CKPT_NAME
 
 
+def seg_chip_file(model, region):
+    return "segmentation/seg_{}_{}.tar".format(model, region)
+
+
+def seg_weight_file(model, state):
+    return "weights/segmentation/{}_seg_{}.pth".format(model, state)
+
+
+def seg_chip_dest(model, region):
+    """Where infer_seg.py's chips path reads this region from."""
+    return P.seg_chips_dir(model, region, must_exist=False)
+
+
+def seg_splits_dest(model, region):
+    """The split file run_chips() reads, listing the test chip basenames."""
+    return P.seg_splits_file(model, region, must_exist=False)
+
+
+def seg_weight_dest(model, state):
+    """Where seg_checkpoint() looks for this state's checkpoint."""
+    return P.SEG_WEIGHTS / model / R.seg_checkpoint_relative(model, state)
+
+
+def seg_plan(model, state, index):
+    """Every (remote, destination) pair a segmentation cell needs.
+
+    Chips, for every cell. The published results were produced two ways -- a
+    sliding window over a stitched multitemporal raster for eleven cells, the
+    region's own test chips for SatMAE/Minnesota -- but the rasters were never
+    published and cannot be rebuilt from what was: the chips sample about 13%
+    of a region, non-contiguously. Chips are therefore the only protocol a
+    clone can run, and infer_seg.py still takes --input stack for anyone who
+    has the rasters.
+    """
+    region = R.seg_test_region(state)
+    return [
+        {
+            "kind": "weights", "role": "checkpoint", "region": region,
+            "remote": seg_weight_file(model, state),
+            "dest": seg_weight_dest(model, state),
+            "model": model,
+        },
+        {
+            "kind": "seg_chips", "role": "test chips", "region": region,
+            "remote": seg_chip_file(model, region),
+            "dest": seg_chip_dest(model, region),
+            "model": model,
+        },
+    ]
+
+
 def cd_plan(model, state, splits):
     """Every (remote, destination) pair this cell needs.
 
@@ -124,6 +175,25 @@ def unpack(tar_path, parent, expect):
                 "{} contains top-level {}, expected only '{}'. Refusing to "
                 "unpack into {}.".format(tar_path.name, sorted(tops), expect, parent))
         tf.extractall(parent)
+
+
+def write_splits(chips_dir, splits_path):
+    """List the test chips for run_chips(), which reads basenames one per line.
+
+    The original split files were not published. They are derivable: the
+    published archive for a test region contains exactly that region's test
+    chips, so the listing is the split. Masks are excluded -- the file names
+    the chip, and the mask is found alongside it.
+    """
+    names = sorted(f.stem for f in Path(chips_dir).glob("*.tif")
+                   if not f.stem.endswith("_mask"))
+    if not names:
+        raise SystemExit("No chips found in {}; cannot write {}".format(
+            chips_dir, splits_path))
+    splits_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(splits_path, "w") as fh:
+        fh.write("\n".join(names) + "\n")
+    print("  wrote {} ({} chips)".format(splits_path, len(names)))
 
 
 def install_weight(src, dest):
@@ -194,8 +264,9 @@ def main():
         description="Download one benchmark cell from Hugging Face.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__.split("Each cell needs")[0].strip())
-    p.add_argument("--task", default="cd", choices=["cd"],
-                   help="only change detection is published in full (default: cd)")
+    p.add_argument("--task", default="cd", choices=["cd", "seg"],
+                   help="cd is published in full; seg is missing its stitched "
+                        "rasters (default: cd)")
     p.add_argument("--model", default="all",
                    help="satmae, spectralgpt, prithvi, or all (default: all)")
     p.add_argument("--state", default="all",
@@ -219,7 +290,7 @@ def main():
         R.state(s)
     splits = ["train", "val", "test"] if args.splits == "all" else ["test"]
 
-    lacking = missing_manifest_deps()
+    lacking = missing_manifest_deps() if args.task == "cd" else []
     if lacking:
         print("Warning: {} not importable, so chip manifests cannot be built.\n"
               "         The download will still run; finish with\n"
@@ -239,7 +310,8 @@ def main():
     wanted, present, missing, skipped = [], [], [], []
     for model in models:
         for st in states:
-            items = cd_plan(model, st, splits)
+            items = (cd_plan(model, st, splits) if args.task == "cd"
+                     else seg_plan(model, st, index))
             for item in items:
                 item["state"] = st
                 item["size"] = index.get(item["remote"], 0)
@@ -281,7 +353,7 @@ def main():
         print("  Pass --partial to download these anyway.")
 
     total = sum(i["size"] for i in wanted)
-    stale = stale_manifests(models, states, splits)
+    stale = stale_manifests(models, states, splits) if args.task == "cd" else set()
     if not wanted:
         if stale:
             print("\nNothing to download, but manifests are missing.")
@@ -314,11 +386,20 @@ def main():
             touched.add(i["model"])
             if not args.keep_tars:
                 local.unlink()
+        elif i["kind"] == "seg_chips":
+            unpack(local, i["dest"].parent, i["region"])
+            write_splits(i["dest"], seg_splits_dest(i["model"], i["region"]))
+            if not args.keep_tars:
+                local.unlink()
         else:
             install_weight(local, i["dest"])
         print("  -> {}".format(i["dest"]))
 
-    manifests_ok = regenerate_manifests(touched | stale_manifests(models, states, splits))
+    if args.task == "cd":
+        manifests_ok = regenerate_manifests(
+            touched | stale_manifests(models, states, splits))
+    else:
+        manifests_ok = True
 
     # The per-file download cache holds only lock and metadata files once the
     # archives are unpacked, but leaving it behind is untidy.

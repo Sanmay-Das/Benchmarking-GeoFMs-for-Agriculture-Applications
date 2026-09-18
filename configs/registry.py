@@ -136,7 +136,13 @@ SEG_MODELS = {
         "label": "SatMAE",
         "chip": 96,
         "stride": 48,
-        "heads": ["fcn", "fpn", "psanet"],
+        # FPN only. SatMAE segmentation was also trained with an FCN head and
+        # with PSANet, and those runs still exist locally
+        # (output_seg_*_fcn, output_seg_* without a suffix), but FPN is the
+        # head published on Hugging Face and the one this benchmark reports.
+        # Offering the others meant --head fcn resolved to a checkpoint nobody
+        # can download.
+        "heads": ["fpn"],
         "tree": "SatMAE",
         "num_classes": 14,
         "delta": 8,
@@ -155,9 +161,7 @@ SEG_MODELS = {
         # Encoder geometry shared by all three heads.
         "encoder": {"patch_size": 8, "in_chans": 18, "drop_path": 0.2,
                     "channel_groups": [[0,1,2,3,4,5],[6,7,8,9,10,11],[12,13,14,15,16,17]]},
-        "head_classes": {"fcn": ("models_satmae_fcn", "SatMAEFCN"),
-                         "fpn": ("models_satmae_fpn", "SatMAEFPN"),
-                         "psanet": ("psanet", "PSANet")},
+        "head_classes": {"fpn": ("models_satmae_fpn", "SatMAEFPN")},
     },
     "spectralgpt": {
         "label": "SpectralGPT",
@@ -205,12 +209,15 @@ SEG_MODELS = {
 }
 
 SEG_CHECKPOINTS = {
-    ("satmae", "fcn",    "NWIA"):    "output_seg_Iowa_fcn/checkpoint-best.pth",
-    ("satmae", "fcn",    "SouthMN"): "output_seg_MN_fcn/checkpoint-best.pth",
     ("satmae", "fpn",    "NWIA"):    "output_seg_Iowa_fpn/checkpoint-best.pth",
     ("satmae", "fpn",    "SouthMN"): "output_seg_MN_fpn/checkpoint-best.pth",
-    ("satmae", "psanet", "NWIA"):    "output_seg_Iowa/checkpoint-best.pth",
-    ("satmae", "psanet", "SouthMN"): "output_seg_MN/checkpoint-best.pth",
+
+    # FPN was also trained for North Carolina and California. These were
+    # omitted here while only two regions had been scored; the runs exist
+    # (output_seg_NC_fpn, output_seg_CA_fpn) and FPN is the head published on
+    # Hugging Face, so all four states are recorded for it.
+    ("satmae", "fpn",    "EastNC"):  "output_seg_NC_fpn/checkpoint-best.pth",
+    ("satmae", "fpn",    "SouthCA"): "output_seg_CA_fpn/checkpoint-best.pth",
 
     ("spectralgpt", "", "NWIA"):    "multi_train/best_mIoU_CentEastIA_model.pth",
     ("spectralgpt", "", "SouthMN"): "multi_train/best_mIoU_NorthCentMN_model.pth",
@@ -319,3 +326,70 @@ def state_of_region(region_name):
 def states():
     """Every state name, for batch drivers and tests."""
     return sorted(STATES)
+
+
+# ---------------------------------------------------------------------------
+# Segmentation on Hugging Face
+#
+# The published names and the names training wrote do not correspond. Training
+# produced output_seg_<run>[_<head>]/checkpoint-best.pth for SatMAE,
+# multi_train/best_mIoU_<run>_model.pth for SpectralGPT and
+# <run>/best_mIoU_epoch_<N>.pth for Prithvi; the Hub carries one flat file per
+# model and state, <model>_seg_<state>.pth. fetch.py installs a downloaded file
+# under the name seg_checkpoint() expects, so this records which head each
+# published file actually is.
+#
+# Only one head per model was uploaded. For SatMAE that is FPN, identified by
+# size: the published files are 2,628,248,073 bytes, matching output_seg_*_fpn
+# exactly, against 2.54 GB for psanet and 2.47 GB for fcn. So fcn and psanet
+# are reproducible only by someone who trains them.
+# ---------------------------------------------------------------------------
+
+SEG_PUBLISHED_HEAD = {"satmae": "fpn", "spectralgpt": "", "prithvi": ""}
+
+
+def seg_published_head(model_name):
+    """The head whose checkpoint is published for this backbone."""
+    if model_name not in SEG_PUBLISHED_HEAD:
+        raise SystemExit("Unknown segmentation model '{}'. Choose from: {}".format(
+            model_name, ", ".join(sorted(SEG_PUBLISHED_HEAD))))
+    return SEG_PUBLISHED_HEAD[model_name]
+
+
+def seg_test_region(state_name):
+    """The region a state's segmentation number is computed on.
+
+    The same region as change detection; segmentation reaches it through a
+    different split directory, which is what STATES' "seg" key records.
+    """
+    return test_region(state_name)
+
+
+def seg_checkpoint_relative(model_name, state_name, head=None):
+    """Where seg_checkpoint() expects this state's checkpoint to live.
+
+    Returns the path relative to MSR_WEIGHTS/seg/<model>/, so a flat file
+    downloaded from the Hub can be installed where the code will find it.
+    """
+    if head is None:
+        head = seg_published_head(model_name)
+    region = seg_test_region(state_name)
+    key = (model_name, head, region)
+    if key not in SEG_CHECKPOINTS:
+        raise SystemExit(
+            "No segmentation checkpoint recorded for model={} head={!r} "
+            "state={} (region {}).".format(model_name, head, state_name, region))
+    return SEG_CHECKPOINTS[key]
+
+
+def seg_states(model_name):
+    """States this backbone has a recorded segmentation checkpoint for."""
+    head = seg_published_head(model_name)
+    out = []
+    for name in states():
+        try:
+            seg_checkpoint_relative(model_name, name, head)
+        except SystemExit:
+            continue
+        out.append(name)
+    return out
