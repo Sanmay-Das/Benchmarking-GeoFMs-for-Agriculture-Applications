@@ -22,6 +22,8 @@ against MSR_DATA_ROOT wherever the data was unpacked.
 import os
 import sys
 import argparse
+import json
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -98,7 +100,27 @@ def build_model(model_name, checkpoint, device):
     model = getattr(module, fn_name)(pretrain_path=None)
 
     ckpt = torch.load(checkpoint, map_location='cpu')
-    model.load_state_dict(ckpt['model'])
+    try:
+        model.load_state_dict(ckpt['model'])
+    except RuntimeError as exc:
+        # A mismatch here is almost always the wrong file rather than a bug:
+        # the segmentation and change-detection runs write checkpoints of the
+        # same name into similarly named directories, and a segmentation
+        # checkpoint carries an FPN neck and a seg head where the CD model
+        # expects its conv stack and PPM decoder.
+        found = set(ckpt['model'])
+        looks_like_seg = any(k.startswith(('neck.fpn', 'head.')) for k in found)
+        raise SystemExit(
+            "{} does not match the {} change-detection architecture.\n"
+            "  checkpoint: {}\n"
+            "  {}\n"
+            "  Verify this is the change-detection checkpoint for this state, "
+            "not a segmentation one.\n\n{}".format(
+                Path(checkpoint).name, model_name, checkpoint,
+                "Its keys look like a segmentation model (neck.fpn*, head.*)."
+                if looks_like_seg else
+                "Its keys do not correspond to this model's layers.",
+                exc))
     model.to(device).eval()
     print("Loaded checkpoint: epoch={}  best_F1={:.2f}%".format(
         ckpt['epoch'], ckpt['best_f1'] * 100))
@@ -187,7 +209,20 @@ def run(model_name, region, threshold=0.5):
         dst.write(gt_canvas, 1)
     print("Saved GT:         {}".format(gt_path))
 
-    report(pred, gt_canvas, region)
+    metrics = report(pred, gt_canvas, region)
+
+    # Recorded as well as printed: reproduce.sh collects these into the
+    # results table, and a number on a terminal that has scrolled away is
+    # not evidence of anything.
+    metrics.update({"model": model_name, "region": region,
+                    "state": R.state_of_region(region),
+                    "threshold": threshold,
+                    "chips": int(len(df)),
+                    "prediction": str(pred_path)})
+    metrics_path = out_dir / (stem + "_metrics.json")
+    with open(metrics_path, "w") as fh:
+        json.dump(metrics, fh, indent=2, sort_keys=True)
+    print("Saved metrics:    {}".format(metrics_path))
 
 
 def report(pred, gt_canvas, region):
@@ -205,6 +240,8 @@ def report(pred, gt_canvas, region):
     print("  OA={:.2f}%  Precision={:.2f}%  Recall={:.2f}%  F1={:.2f}%".format(
         oa * 100, prec * 100, rec * 100, f1 * 100))
     print("  TP={}  FP={}  TN={}  FN={}".format(tp, fp, tn, fn))
+    return {"OA": oa * 100, "precision": prec * 100, "recall": rec * 100,
+            "F1": f1 * 100, "TP": tp, "FP": fp, "TN": tn, "FN": fn}
 
 
 def main():
