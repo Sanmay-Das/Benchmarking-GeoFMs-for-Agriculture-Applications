@@ -1,7 +1,7 @@
 # Benchmarking Geospatial Foundation Models for Agriculture Applications
 
 Change detection and semantic segmentation with three geospatial foundation
-model backbones — **SatMAE**, **SpectralGPT** and **Prithvi** — evaluated across
+model backbones - **SatMAE**, **SpectralGPT** and **Prithvi** - evaluated across
 four US agricultural regions.
 
 ## Quick start
