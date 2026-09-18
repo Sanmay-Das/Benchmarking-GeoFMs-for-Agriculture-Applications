@@ -260,3 +260,62 @@ def split(name):
         raise SystemExit("Unknown split '{}'. Choose from: {}".format(
             name, ", ".join(sorted(CD_SPLITS))))
     return CD_SPLITS[name]
+
+
+# ---------------------------------------------------------------------------
+# States
+#
+# The user-facing unit. A state is what the published checkpoints are named
+# after (satmae_cd_iowa.pth), and it determines everything else about a run:
+# which sub-regions are train/val/test, and which checkpoint to score with.
+#
+# Regions are an implementation detail -- nobody outside this project knows
+# that NWIA is the Iowa test region or that NENC and ECNC are its North
+# Carolina training partners. Scripts take --state and derive the rest.
+#
+# Two keys because a state's change-detection split key is not its
+# segmentation split directory: Iowa is "IA" for CD and "Iowa" for seg. That
+# distinction used to live implicitly in REGIONS' train_run/seg_split pair.
+# ---------------------------------------------------------------------------
+
+STATES = {
+    "iowa":           {"cd": "IA", "seg": "Iowa", "label": "Iowa"},
+    "minnesota":      {"cd": "MN", "seg": "MN",   "label": "Minnesota"},
+    "north_carolina": {"cd": "NC", "seg": "NC",   "label": "North Carolina"},
+    "california":     {"cd": "CA", "seg": "CA",   "label": "California"},
+}
+
+
+def state(name):
+    if name not in STATES:
+        raise SystemExit("Unknown state '{}'. Choose from: {}".format(
+            name, ", ".join(sorted(STATES))))
+    return STATES[name]
+
+
+def cd_regions(state_name):
+    """The train/val/test regions for a state's change-detection split."""
+    return split(state(state_name)["cd"])
+
+
+def test_region(state_name):
+    """The single region a state's reported number is computed on."""
+    return cd_regions(state_name)["test"]
+
+
+def state_of_region(region_name):
+    """Inverse of test_region: which state a region belongs to.
+
+    Accepts any of a split's three regions, not just the test one, so
+    training paths can resolve a state from whichever region they hold.
+    """
+    for name, meta in STATES.items():
+        regions = split(meta["cd"])
+        if region_name in (regions["train"], regions["val"], regions["test"]):
+            return name
+    raise SystemExit("Region '{}' belongs to no known state.".format(region_name))
+
+
+def states():
+    """Every state name, for batch drivers and tests."""
+    return sorted(STATES)
