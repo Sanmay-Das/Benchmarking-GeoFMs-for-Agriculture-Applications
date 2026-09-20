@@ -82,31 +82,14 @@ Seven of the twelve segmentation cells are reproducible:
 
 Iowa has no segmentation chips published for any backbone.
 
-**A note on protocol.** The published segmentation numbers were produced two
-ways: eleven cells by sliding a window over a stitched multitemporal raster,
-and SatMAE/Minnesota against that region's own test chips. The rasters
-(`processed_stacks/`) were never published, and they cannot be rebuilt from
-what was — the chips sample roughly 13% of a region, non-contiguously. So this
-repository scores segmentation from chips throughout, which is uniform and
-runnable but **not numerically identical to the paper's eleven stack-based
-rows**: per-chip inference has no overlap averaging and no surrounding
-context.
-
-If you have the rasters, `--input stack` restores the original protocol:
-
-```bash
-python infer_seg.py --model prithvi --region SouthMN --input stack
-```
-
-`--input auto`, the default, uses a stitched raster when one is present and
-chips otherwise.
+Segmentation is scored from the published test chips.
 
 SatMAE segmentation uses the **FPN** head. It was also trained with an FCN
 head and with PSANet, but FPN is the head published on Hugging Face and the one
 this benchmark reports, so it is the only one wired up here.
 
-Split files are not published either. They are derivable from the chips, so
-`fetch.py` writes them after unpacking.
+The split files listing those chips are not published. They are derivable from
+the chips, so `fetch.py` writes them after unpacking.
 
 ## Commands
 
