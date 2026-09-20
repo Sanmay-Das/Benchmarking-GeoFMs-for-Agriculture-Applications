@@ -1,7 +1,7 @@
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
 
 import os
 import numpy as np
@@ -59,7 +59,7 @@ def brightness_modulate(prediction, ground_truth, colors):
 
 
 def main():
-    base_dir = str(MSR_ROOT)
+    base_dir = str(GFM_ROOT)
     gt_dir = os.path.join(base_dir, 'data/multi_temporal_crop_segmentation/NWIA')
     pred_dir = os.path.join(base_dir, 'predictions/prithvi_NWIA')
     output_dir = os.path.join(base_dir, 'visualizations_geotiff/prithvi__NWIA_224x224')

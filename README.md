@@ -158,12 +158,15 @@ Defaults are self-contained; override only if you want data elsewhere.
 
 | variable | default | holds |
 |---|---|---|
-| `MSR_DATA_ROOT` | `./data` | downloaded chips |
-| `MSR_WEIGHTS` | `./weights` | checkpoints |
-| `MSR_OUTPUT_ROOT` | `./outputs` | predictions, metrics, logs |
-| `MSR_VENVS` | `./venvs` | per-model environments |
+| `GFM_DATA_ROOT` | `./data` | downloaded chips |
+| `GFM_WEIGHTS` | `./weights` | checkpoints |
+| `GFM_OUTPUT_ROOT` | `./outputs` | predictions, metrics, logs |
+| `GFM_VENVS` | `./venvs` | per-model environments |
 
 Nothing is ever written inside the source tree.
+
+These were once named `MSR_*`, after the directory this was developed in. Those
+names still work.
 
 ## Data
 

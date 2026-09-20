@@ -128,7 +128,7 @@ def pairs():
 #
 # Keys are (model, head, region); head is "" for models with a single head.
 # Values are paths relative to the model's own tree, which is what
-# paths.seg_checkpoint() falls back to when MSR_WEIGHTS has no copy.
+# paths.seg_checkpoint() falls back to when GFM_WEIGHTS has no copy.
 # ---------------------------------------------------------------------------
 
 SEG_MODELS = {
@@ -368,7 +368,7 @@ def seg_test_region(state_name):
 def seg_checkpoint_relative(model_name, state_name, head=None):
     """Where seg_checkpoint() expects this state's checkpoint to live.
 
-    Returns the path relative to MSR_WEIGHTS/seg/<model>/, so a flat file
+    Returns the path relative to GFM_WEIGHTS/seg/<model>/, so a flat file
     downloaded from the Hub can be installed where the code will find it.
     """
     if head is None:

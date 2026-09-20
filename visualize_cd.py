@@ -18,7 +18,7 @@ runs had finished at the time rather than a deliberate choice. Discovering
 them makes the figure follow the predictions that actually exist; pass
 --models to pin an explicit list.
 
-Outputs under $MSR_OUTPUT_ROOT/visualizations/cd_<region>/:
+Outputs under $GFM_OUTPUT_ROOT/visualizations/cd_<region>/:
     <region>_CD_GT_colored.png, <region>_CD_<Model>_colored.png
     crops/     full-resolution crop panels
     geotiffs/  colored GeoTIFFs
@@ -26,7 +26,7 @@ Outputs under $MSR_OUTPUT_ROOT/visualizations/cd_<region>/:
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv, chips_csv
+from paths import GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS, load_chips_csv, chips_csv
 import registry as R
 
 

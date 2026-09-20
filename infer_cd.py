@@ -9,14 +9,14 @@ live in configs/registry.py.
     python infer_cd.py --model satmae --region SouthMN
     python infer_cd.py --model prithvi --region all
 
-Writes, under $MSR_OUTPUT_ROOT/predictions/cd_<model>_<region>/:
+Writes, under $GFM_OUTPUT_ROOT/predictions/cd_<model>_<region>/:
 
     <region>_<Model>_CD_pred.tif   binary change map (0=unchanged, 1=changed,
                                    255=nodata)
     <region>_<Model>_CD_gt.tif     ground-truth change map, same encoding
 
 Chips are read through paths.load_chips_csv(), so the manifests resolve
-against MSR_DATA_ROOT wherever the data was unpacked.
+against GFM_DATA_ROOT wherever the data was unpacked.
 """
 
 import os
@@ -32,7 +32,7 @@ import rasterio
 from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, PREDICTIONS, chips_csv, load_chips_csv, cd_checkpoint  # noqa: E402
+from paths import GFM_ROOT, PREDICTIONS, chips_csv, load_chips_csv, cd_checkpoint  # noqa: E402
 import registry as R  # noqa: E402
 
 
@@ -94,7 +94,7 @@ def change_probability(output, head):
 def build_model(model_name, checkpoint, device):
     """Import the vendored builder and load the fine-tuned weights."""
     spec = R.model(model_name)
-    sys.path.insert(0, str(MSR_ROOT / spec["code_dir"]))
+    sys.path.insert(0, str(GFM_ROOT / spec["code_dir"]))
     module_name, fn_name = spec["builder"]
     module = __import__(module_name, fromlist=[fn_name])
     model = getattr(module, fn_name)(pretrain_path=None)

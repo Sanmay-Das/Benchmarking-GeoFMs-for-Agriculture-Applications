@@ -26,8 +26,8 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=29550 --use_env \
         train_cd_satmae.py \
-        --data-root $MSR_DATA_ROOT/change_detection_chips/satmae \
-        --pretrain-path $MSR_ROOT/weights/<satmae_pretrain>.pth \
+        --data-root $GFM_DATA_ROOT/change_detection_chips/satmae \
+        --pretrain-path $GFM_ROOT/weights/<satmae_pretrain>.pth \
         --output-dir ./cd_train_satmae
 """
 
@@ -38,7 +38,7 @@ while _d != _os.path.dirname(_d) and not _os.path.isfile(
     _d = _os.path.dirname(_d)
 _sys.path.insert(0, _os.path.join(_d, 'configs'))
 import registry  # noqa: E402
-from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+from paths import WEIGHTS, CD_CHIPS, GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
 
 
 import time

@@ -9,7 +9,7 @@ while _d != _os.path.dirname(_d) and not _os.path.isfile(
         _os.path.join(_d, 'configs', 'paths.py')):
     _d = _os.path.dirname(_d)
 _sys.path.insert(0, _os.path.join(_d, 'configs'))
-from paths import DATA_ROOT, WEIGHTS, MSR_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+from paths import DATA_ROOT, WEIGHTS, GFM_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
 
 custom_imports = dict(
     imports=['satmae_backbone', 'geospatial_fm', 'custom_pipelines'],

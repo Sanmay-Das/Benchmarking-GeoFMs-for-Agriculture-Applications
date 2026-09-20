@@ -23,8 +23,8 @@ Run:
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=29549 --use_env \
         train_cd_prithvi.py \
-        --data-root $MSR_DATA_ROOT/change_detection_chips/prithvi \
-        --pretrain-path $MSR_ROOT/weights/Prithvi_EO_V1_100M.pt \
+        --data-root $GFM_DATA_ROOT/change_detection_chips/prithvi \
+        --pretrain-path $GFM_ROOT/weights/Prithvi_EO_V1_100M.pt \
         --output-dir ./cd_train_prithvi
 """
 
@@ -35,7 +35,7 @@ while _d != _os.path.dirname(_d) and not _os.path.isfile(
     _d = _os.path.dirname(_d)
 _sys.path.insert(0, _os.path.join(_d, 'configs'))
 import registry  # noqa: E402
-from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+from paths import WEIGHTS, CD_CHIPS, GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
 
 
 import time

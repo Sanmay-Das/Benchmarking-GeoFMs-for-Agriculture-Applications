@@ -27,13 +27,13 @@ Folder structure expected:
         train_cd_spectralgpt.py   <- THIS FILE
 
 Run:
-    cd $MSR_ROOT/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection
+    cd $GFM_ROOT/IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection
 
     python -m torch.distributed.launch \
         --nproc_per_node=1 --master_port=25643 --use_env \
         train_cd_spectralgpt.py \
-        --data-root $MSR_DATA_ROOT/change_detection_chips/spectralgpt \
-        --pretrain-path $MSR_ROOT/weights/SpectralGPT+.pth \
+        --data-root $GFM_DATA_ROOT/change_detection_chips/spectralgpt \
+        --pretrain-path $GFM_ROOT/weights/SpectralGPT+.pth \
         --output-dir ./cd_train_spectralgpt
 
 Test only (EastIA):
@@ -54,7 +54,7 @@ while _d != _os.path.dirname(_d) and not _os.path.isfile(
     _d = _os.path.dirname(_d)
 _sys.path.insert(0, _os.path.join(_d, 'configs'))
 import registry  # noqa: E402
-from paths import WEIGHTS, CD_CHIPS, MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
+from paths import WEIGHTS, CD_CHIPS, GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, PREDICTIONS  # noqa: E402
 
 
 import time

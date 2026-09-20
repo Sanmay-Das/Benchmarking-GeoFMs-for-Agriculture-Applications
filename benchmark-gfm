@@ -51,14 +51,14 @@ sbatch_resources() {
 state_to_split() {
     local state="$1" task="$2"
     python3 -c "
-import sys; sys.path.insert(0, '$MSR_ROOT/configs')
+import sys; sys.path.insert(0, '$GFM_ROOT/configs')
 import registry as R
 print(R.state('$state')['${task}'])" || die "unknown state: $state"
 }
 
 state_to_region() {
     python3 -c "
-import sys; sys.path.insert(0, '$MSR_ROOT/configs')
+import sys; sys.path.insert(0, '$GFM_ROOT/configs')
 import registry as R
 print(R.test_region('$1'))" || die "unknown state: $1"
 }
@@ -78,7 +78,7 @@ cmd_infer() {
     done
 
     msr_load_cuda
-    cd "$MSR_ROOT"
+    cd "$GFM_ROOT"
 
     local script
     case "$task" in
@@ -105,7 +105,7 @@ cmd_infer() {
     fi
 
     echo ""
-    echo "Outputs under $MSR_OUTPUT_ROOT/predictions/"
+    echo "Outputs under $GFM_OUTPUT_ROOT/predictions/"
 }
 
 # ----------------------------------------------------------------- training
@@ -117,34 +117,34 @@ train_cd() {
         satmae)
             code_dir="SatMAE/ChangeDetection"
             script="train_cd_satmae.py"
-            pretrain="$MSR_WEIGHTS/pretrain-vit-large-e199.pth"
+            pretrain="$GFM_WEIGHTS/pretrain-vit-large-e199.pth"
             hyper=(--lr 0.0001 --warmup-epochs 0 --batch_size 16 --epochs 60) ;;
         spectralgpt)
             code_dir="IEEE_TPAMI_SpectralGPT/downstream_tasks/ChangeDetection"
             script="train_cd_spectralgpt.py"
-            pretrain="$MSR_WEIGHTS/SpectralGPT+.pth"
+            pretrain="$GFM_WEIGHTS/SpectralGPT+.pth"
             hyper=(--lr 0.0001 --warmup-epochs 0) ;;
         prithvi)
             code_dir="prithvi_finetune/ChangeDetection"
             script="train_cd_prithvi.py"
-            pretrain="$MSR_WEIGHTS/Prithvi_EO_V1_100M.pt"
+            pretrain="$GFM_WEIGHTS/Prithvi_EO_V1_100M.pt"
             hyper=(--lr 0.0001 --warmup-epochs 0 --batch_size 16 --epochs 60) ;;
         *) die "unknown model: $model" ;;
     esac
 
-    local out_dir="$MSR_OUTPUT_ROOT/checkpoints/cd/cd_train_${model}_${split}"
-    mkdir -p "$MSR_OUTPUT_ROOT/logs" "$out_dir"
+    local out_dir="$GFM_OUTPUT_ROOT/checkpoints/cd/cd_train_${model}_${split}"
+    mkdir -p "$GFM_OUTPUT_ROOT/logs" "$out_dir"
 
     msr_banner "${model} CD training -- split ${split}"
     echo "Out:  $out_dir"
     echo ""
 
     local py; py="$(msr_python "$model")"
-    cd "$MSR_ROOT/$code_dir"
+    cd "$GFM_ROOT/$code_dir"
     "$py" -m torch.distributed.launch --nproc_per_node=1 \
         --master_port="$(msr_master_port)" --use_env "$script" \
         --split "$split" \
-        --data-root "$MSR_DATA_ROOT/change_detection_chips/$model" \
+        --data-root "$GFM_DATA_ROOT/change_detection_chips/$model" \
         --pretrain-path "$pretrain" \
         --output-dir "$out_dir" \
         "${hyper[@]}" "$@"
@@ -166,15 +166,15 @@ train_seg_satmae() {
         *) die "unknown head: $head (fpn is the only head this reports)" ;;
     esac
     case "$split" in
-        Iowa) chips="$MSR_DATA_ROOT/SatMAE_chips_multitemporal" ;;
-        MN)   chips="$MSR_DATA_ROOT/SatMAE_chips_MN" ;;
+        Iowa) chips="$GFM_DATA_ROOT/SatMAE_chips_multitemporal" ;;
+        MN)   chips="$GFM_DATA_ROOT/SatMAE_chips_MN" ;;
         *) die "unsupported segmentation split: $split (expected Iowa or MN)" ;;
     esac
 
-    local splits_dir="$MSR_DATA_ROOT/SatMAE_chips_multitemporal/$split"
+    local splits_dir="$GFM_DATA_ROOT/SatMAE_chips_multitemporal/$split"
     local suffix="_$head"
-    local out_dir="$MSR_OUTPUT_ROOT/checkpoints/seg/output_seg_${split}${suffix}"
-    mkdir -p "$MSR_OUTPUT_ROOT/logs" "$out_dir/logs"
+    local out_dir="$GFM_OUTPUT_ROOT/checkpoints/seg/output_seg_${split}${suffix}"
+    mkdir -p "$GFM_OUTPUT_ROOT/logs" "$out_dir/logs"
 
     msr_banner "SatMAE segmentation -- head=$head split=$split"
     echo "Chips: $chips"
@@ -182,13 +182,13 @@ train_seg_satmae() {
     echo ""
 
     local py; py="$(msr_python satmae)"
-    cd "$MSR_ROOT/SatMAE"
+    cd "$GFM_ROOT/SatMAE"
     "$py" -m torch.distributed.launch --nproc_per_node=1 \
         --master_port="$(msr_master_port)" --use_env "$entry" \
         --model vit_large_patch16 \
         --input_size 96 --patch_size 8 --nb_classes 14 --drop_path 0.2 \
         --epochs 100 --batch_size 8 --accum_iter 16 \
-        --finetune "$MSR_WEIGHTS/pretrain-vit-large-e199.pth" \
+        --finetune "$GFM_WEIGHTS/pretrain-vit-large-e199.pth" \
         --data_path "$chips" \
         --train_path "$splits_dir/train.txt" \
         --test_path "$splits_dir/val.txt" \
@@ -215,7 +215,7 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 PY
     export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-16}
-    cd "$MSR_ROOT"
+    cd "$GFM_ROOT"
     mim train mmsegmentation \
         prithvi_finetune/configs/multi_temporal_crop_classification.py \
         --launcher none --gpus 1 "$@"
@@ -268,10 +268,10 @@ cmd_viz() {
     [ -n "$state" ] && rest+=(--region "$(state_to_region "$state")")
 
     msr_load_cuda
-    cd "$MSR_ROOT"
+    cd "$GFM_ROOT"
     "$(msr_python spectralgpt)" visualize_cd.py "${rest[@]+"${rest[@]}"}"
     echo ""
-    echo "Outputs under $MSR_OUTPUT_ROOT/visualizations/"
+    echo "Outputs under $GFM_OUTPUT_ROOT/visualizations/"
 }
 
 cmd_eval() {
@@ -283,16 +283,16 @@ cmd_eval() {
         esac
     done
     msr_load_cuda
-    cd "$MSR_ROOT"
+    cd "$GFM_ROOT"
     "$(msr_python satmae)" evaluate_seg.py "${rest[@]+"${rest[@]}"}"
 }
 
 cmd_manifests() {
-    cd "$MSR_ROOT"
+    cd "$GFM_ROOT"
     local models=("$@")
     [ ${#models[@]} -eq 0 ] && models=(satmae spectralgpt prithvi)
     for model in "${models[@]}"; do
-        local base="$MSR_DATA_ROOT/change_detection_chips/$model"
+        local base="$GFM_DATA_ROOT/change_detection_chips/$model"
         if [ ! -d "$base" ]; then
             echo "skip $model: $base not found"
             continue
@@ -312,12 +312,12 @@ COMMAND="${1:-help}"; shift || true
 
 if [ "$SBATCH" = 1 ]; then
     command -v sbatch >/dev/null || die "sbatch not found; run without --sbatch"
-    mkdir -p "$MSR_OUTPUT_ROOT/logs"
+    mkdir -p "$GFM_OUTPUT_ROOT/logs"
     # shellcheck disable=SC2046
     exec sbatch $(sbatch_resources "$COMMAND") \
         --job-name="gfm_$COMMAND" \
-        --output="$MSR_OUTPUT_ROOT/logs/${COMMAND}_%j.out" \
-        --error="$MSR_OUTPUT_ROOT/logs/${COMMAND}_%j.err" \
+        --output="$GFM_OUTPUT_ROOT/logs/${COMMAND}_%j.out" \
+        --error="$GFM_OUTPUT_ROOT/logs/${COMMAND}_%j.err" \
         --wrap "$(printf '%q ' "$HERE/benchmark-gfm" "$COMMAND" "$@")"
 fi
 

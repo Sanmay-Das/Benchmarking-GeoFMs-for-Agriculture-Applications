@@ -10,14 +10,14 @@
 # shared environment cannot satisfy both, so do not try to merge them.
 #
 # Environments are created under ./venvs/<model>/ and are what benchmark-gfm and
-# reproduce.sh look for. Set MSR_VENVS to put them elsewhere (a scratch
+# reproduce.sh look for. Set GFM_VENVS to put them elsewhere (a scratch
 # filesystem, say -- they total several GB).
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-VENVS="${MSR_VENVS:-$ROOT/venvs}"
-PYTHON="${MSR_PYTHON:-python3}"
+VENVS="${GFM_VENVS:-$ROOT/venvs}"
+PYTHON="${GFM_PYTHON:-python3}"
 
 MODELS=("$@")
 if [ ${#MODELS[@]} -eq 0 ]; then
@@ -27,7 +27,7 @@ fi
 version=$("$PYTHON" -c 'import sys; print("%d.%d" % sys.version_info[:2])')
 if [ "$version" != "3.9" ]; then
     echo "Warning: the pins were resolved against Python 3.9; this is $version."
-    echo "         Set MSR_PYTHON to a 3.9 interpreter if installation fails."
+    echo "         Set GFM_PYTHON to a 3.9 interpreter if installation fails."
 fi
 
 mkdir -p "$VENVS"

@@ -5,7 +5,7 @@ Output values: 0-12=class, 255=NoData (same encoding as prediction TIFs).
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
 
 
 import os
@@ -14,7 +14,7 @@ import rasterio
 import rasterio.transform
 from tqdm import tqdm
 
-BASE      = str(MSR_ROOT)
+BASE      = str(GFM_ROOT)
 CHIP_DIR  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_MN/SouthMN')
 TEST_TXT  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/MN/test.txt')
 OUT_PATH  = os.path.join(str(PREDICTIONS), 'GT_SouthMN.tif')

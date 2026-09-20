@@ -1,7 +1,7 @@
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
 
 import os
 import numpy as np
@@ -58,7 +58,7 @@ def brightness_modulate(prediction, ground_truth, colors):
 
 
 def main():
-    base_dir = str(MSR_ROOT)
+    base_dir = str(GFM_ROOT)
     gt_dir   = os.path.join(base_dir, 'SpectralGPT_chips_multitemporal/NWIA/ImageSets')
     pred_dir = os.path.join(base_dir, 'predictions/spectralgpt_NWIA')
     output_dir = os.path.join(base_dir, 'visualizations_geotiff/spectralgpt_NWIA_128x128')

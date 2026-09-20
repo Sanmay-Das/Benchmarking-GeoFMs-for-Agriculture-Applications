@@ -18,7 +18,7 @@ Two input modes, chosen per (model, region) by the registry:
     chips   run over pre-cut chips listed in a split file and stitch them
 
 Writes <region>_<Model>[_<HEAD>]_Prediction.tif under
-$MSR_OUTPUT_ROOT/predictions/.
+$GFM_OUTPUT_ROOT/predictions/.
 """
 
 import os
@@ -35,7 +35,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs'))
-from paths import (MSR_ROOT, DATA_ROOT, PREDICTIONS,  # noqa: E402
+from paths import (GFM_ROOT, DATA_ROOT, PREDICTIONS,  # noqa: E402
                    seg_checkpoint, stack_path, seg_chips_dir,
                    seg_splits_file)
 import registry as R  # noqa: E402
@@ -168,10 +168,10 @@ def compute_iou(pred, gt, num_classes):
 
 def build_model(model_name, head, checkpoint, device):
     spec = R.SEG_MODELS[model_name]
-    tree = MSR_ROOT / spec["tree"]
+    tree = GFM_ROOT / spec["tree"]
 
     if model_name == "satmae":
-        sys.path.insert(0, str(MSR_ROOT / "SatMAE"))
+        sys.path.insert(0, str(GFM_ROOT / "SatMAE"))
         import models_vit_group_channels
         enc = spec["encoder"]
         encoder = models_vit_group_channels.vit_large_patch16(
@@ -197,7 +197,7 @@ def build_model(model_name, head, checkpoint, device):
         from mmcv import Config
         from mmcv.runner import load_checkpoint
         from mmseg.models import build_segmentor
-        cfg = Config.fromfile(str(MSR_ROOT / spec["config"]))
+        cfg = Config.fromfile(str(GFM_ROOT / spec["config"]))
         model = build_segmentor(cfg.model, test_cfg=cfg.get('test_cfg'))
         load_checkpoint(model, str(checkpoint), map_location='cpu')
 

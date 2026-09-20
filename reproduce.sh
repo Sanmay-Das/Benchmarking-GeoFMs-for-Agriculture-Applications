@@ -11,8 +11,8 @@
 # Each cell is fetched, scored, and recorded independently, so a failure in one
 # does not lose the others -- the table at the end reports what succeeded.
 #
-# Requires ./setup.sh to have run. Data goes to $MSR_DATA_ROOT (default
-# ./data), results to $MSR_OUTPUT_ROOT (default ./outputs); neither needs
+# Requires ./setup.sh to have run. Data goes to $GFM_DATA_ROOT (default
+# ./data), results to $GFM_OUTPUT_ROOT (default ./outputs); neither needs
 # setting for a default install.
 
 set -uo pipefail
@@ -110,12 +110,12 @@ done
 
 echo
 echo "############### results ###############"
-MSR_TASK="$TASK" python3 - <<'PY'
+GFM_TASK="$TASK" python3 - <<'PY'
 import json, os, sys
 sys.path.insert(0, "configs")
 import paths as P
 
-task = os.environ.get("MSR_TASK", "cd")
+task = os.environ.get("GFM_TASK", "cd")
 
 rows = []
 if P.PREDICTIONS.is_dir():

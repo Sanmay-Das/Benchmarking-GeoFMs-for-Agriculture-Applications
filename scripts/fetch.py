@@ -13,9 +13,9 @@ ask of anyone, so this resolves a cell to its individual files.
 Each cell needs two things:
 
   chips       change_detection/cd_<model>_<region>.tar on the Hub, unpacked to
-              $MSR_DATA_ROOT/change_detection_chips/<model>/<region>/
+              $GFM_DATA_ROOT/change_detection_chips/<model>/<region>/
   checkpoint  weights/change_detection/<model>_cd_<state>.pth, installed as
-              $MSR_WEIGHTS/cd/cd_train_<model>[_<run>]/best_F1_model.pth,
+              $GFM_WEIGHTS/cd/cd_train_<model>[_<run>]/best_F1_model.pth,
               which is where paths.cd_checkpoint() looks.
 
 Manifests are not published -- they contain absolute paths and are cheap to

@@ -5,7 +5,7 @@ Saves colorized GeoTIFFs to visualizations/seg_SouthMN/.
 
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'configs'))
-from paths import MSR_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
+from paths import GFM_ROOT, DATA_ROOT, OUTPUT_ROOT, WEIGHTS, PREDICTIONS
 
 
 import os
@@ -37,7 +37,7 @@ COLORS = np.array([
 
 NODATA_COLOR = np.array([0, 0, 0], dtype=np.uint8)  # black for NoData
 
-BASE_DIR  = str(MSR_ROOT)
+BASE_DIR  = str(GFM_ROOT)
 PRED_DIR  = str(PREDICTIONS)
 CHIP_DIR  = os.path.join(str(DATA_ROOT), 'SatMAE_chips_MN/SouthMN')
 SPLITS_TXT = os.path.join(str(DATA_ROOT), 'SatMAE_chips_multitemporal/MN/test.txt')

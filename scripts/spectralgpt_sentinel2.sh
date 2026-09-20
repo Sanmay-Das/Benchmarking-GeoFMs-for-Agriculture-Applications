@@ -20,15 +20,15 @@ module purge
 module load cuda/12.1
 
 # Activate environment
-cd "$MSR_ROOT"
-# Python environment. Set MSR_VENV to your venv built from
+cd "$GFM_ROOT"
+# Python environment. Set GFM_VENV to your venv built from
 # requirements/; falls back to ./spectralgptenv if present.
-if [ -z "${MSR_VENV:-}" ] && [ -f "$MSR_ROOT/spectralgptenv/bin/activate" ]; then
-    source "$MSR_ROOT/spectralgptenv/bin/activate"
+if [ -z "${GFM_VENV:-}" ] && [ -f "$GFM_ROOT/spectralgptenv/bin/activate" ]; then
+    source "$GFM_ROOT/spectralgptenv/bin/activate"
 fi
 
 # Go to work directory
-cd $MSR_ROOT/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich
+cd $GFM_ROOT/IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich
 
 # Run training (distributed launch with 1 GPU)
 python -m torch.distributed.launch --nproc_per_node=1 \

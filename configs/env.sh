@@ -30,22 +30,22 @@ msr_legacy_env() {
 
 # Echo the interpreter for a model, in preference order:
 #   venvs/<model>   built by setup.sh
-#   $MSR_VENV       an environment the user names explicitly
+#   $GFM_VENV       an environment the user names explicitly
 #   legacy in-tree  satmae_env, spectralgptenv, prithvifmenv
 #   python3         whatever is on PATH
 msr_python() {
     local model="${1:-}" venvs legacy
-    venvs="${MSR_VENVS:-$MSR_ROOT/venvs}"
+    venvs="${GFM_VENVS:-$GFM_ROOT/venvs}"
 
     if [ -n "$model" ] && [ -x "$venvs/$model/bin/python" ]; then
         echo "$venvs/$model/bin/python"; return
     fi
-    if [ -n "${MSR_VENV:-}" ] && [ -x "$MSR_VENV/bin/python" ]; then
-        echo "$MSR_VENV/bin/python"; return
+    if [ -n "${GFM_VENV:-}" ] && [ -x "$GFM_VENV/bin/python" ]; then
+        echo "$GFM_VENV/bin/python"; return
     fi
     legacy=$(msr_legacy_env "$model")
-    if [ -n "$legacy" ] && [ -x "$MSR_ROOT/$legacy/bin/python" ]; then
-        echo "$MSR_ROOT/$legacy/bin/python"; return
+    if [ -n "$legacy" ] && [ -x "$GFM_ROOT/$legacy/bin/python" ]; then
+        echo "$GFM_ROOT/$legacy/bin/python"; return
     fi
     command -v python3
 }
