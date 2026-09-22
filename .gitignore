@@ -44,3 +44,7 @@ paper/
 # IDE configuration
 .idea/
 *.iml
+
+# Created by setup.sh and reproduce.sh
+outputs/
+venvs/
