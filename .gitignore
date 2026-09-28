@@ -32,9 +32,6 @@ experiments/
 .refresh
 *.pdf
 
-# Claude settings
-.claude/
-
 # Large binary files
 *.tif
 *.pth
