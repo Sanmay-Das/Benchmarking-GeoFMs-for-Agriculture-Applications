@@ -4,6 +4,37 @@ Change detection and semantic segmentation with three geospatial foundation
 model backbones - **SatMAE**, **SpectralGPT** and **Prithvi** - evaluated across
 four US agricultural regions.
 
+## Requirements
+
+- **Python 3.9** (required, not just recommended)
+- A CUDA-capable GPU for inference and training; CPU works but is slow
+- Roughly 10 GB of disk for the environments, plus whatever data you download
+
+Python 3.9 is a hard requirement. The dependency versions were resolved against
+3.9.18, and two of them have no wheels for newer interpreters: `torch
+1.11.0+cu113` and `mmcv-full`. On Python 3.10 or later, pip falls back to
+building them from source and the install fails. `setup.sh` checks the version
+and stops if it is wrong.
+
+If your default `python3` is something else, install a 3.9 interpreter and point
+`GFM_PYTHON` at it:
+
+```bash
+pyenv install 3.9.18
+GFM_PYTHON=~/.pyenv/versions/3.9.18/bin/python ./setup.sh
+
+# or, with conda
+conda create -n gfm39 python=3.9 -y
+GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
+```
+
+If an earlier attempt already created environments with the wrong interpreter,
+delete them first -- they cannot be repaired in place:
+
+```bash
+rm -rf venvs
+```
+
 ## Quick start
 
 ```bash
