@@ -37,13 +37,28 @@ usage() { sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; }
 die() { echo "$*" >&2; exit 2; }
 
 # SLURM resources per command. Previously eight copies of #SBATCH headers.
+#
+# Partition and GRES names differ between clusters, so they come from the
+# environment with the UCR HPCC names as defaults. On another cluster:
+#
+#     export GFM_PARTITION_GPU=gpu-shared
+#     export GFM_PARTITION_CPU=compute
+#     export GFM_GRES_TRAIN=gpu:1
+#     export GFM_SBATCH_EXTRA="--account=abc123 --qos=normal"
+#
+GFM_PARTITION_GPU="${GFM_PARTITION_GPU:-gpu}"
+GFM_PARTITION_CPU="${GFM_PARTITION_CPU:-batch}"
+GFM_GRES_TRAIN="${GFM_GRES_TRAIN:-gpu:a100:1}"
+GFM_GRES_INFER="${GFM_GRES_INFER:-gpu:1}"
+GFM_SBATCH_EXTRA="${GFM_SBATCH_EXTRA:-}"
+
 sbatch_resources() {
     case "$1" in
-        train)     echo "--partition=gpu --gres=gpu:a100:1 --cpus-per-task=16 --mem=128G --time=24:00:00" ;;
-        infer)     echo "--partition=gpu --gres=gpu:1 --cpus-per-task=8 --mem=64G --time=08:00:00" ;;
-        viz|eval)  echo "--partition=batch --cpus-per-task=4 --mem=32G --time=04:00:00" ;;
-        manifests) echo "--partition=batch --cpus-per-task=4 --mem=32G --time=06:00:00" ;;
-        *)         echo "--partition=batch --cpus-per-task=4 --mem=16G --time=02:00:00" ;;
+        train)     echo "--partition=$GFM_PARTITION_GPU --gres=$GFM_GRES_TRAIN --cpus-per-task=16 --mem=128G --time=24:00:00 $GFM_SBATCH_EXTRA" ;;
+        infer)     echo "--partition=$GFM_PARTITION_GPU --gres=$GFM_GRES_INFER --cpus-per-task=8 --mem=64G --time=08:00:00 $GFM_SBATCH_EXTRA" ;;
+        viz|eval)  echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=32G --time=04:00:00 $GFM_SBATCH_EXTRA" ;;
+        manifests) echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=32G --time=06:00:00 $GFM_SBATCH_EXTRA" ;;
+        *)         echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=16G --time=02:00:00 $GFM_SBATCH_EXTRA" ;;
     esac
 }
 

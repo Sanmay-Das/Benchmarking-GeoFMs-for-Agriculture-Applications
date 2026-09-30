@@ -32,6 +32,7 @@ import rasterio
 from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs'))
+from runtime import resolve_device  # noqa: E402
 from paths import GFM_ROOT, PREDICTIONS, chips_csv, load_chips_csv, cd_checkpoint  # noqa: E402
 import registry as R  # noqa: E402
 
@@ -127,7 +128,7 @@ def build_model(model_name, checkpoint, device):
     return model
 
 
-def run(model_name, region, threshold=0.5):
+def run(model_name, region, threshold=0.5, allow_cpu=False):
     spec = R.model(model_name)
     R.region(region)
     chip = spec["chip"]
@@ -137,7 +138,7 @@ def run(model_name, region, threshold=0.5):
     out_dir = PREDICTIONS / "cd_{}_{}".format(model_name, region)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = resolve_device(allow_cpu)
     print("Device: {}".format(device))
 
     model = build_model(model_name, checkpoint, device)
@@ -252,12 +253,14 @@ def main():
                     help="region name, or 'all' for every region")
     ap.add_argument('--threshold', type=float, default=0.5,
                     help='probability above which a pixel is called changed')
+    ap.add_argument('--allow-cpu', action='store_true', dest='allow_cpu',
+                    help='run on CPU without asking (for batch jobs)')
     args = ap.parse_args()
 
     regions = sorted(R.REGIONS) if args.region == 'all' else [args.region]
     for region in regions:
         print("\n==== {} / {} ====".format(args.model, region))
-        run(args.model, region, args.threshold)
+        run(args.model, region, args.threshold, args.allow_cpu)
 
 
 if __name__ == '__main__':

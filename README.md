@@ -137,9 +137,47 @@ python scripts/fetch.py --task {cd,seg} [options] # download only
 `reproduce.sh` options: `--model`, `--state`, `--threshold`, `--dry-run`,
 `--skip-fetch`.
 
-### Training
+### Where it runs
 
-Training runs as a SLURM job:
+Inference and training want a GPU. Nothing here requires a cluster -- SLURM is
+one of three ways to get to one.
+
+**On a machine with a GPU**, run the command directly:
+
+```bash
+./benchmark-gfm infer --task seg --model prithvi --state minnesota
+```
+
+**On a cluster, interactively** -- useful while trying things out, because you
+see the output as it happens:
+
+```bash
+srun --partition=gpu --gres=gpu:1 --cpus-per-task=8 --mem=64G --time=2:00:00 --pty bash
+./benchmark-gfm infer --task seg --model prithvi --state minnesota
+```
+
+**On a cluster, as a batch job**, add `--sbatch` and the command is submitted
+with the resources that command needs:
+
+```bash
+./benchmark-gfm --sbatch infer --task seg --model prithvi --state minnesota
+```
+
+The partition and GRES names default to the ones on UCR's HPCC. Elsewhere,
+set them once in your shell:
+
+```bash
+export GFM_PARTITION_GPU=gpu-shared     # partition with GPUs
+export GFM_PARTITION_CPU=compute        # partition for eval and viz
+export GFM_GRES_INFER=gpu:1             # --gres for inference
+export GFM_GRES_TRAIN=gpu:1             # --gres for training
+export GFM_SBATCH_EXTRA="--account=abc123"
+```
+
+With no GPU, the inference commands say so and ask before continuing, since
+CPU runs are slow. Pass `--allow-cpu` to skip the question in a batch job.
+
+### Training
 
 ```bash
 ./benchmark-gfm --sbatch train --task cd --model satmae --state minnesota
