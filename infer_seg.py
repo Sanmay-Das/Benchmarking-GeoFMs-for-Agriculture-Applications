@@ -162,13 +162,40 @@ class SlidingWindowDataset(Dataset):
         return reshape_for_model(chip, self.spec, self.chip_size), y, x
 
 
+CDL_CLASSES = 13
+
+
 def compute_iou(pred, gt, num_classes):
-    """Per-class IoU in percent, skipping class 0 (NoData). NaN where absent."""
+    """Per-class IoU in percent over the 13 CDL classes. NaN where absent.
+
+    Both rasters are brought onto the same 0-12 class index first, which is
+    what evaluate_seg_NWIA.py does, because the models do not write the same
+    encoding:
+
+      SatMAE      has a 14th output channel for NoData, so argmax gives 1-13
+                  for real classes and 0 for NoData.
+      Prithvi,    have 13 output channels, so argmax gives 0-12 and NoData is
+      SpectralGPT written as 255.
+
+    Ground-truth masks are 1-13 with 0 for NoData in every case. Comparing a
+    0-based prediction against those directly scores class k against class
+    k+1, which is near-zero IoU everywhere rather than an obvious failure.
+    """
+    gt_cls = gt.astype(np.int16) - 1                      # 0-12, NoData -> -1
+
+    pred_cls = pred.astype(np.int16)
+    if num_classes == CDL_CLASSES + 1:                    # SatMAE: 1-13
+        pred_cls = pred_cls - 1                           # 0-12, NoData -> -1
+        pred_cls = np.where(pred == 0, -1, pred_cls)
+    pred_cls = np.where(pred == 255, -1, pred_cls)        # NoData sentinel
+
+    valid = ((gt_cls >= 0) & (gt_cls < CDL_CLASSES) &
+             (pred_cls >= 0) & (pred_cls < CDL_CLASSES))
+
     ious = []
-    for c in range(1, num_classes):
-        mask = gt != 0
-        pred_c = (pred == c) & mask
-        gt_c = (gt == c) & mask
+    for c in range(CDL_CLASSES):
+        pred_c = (pred_cls == c) & valid
+        gt_c = (gt_cls == c) & valid
         inter = (pred_c & gt_c).sum()
         union = (pred_c | gt_c).sum()
         ious.append(float('nan') if union == 0 else 100.0 * inter / union)
