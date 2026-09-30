@@ -50,7 +50,7 @@ import registry as R  # noqa: E402
 # Normalization -- one scheme per backbone, matching how each was trained.
 # ---------------------------------------------------------------------------
 
-def make_normalizer(spec):
+def make_normalizer(spec, region):
     """Return f(chip) -> normalized chip for an (18, h, w) float32 array.
 
     Epsilon placement follows each original script exactly: SatMAE divides by
@@ -70,8 +70,16 @@ def make_normalizer(spec):
         return lambda chip: (chip - mean) / std
 
     if scheme == "global_minmax":
-        lo = np.asarray(spec["gmin"], dtype=np.float32).reshape(18, 1, 1)
-        rng = np.asarray(spec["gmax"], dtype=np.float32).reshape(18, 1, 1) - lo
+        # Bounds are per region: each scene was scaled by its own observed
+        # range, so using one region's numbers everywhere silently shifts the
+        # inputs for the other three.
+        bounds = spec["gminmax"].get(region)
+        if bounds is None:
+            raise SystemExit(
+                "No min-max bounds for region {}; known regions are {}".format(
+                    region, sorted(spec["gminmax"])))
+        lo = np.asarray(bounds["gmin"], dtype=np.float32).reshape(18, 1, 1)
+        rng = np.asarray(bounds["gmax"], dtype=np.float32).reshape(18, 1, 1) - lo
         return lambda chip: np.clip((chip - lo) / rng, 0.0, 1.0)
 
     raise SystemExit("Unknown segmentation normalization: {}".format(scheme))
@@ -212,6 +220,26 @@ def build_model(model_name, head, checkpoint, device):
     return model.to(device).eval()
 
 
+def logits_from(out):
+    """Pull the class logits out of whatever forward() returned.
+
+    The three backbones do not agree: SpectralGPT's segmentation head returns
+    a dict keyed "out" (the original scripts did output['out']), some heads
+    return a tuple of scales with the finest first, and others return the
+    tensor directly.
+    """
+    if isinstance(out, dict):
+        for key in ("out", "logits", "pred"):
+            if key in out:
+                return out[key]
+        raise SystemExit(
+            "model returned a dict with no logits key; got {}".format(
+                sorted(out)))
+    if isinstance(out, (list, tuple)):
+        return out[0]
+    return out
+
+
 def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     chip, stride, delta = spec["chip"], spec["stride"], spec["delta"]
     num_classes = spec["num_classes"]
@@ -221,7 +249,7 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     print("Device: {}".format(device))
 
     model = build_model(model_name, head, seg_checkpoint(model_name, region, head), device)
-    normalize = make_normalizer(spec)
+    normalize = make_normalizer(spec, region)
 
     raster = stack_path(region)
     dataset = SlidingWindowDataset(raster, chip, stride, delta, normalize, spec)
@@ -232,15 +260,16 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     blend = cosine_blend_mask(chip, stride, delta).to(device)
     pad = dataset.pad
     H, W = dataset.height, dataset.width
-    logits_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
+    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
     weight_sum = torch.zeros((1, H, W), dtype=torch.float32, device=device)
 
     label = "{}{} {}".format(spec["label"], suffix, region)
     with torch.no_grad():
         for chips, ys, xs in tqdm(loader, desc=label):
-            out = model(chips.to(device))
-            if isinstance(out, (list, tuple)):
-                out = out[0]
+            # Blend probabilities, not logits. The originals softmaxed before
+            # accumulating, and averaging logits across overlapping windows is
+            # not the same operation.
+            out = F.softmax(logits_from(model(chips.to(device))), dim=1)
             out = out[:, :, delta:chip - delta, delta:chip - delta]
 
             for i in range(out.shape[0]):
@@ -254,11 +283,11 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
                 sy, sx = y0 - y, x0 - x
                 tile = out[i][:, sy:sy + (y1 - y0), sx:sx + (x1 - x0)]
                 mask = blend[sy:sy + (y1 - y0), sx:sx + (x1 - x0)]
-                logits_sum[:, y0:y1, x0:x1] += tile * mask
+                prob_sum[:, y0:y1, x0:x1] += tile * mask
                 weight_sum[:, y0:y1, x0:x1] += mask
 
     weight_sum[weight_sum == 0] = 1
-    pred = (logits_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
+    pred = (prob_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
     pred[dataset.nodata_mask] = 0
 
     profile = dict(dataset.profile)
@@ -334,10 +363,10 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
 
     model = build_model(model_name, head,
                         seg_checkpoint(model_name, region, head), device)
-    normalize = make_normalizer(spec)
+    normalize = make_normalizer(spec, region)
     blend = cosine_blend_mask(chip, stride, delta).to(device)
 
-    logits_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
+    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
     weight_sum = torch.zeros((1, H, W), dtype=torch.float32, device=device)
     gt_canvas = np.zeros((H, W), dtype=np.uint8)
 
@@ -365,19 +394,17 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
             batch_t = torch.from_numpy(np.stack(chips)).float()
             if spec.get('layout') == 'bands_dates':
                 batch_t = batch_t.view(-1, 3, 6, chip, chip).permute(0, 2, 1, 3, 4)
-            out = model(batch_t.to(device))
-            if isinstance(out, (list, tuple)):
-                out = out[0]
+            out = F.softmax(logits_from(model(batch_t.to(device))), dim=1)
             out = out[:, :, delta:chip - delta, delta:chip - delta]
 
             for i, (y, x) in enumerate(metas):
                 y0, x0 = y + delta, x + delta
                 h = w = chip - 2 * delta
-                logits_sum[:, y0:y0 + h, x0:x0 + w] += out[i] * blend
+                prob_sum[:, y0:y0 + h, x0:x0 + w] += out[i] * blend
                 weight_sum[:, y0:y0 + h, x0:x0 + w] += blend
 
     weight_sum[weight_sum == 0] = 1
-    pred = (logits_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
+    pred = (prob_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
 
     profile = dict(ref_profile)
     profile.update(driver='GTiff', dtype='uint8', count=1, height=H, width=W,
