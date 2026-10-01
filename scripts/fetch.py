@@ -184,9 +184,14 @@ def write_splits(chips_dir, splits_path):
     published archive for a test region contains exactly that region's test
     chips, so the listing is the split. Masks are excluded -- the file names
     the chip, and the mask is found alongside it.
+
+    One line per chip, taken from the masks: a chip is scored only if it has
+    one, which is also how scripts/infer_finder.py chose Prithvi's test chips.
+    Names go through P.chip_name, since image and mask files are spelled
+    differently per model and the archive also holds the region's CDL raster.
     """
-    names = sorted(f.stem for f in Path(chips_dir).glob("*.tif")
-                   if not f.stem.endswith("_mask"))
+    names = sorted({P.chip_name(f.stem) for f in Path(chips_dir).glob("*.tif")
+                    if f.stem.endswith((".mask", "_mask"))} - {None})
     if not names:
         raise SystemExit("No chips found in {}; cannot write {}".format(
             chips_dir, splits_path))

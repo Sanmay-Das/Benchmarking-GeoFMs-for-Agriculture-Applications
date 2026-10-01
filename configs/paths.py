@@ -338,3 +338,46 @@ def stack_path(region, must_exist=True):
     if must_exist:
         require(p, "multitemporal stack for {}".format(region))
     return p
+
+
+# ---------------------------------------------------------------------------
+# Segmentation chip names
+# ---------------------------------------------------------------------------
+# One chip is stored as an image plus a mask, and the models spell the pair
+# differently:
+#
+#   SpectralGPT  SouthCA_chip_1024_1280.tif   SouthCA_chip_1024_1280_mask.tif
+#   SatMAE       chip_1440_2352.tif           chip_1440_2352_mask.tif
+#   Prithvi      chip_10080_10080_merged.tif  chip_10080_10080.mask.tif
+#
+# Everything downstream works on the chip name -- the stem with the image or
+# mask suffix removed -- and finds the files from it.
+
+import re as _re
+
+_CHIP_SUFFIXES = (".mask", "_mask", "_merged")
+CHIP_NAME_RE = _re.compile(r"_(\d+)_(\d+)$")
+
+
+def chip_name(stem):
+    """The chip a file stem belongs to, or None if it is not a chip.
+
+    Strips the image/mask suffixes above, then requires a trailing
+    _<row>_<col>; that excludes region rasters such as
+    SouthCA_cdl_epsg5070_10m and files like chip_stats.
+    """
+    for suffix in _CHIP_SUFFIXES:
+        if stem.endswith(suffix):
+            stem = stem[:-len(suffix)]
+            break
+    return stem if CHIP_NAME_RE.search(stem) else None
+
+
+def chip_image(data_dir, name):
+    """Path of a chip's image, whichever spelling the model uses."""
+    import os
+    for suffix in (".tif", "_merged.tif"):
+        path = os.path.join(str(data_dir), name + suffix)
+        if os.path.exists(path):
+            return path
+    raise SystemExit("No image for chip {} in {}".format(name, data_dir))
