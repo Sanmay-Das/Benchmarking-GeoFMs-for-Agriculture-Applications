@@ -10,14 +10,17 @@ configs/registry.py.
     python infer_seg.py --model satmae --head fpn --region NWIA
     python infer_seg.py --model prithvi --region all
 
-Two input modes, chosen per (model, region) by the registry:
+Two input modes; chips is what the published data supports:
 
-    stack   slide a window over a stitched multitemporal raster, blending
-            overlapping predictions with a cosine-tapered mask (the
-            TerraTorch tiled_inference protocol)
     chips   run over pre-cut chips listed in a split file and stitch them
+    stack   slide a window over a stitched multitemporal raster, if you have
+            one (never published)
 
-Writes <region>_<Model>[_<HEAD>]_Prediction.tif under
+Both blend overlapping predictions with a cosine-tapered mask (the TerraTorch
+tiled_inference protocol). Chip runs are then scored against the chip masks
+with the method each model's column of Table 4 used -- see seg_metrics.py.
+
+Writes <region>_<Model>[_<HEAD>]_Prediction.tif and a _metrics.json under
 $GFM_OUTPUT_ROOT/predictions/.
 """
 
@@ -40,6 +43,7 @@ CHIP_COORDS_RE = re.compile(r'_(\d+)_(\d+)$')
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs'))
 from runtime import resolve_device  # noqa: E402
+import seg_metrics as SM  # noqa: E402
 from paths import (GFM_ROOT, DATA_ROOT, PREDICTIONS,  # noqa: E402
                    seg_checkpoint, stack_path, seg_chips_dir,
                    seg_splits_file)
@@ -160,46 +164,6 @@ class SlidingWindowDataset(Dataset):
         chip = self.data[:, y:y + self.chip_size, x:x + self.chip_size]
         chip = torch.from_numpy(self.normalize(chip)).float()
         return reshape_for_model(chip, self.spec, self.chip_size), y, x
-
-
-CDL_CLASSES = 13
-
-
-def compute_iou(pred, gt, num_classes):
-    """Per-class IoU in percent over the 13 CDL classes. NaN where absent.
-
-    Both rasters are brought onto the same 0-12 class index first, which is
-    what evaluate_seg_NWIA.py does, because the models do not write the same
-    encoding:
-
-      SatMAE      has a 14th output channel for NoData, so argmax gives 1-13
-                  for real classes and 0 for NoData.
-      Prithvi,    have 13 output channels, so argmax gives 0-12 and NoData is
-      SpectralGPT written as 255.
-
-    Ground-truth masks are 1-13 with 0 for NoData in every case. Comparing a
-    0-based prediction against those directly scores class k against class
-    k+1, which is near-zero IoU everywhere rather than an obvious failure.
-    """
-    gt_cls = gt.astype(np.int16) - 1                      # 0-12, NoData -> -1
-
-    pred_cls = pred.astype(np.int16)
-    if num_classes == CDL_CLASSES + 1:                    # SatMAE: 1-13
-        pred_cls = pred_cls - 1                           # 0-12, NoData -> -1
-        pred_cls = np.where(pred == 0, -1, pred_cls)
-    pred_cls = np.where(pred == 255, -1, pred_cls)        # NoData sentinel
-
-    valid = ((gt_cls >= 0) & (gt_cls < CDL_CLASSES) &
-             (pred_cls >= 0) & (pred_cls < CDL_CLASSES))
-
-    ious = []
-    for c in range(CDL_CLASSES):
-        pred_c = (pred_cls == c) & valid
-        gt_c = (gt_cls == c) & valid
-        inter = (pred_c & gt_c).sum()
-        union = (pred_c | gt_c).sum()
-        ious.append(float('nan') if union == 0 else 100.0 * inter / union)
-    return ious
 
 
 # ---------------------------------------------------------------------------
@@ -395,7 +359,6 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
 
     prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
     weight_sum = torch.zeros((1, H, W), dtype=torch.float32, device=device)
-    gt_canvas = np.zeros((H, W), dtype=np.uint8)
 
     label = "{}{} {}".format(spec["label"], suffix, region)
     with torch.no_grad():
@@ -412,11 +375,6 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
                 r, c = coords[start + offset]
                 metas.append((r - min_row, c - min_col))
 
-                mask_file = os.path.join(data_dir, name + '_mask.tif')
-                if os.path.exists(mask_file):
-                    with rasterio.open(mask_file) as src:
-                        gt_canvas[r - min_row:r - min_row + chip,
-                                  c - min_col:c - min_col + chip] = src.read(1)
 
             batch_t = torch.from_numpy(np.stack(chips)).float()
             if spec.get('layout') == 'bands_dates':
@@ -430,12 +388,18 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
                 prob_sum[:, y0:y0 + h, x0:x0 + w] += out[i] * blend
                 weight_sum[:, y0:y0 + h, x0:x0 + w] += blend
 
+    # Pixels no window reached -- the outer delta-wide rim of the chip set --
+    # have no prediction. Mark them NoData rather than letting argmax over
+    # zeros call them class 0, which is Natural Veg, a real class.
+    uncovered = (weight_sum[0] == 0).cpu().numpy()
     weight_sum[weight_sum == 0] = 1
     pred = (prob_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
+    pred[uncovered] = SM.NO_PREDICTION
 
     profile = dict(ref_profile)
     profile.update(driver='GTiff', dtype='uint8', count=1, height=H, width=W,
-                   transform=canvas_transform, compress='lzw', nodata=0)
+                   transform=canvas_transform, compress='lzw',
+                   nodata=SM.NO_PREDICTION)
     name = "{}_{}{}_Prediction.tif".format(
         region, spec["label"], "_" + head.upper() if head else "")
     out_file = out_dir / name
@@ -443,20 +407,30 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
         dst.write(pred, 1)
     print("Saved: {}".format(out_file))
 
-    ious = compute_iou(pred, gt_canvas, num_classes)
-    valid = [v for v in ious if not math.isnan(v)]
-    miou = sum(valid) / len(valid) if valid else float('nan')
-    if valid:
-        print("mIoU: {:.2f}%  over {} classes".format(miou, len(valid)))
+    # Score with the method this model's column of Table 4 used.
+    scorer = spec["scorer"]
+    common = dict(pred=pred, names=names, coords=coords,
+                  origin=(min_row, min_col), data_dir=data_dir, chip=chip,
+                  mask_offset=R.per_region(spec["mask_offset"], region),
+                  pred_offset=R.per_region(spec["pred_offset"], region))
+    if scorer == "per_chip":
+        scores = SM.score_per_chip(**common)
+    elif scorer == "canvas":
+        scores = SM.score_canvas(
+            delta=delta, gt_inner=R.per_region(spec["gt_inner"], region),
+            **common)
+    else:
+        raise SystemExit("Unknown segmentation scorer: {}".format(scorer))
+    SM.print_report(scores, "{} {}".format(spec["label"], region))
 
     # Recorded as well as printed, so reproduce.sh can tabulate it. The change
     # detection path does the same.
     metrics = {
         "model": model_name, "region": region, "head": head,
-        "state": R.state_of_region(region), "mIoU": miou,
-        "classes_present": len(valid), "num_classes": num_classes,
-        "per_class_iou": ious, "prediction": str(out_file),
+        "state": R.state_of_region(region), "scorer": scorer,
+        "prediction": str(out_file),
     }
+    metrics.update(scores)
     metrics_path = out_dir / (out_file.stem + "_metrics.json")
     with open(metrics_path, "w") as fh:
         json.dump(metrics, fh, indent=2, sort_keys=True)
@@ -467,18 +441,16 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
 def input_mode(spec, region, model_name=None, requested="auto"):
     """Which inference path this (model, region) uses.
 
-    Two protocols exist. The published results slid a window over a stitched
-    multitemporal raster; SatMAE/SouthMN was scored against its own test chips
-    instead. The rasters were never published and the chips cover only about
-    13% of a region non-contiguously, so they cannot be reconstructed -- which
-    leaves chips as the only protocol available to someone who clones this.
+    The published data is chips, and the paper's numbers are scored on chip
+    ground truth, so chips is the path anyone who clones this will take.
 
-    "auto" therefore prefers whichever input is actually present, favouring the
-    stack when both are, so an existing working copy reproduces its own
-    numbers. Pass --input to force one.
-
-    Chip-based and stack-based numbers are not interchangeable: per-chip
-    inference has no overlap averaging and no surrounding context.
+    Some of the original runs predicted by sliding a window over a stitched
+    multitemporal raster instead. Those rasters were never published. Where a
+    working copy still has one, "auto" uses it so that copy reproduces its own
+    output. Scoring is identical either way; on SpectralGPT California the two
+    inputs score within 0.3 IoU of each other per class and identically on
+    crops, the difference coming from chip edges, which the raster gives
+    surrounding context. Pass --input to force one.
     """
     if requested in ("chips", "stack"):
         return requested
@@ -530,9 +502,9 @@ def main():
                     help='override the per-model batch size (memory only)')
     ap.add_argument('--input', default='auto', choices=['auto', 'chips', 'stack'],
                     dest='requested',
-                    help="inference input: chips is what the published data "
-                         "supports, stack reproduces the paper's protocol but "
-                         "needs processed_stacks/ (default: auto)")
+                    help="inference input: chips (the published data) or "
+                         "stack, which needs your own processed_stacks/ "
+                         "(default: auto)")
     ap.add_argument('--allow-cpu', action='store_true', dest='allow_cpu',
                     help='run on CPU without asking (for batch jobs)')
     args = ap.parse_args()

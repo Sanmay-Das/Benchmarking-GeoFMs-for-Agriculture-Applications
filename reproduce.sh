@@ -45,12 +45,7 @@ done
 
 case "$TASK" in
     cd) ;;
-    seg)
-        echo "Note: most segmentation cells infer over a stitched raster" >&2
-        echo "      (processed_stacks/), which is not published. Only SatMAE" >&2
-        echo "      minnesota runs from chips. Cells without their input are" >&2
-        echo "      reported and skipped." >&2
-        echo "" >&2 ;;
+    seg) ;;
     *) echo "unknown task: $TASK (expected cd or seg)" >&2; exit 2 ;;
 esac
 
@@ -146,14 +141,16 @@ if task == "cd":
             r.get("OA", float("nan")), r.get("precision", float("nan")),
             r.get("recall", float("nan")), r.get("F1", float("nan"))))
 else:
-    hdr = "{:<13} {:<16} {:<9} {:<7} {:>8} {:>8}"
-    print(hdr.format("model", "state", "region", "head", "mIoU%", "classes"))
-    print("-" * 68)
+    # Same summaries as Table 4: mIoU over all available classes and over
+    # the crop classes alone.
+    hdr = "{:<13} {:<16} {:<9} {:<7} {:>10} {:>12}"
+    print(hdr.format("model", "state", "region", "head", "mIoU(all)", "mIoU(crops)"))
+    print("-" * 72)
     for r in sorted(rows, key=key):
-        print("{:<13} {:<16} {:<9} {:<7} {:>8.2f} {:>8}".format(
+        print("{:<13} {:<16} {:<9} {:<7} {:>10.2f} {:>12.2f}".format(
             r.get("model", "?"), r.get("state", "?"), r.get("region", "?"),
             r.get("head", "") or "-", r.get("mIoU", float("nan")),
-            r.get("classes_present", "?")))
+            r.get("mIoU_crops", float("nan"))))
 
 print("\nPredictions and metrics: {}".format(P.PREDICTIONS))
 PY

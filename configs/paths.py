@@ -304,12 +304,16 @@ def seg_chips_dir(model, region, must_exist=True):
 def seg_splits_file(model, region, must_exist=True):
     """File listing the test chip basenames for one (model, region).
 
-    Written by fetch.py after unpacking, since the original split files were
-    never published. The legacy per-run test.txt is accepted as a fallback.
+    The test sets the paper was scored on ship with the repository under
+    splits/seg/<model>/, and are used first. Where none ships, fall back to
+    the list fetch.py writes by listing the unpacked chips -- which can hold
+    chips the paper did not score, so it is only a fallback. The legacy
+    per-run test.txt is accepted last.
     """
     import registry
 
-    candidates = [SEG_CHIPS / model / "{}_test.txt".format(region)]
+    candidates = [GFM_ROOT / "splits" / "seg" / model / "{}_test.txt".format(region),
+                  SEG_CHIPS / model / "{}_test.txt".format(region)]
     spec = registry.SEG_MODELS.get(model, {})
     legacy = spec.get("splits")
     if legacy:
@@ -320,7 +324,7 @@ def seg_splits_file(model, region, must_exist=True):
         if candidate.exists():
             return candidate
     if not must_exist:
-        return candidates[0]
+        return candidates[1]          # where fetch.py will write it
     raise SystemExit(
         "No test split for {} / {}.\n"
         "Looked in:\n  {}\n"

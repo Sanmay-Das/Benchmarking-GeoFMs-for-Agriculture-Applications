@@ -145,6 +145,16 @@ SEG_MODELS = {
         "heads": ["fpn"],
         "tree": "SatMAE",
         "num_classes": 14,
+        # Scored as in evaluate_seg_fpn_corrected.py: ground truth stitched
+        # onto one canvas, each pixel counted once. Each state's model learned
+        # its own region's mask convention, so the same offset applies to
+        # masks and predictions: Iowa masks are 1-13 (0 = NoData), the other
+        # three are already 0-12. Iowa contributes whole chips to the ground
+        # truth; the others only their centre, as that script does.
+        "scorer": "canvas",
+        "mask_offset": {"NWIA": 1, "default": 0},
+        "pred_offset": {"NWIA": 1, "default": 0},
+        "gt_inner": {"NWIA": False, "default": True},
         "delta": 8,
         "batch": 32,
         # NWIA was evaluated by sliding a window over a stitched raster;
@@ -170,6 +180,12 @@ SEG_MODELS = {
         "heads": [""],
         "tree": "IEEE_TPAMI_SpectralGPT/downstream_tasks/SegMunich",
         "num_classes": 13,
+        # Scored as in scripts/infer_finder.py: one confusion matrix summed
+        # chip by chip, so overlapping chips count a pixel more than once.
+        # Masks are 1-13 (0 = NoData); predictions are already 0-12.
+        "scorer": "per_chip",
+        "mask_offset": 1,
+        "pred_offset": 0,
         "delta": 8,
         "batch": 32,
         "input_mode": "stack",
@@ -223,6 +239,12 @@ SEG_MODELS = {
         "heads": [""],
         "tree": "experiments/prithvi_multi_temporal_crop_classification",
         "num_classes": 13,
+        # Scored as in scripts/infer_finder.py: one confusion matrix summed
+        # chip by chip, so overlapping chips count a pixel more than once.
+        # Masks are 1-13 (0 = NoData); predictions are already 0-12.
+        "scorer": "per_chip",
+        "mask_offset": 1,
+        "pred_offset": 0,
         "delta": 8,
         "batch": 16,
         "input_mode": "stack",
@@ -428,3 +450,10 @@ def seg_states(model_name):
             continue
         out.append(name)
     return out
+
+
+def per_region(value, region):
+    """A registry value that may vary by region: {region: v, "default": v}."""
+    if isinstance(value, dict):
+        return value.get(region, value.get("default"))
+    return value
