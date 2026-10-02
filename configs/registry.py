@@ -151,6 +151,9 @@ SEG_MODELS = {
         # masks and predictions: Iowa masks are 1-13 (0 = NoData), the other
         # three are already 0-12. Iowa contributes whole chips to the ground
         # truth; the others only their centre, as that script does.
+        # infer_satmae_fpn_*.py fed chips to the model as read; only the
+        # Prithvi and SpectralGPT scripts replaced -9999 NoData with 0 first.
+        "zero_nodata": False,
         "scorer": "canvas",
         "mask_offset": {"NWIA": 1, "default": 0},
         "pred_offset": {"NWIA": 1, "default": 0},

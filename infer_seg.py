@@ -397,7 +397,8 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
             for offset, name in enumerate(block):
                 with rasterio.open(chip_image(data_dir, name)) as src:
                     arr = src.read().astype(np.float32)
-                arr[arr == -9999] = 0.0
+                if spec.get("zero_nodata", True):
+                    arr[arr == -9999] = 0.0
                 chips.append(normalize(arr))
                 # Index directly: names.index() here was a linear scan per
                 # chip, quadratic over a region with 33,000 of them.
