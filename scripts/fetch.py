@@ -76,8 +76,14 @@ def seg_chip_dest(model, region):
 
 
 def seg_splits_dest(model, region):
-    """The split file run_chips() reads, listing the test chip basenames."""
-    return P.seg_splits_file(model, region, must_exist=False)
+    """Where to write the listing of the unpacked test chips.
+
+    Always beside the downloaded chips, never under splits/seg/: that
+    directory holds the paper's own test splits, which seg_splits_file()
+    prefers, and a directory listing must not overwrite them -- the Hub's
+    California archive, for one, holds nine chips the paper did not score.
+    """
+    return P.SEG_CHIPS / model / "{}_test.txt".format(region)
 
 
 def seg_weight_dest(model, state):

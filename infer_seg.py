@@ -275,11 +275,15 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     print("Windows: {}  ({}x{} raster)".format(
         len(dataset), dataset.height, dataset.width))
 
-    blend = cosine_blend_mask(chip, stride, delta).to(device)
+    blend = cosine_blend_mask(chip, stride, delta)
     pad = dataset.pad
     H, W = dataset.height, dataset.width
-    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
-    weight_sum = torch.zeros((1, H, W), dtype=torch.float32, device=device)
+    # The canvas lives in host memory, as in the original scripts: a large
+    # region is num_classes x H x W floats -- about 7 GB for SatMAE on EastNC
+    # -- which does not fit on a 16 GB GPU alongside the model. Only each
+    # batch's probabilities are on the GPU, moved over as they are blended in.
+    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32)
+    weight_sum = torch.zeros((1, H, W), dtype=torch.float32)
 
     label = "{}{} {}".format(spec["label"], suffix, region)
     with torch.no_grad():
@@ -288,7 +292,7 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
             # accumulating, and averaging logits across overlapping windows is
             # not the same operation.
             out = F.softmax(predict_logits(model, model_name, chips.to(device), chip), dim=1)
-            out = out[:, :, delta:chip - delta, delta:chip - delta]
+            out = out[:, :, delta:chip - delta, delta:chip - delta].cpu()
 
             for i in range(out.shape[0]):
                 y = int(ys[i]) - pad + delta
@@ -305,7 +309,8 @@ def run_stack(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
                 weight_sum[:, y0:y1, x0:x1] += mask
 
     weight_sum[weight_sum == 0] = 1
-    pred = (prob_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
+    prob_sum /= weight_sum
+    pred = prob_sum.argmax(0).numpy().astype(np.uint8)
     pred[dataset.nodata_mask] = 0
 
     profile = dict(dataset.profile)
@@ -384,10 +389,14 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     model = build_model(model_name, head,
                         seg_checkpoint(model_name, region, head), device)
     normalize = make_normalizer(spec, region)
-    blend = cosine_blend_mask(chip, stride, delta).to(device)
+    blend = cosine_blend_mask(chip, stride, delta)
 
-    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32, device=device)
-    weight_sum = torch.zeros((1, H, W), dtype=torch.float32, device=device)
+    # The canvas lives in host memory, as in the original scripts: a large
+    # region is num_classes x H x W floats -- about 7 GB for SatMAE on EastNC
+    # -- which does not fit on a 16 GB GPU alongside the model. Only each
+    # batch's probabilities are on the GPU, moved over as they are blended in.
+    prob_sum = torch.zeros((num_classes, H, W), dtype=torch.float32)
+    weight_sum = torch.zeros((1, H, W), dtype=torch.float32)
 
     label = "{}{} {}".format(spec["label"], suffix, region)
     with torch.no_grad():
@@ -410,7 +419,7 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
             if spec.get('layout') == 'bands_dates':
                 batch_t = batch_t.view(-1, 3, 6, chip, chip).permute(0, 2, 1, 3, 4)
             out = F.softmax(predict_logits(model, model_name, batch_t.to(device), chip), dim=1)
-            out = out[:, :, delta:chip - delta, delta:chip - delta]
+            out = out[:, :, delta:chip - delta, delta:chip - delta].cpu()
 
             for i, (y, x) in enumerate(metas):
                 y0, x0 = y + delta, x + delta
@@ -421,9 +430,10 @@ def run_chips(model_name, region, head, batch, out_dir, spec, allow_cpu=False):
     # Pixels no window reached -- the outer delta-wide rim of the chip set --
     # have no prediction. Mark them NoData rather than letting argmax over
     # zeros call them class 0, which is Natural Veg, a real class.
-    uncovered = (weight_sum[0] == 0).cpu().numpy()
+    uncovered = (weight_sum[0] == 0).numpy()
     weight_sum[weight_sum == 0] = 1
-    pred = (prob_sum / weight_sum).argmax(0).cpu().numpy().astype(np.uint8)
+    prob_sum /= weight_sum
+    pred = prob_sum.argmax(0).numpy().astype(np.uint8)
     pred[uncovered] = SM.NO_PREDICTION
 
     profile = dict(ref_profile)
