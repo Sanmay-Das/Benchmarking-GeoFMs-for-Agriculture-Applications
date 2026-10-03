@@ -6,62 +6,55 @@ four US agricultural regions.
 
 ## Requirements
 
-- **Python 3.9** (required, not just recommended)
-- A CUDA-capable GPU for inference and training; CPU works but is slow
-- Roughly 10 GB of disk for the environments, plus whatever data you download
+- An NVIDIA GPU. Check with `nvidia-smi`: if it prints your GPU, you're ready.
+- Python 3.9.
 
-Python 3.9 is a hard requirement. The dependency versions were resolved against
-3.9.18, and two of them have no wheels for newer interpreters: `torch
-1.11.0+cu113` and `mmcv-full`. On Python 3.10 or later, pip falls back to
-building them from source and the install fails. `setup.sh` checks the version
-and stops if it is wrong.
-
-If your default `python3` is something else, install a 3.9 interpreter and point
-`GFM_PYTHON` at it:
-
-```bash
-pyenv install 3.9.18
-GFM_PYTHON=~/.pyenv/versions/3.9.18/bin/python ./setup.sh
-
-# or, with conda
-conda create -n gfm39 python=3.9 -y
-GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
-```
-
-If an earlier attempt already created environments with the wrong interpreter,
-delete them first -- they cannot be repaired in place:
-
-```bash
-rm -rf venvs
-```
-
-## Quick start
+## Setup
 
 ```bash
 git clone https://github.com/Sanmay-Das/Benchmarking-GeoFMs-for-Agriculture-Applications
 cd Benchmarking-GeoFMs-for-Agriculture-Applications
-
-./setup.sh                                  # build the Python environments
-./reproduce.sh --task cd --state iowa       # download data, score, print results
+./setup.sh
 ```
 
-Data and checkpoints are downloaded automatically
-from [Hugging Face](https://huggingface.co/datasets/sanmay4119/geofm-agriculture-benchmark)
-on first use; no paths or environment variables need to be set.
-
-Check what a run will download before committing to it:
+If `python3` on your machine is not 3.9:
 
 ```bash
-./reproduce.sh --task cd --dry-run
+GFM_PYTHON=/path/to/python3.9 ./setup.sh
 ```
+
+## Run
+
+```bash
+./reproduce.sh --task seg --model satmae --state north_carolina
+```
+
+This downloads the data and weights, runs the model, and prints the results.
+
+- `--task`: `seg` (segmentation) or `cd` (change detection)
+- `--model`: `satmae`, `spectralgpt`, `prithvi`
+- `--state`: `iowa`, `minnesota`, `north_carolina`, `california`
+
+## Running on an HPC cluster
+
+On high-performance computing (HPC) clusters the login node usually has no
+GPU. Submit the same command as a job with `sbatch`:
+
+```bash
+sbatch --partition=gpu --gres=gpu:1 --cpus-per-task=8 --mem=64G --time=6:00:00 \
+  --wrap "./reproduce.sh --task seg --model satmae --state north_carolina"
+```
+
+Run it from inside the repository folder. Change `--partition=gpu` to your
+cluster's GPU partition name. The results appear in `slurm-<jobid>.out`.
 
 ## The benchmark grid
 
 A **cell** is one `(task, model, state)` triple, and one row of results:
 
-- **tasks** — `cd` (change detection), `seg` (semantic segmentation)
-- **models** — `satmae`, `spectralgpt`, `prithvi`
-- **states** — `iowa`, `minnesota`, `north_carolina`, `california`
+- **tasks** - `cd` (change detection), `seg` (semantic segmentation)
+- **models** - `satmae`, `spectralgpt`, `prithvi`
+- **states** - `iowa`, `minnesota`, `north_carolina`, `california`
 
 That is 2 x 3 x 4 = 24 cells. Every command takes the same three flags:
 
@@ -71,8 +64,8 @@ That is 2 x 3 x 4 = 24 cells. Every command takes the same three flags:
 
 Omit `--model` or `--state` to run every one of them.
 
-State is the unit everything is organised by. Each state has three sub-regions —
-train, validation and test — and the reported number is computed on the test
+State is the unit everything is organised by. Each state has three sub-regions -
+train, validation and test - and the reported number is computed on the test
 region. You never name regions directly; `--state iowa` resolves to them.
 
 | state | train | val | test |
@@ -89,9 +82,9 @@ published:
 
 | model | iowa | minnesota | north_carolina | california |
 |---|---|---|---|---|
-| **satmae** | — | ✅ | ✅ | ✅ |
-| **prithvi** | — | — | ✅ | ✅ |
-| **spectralgpt** | — | — | — | ✅ |
+| **satmae** | - | yes | yes | yes |
+| **prithvi** | - | - | yes | yes |
+| **spectralgpt** | - | - | - | yes |
 
 The gaps are missing published files, not missing code. `fetch.py` names exactly
 what is absent for any cell you ask for, and skips downloading the usable half
@@ -107,9 +100,9 @@ Seven of the twelve segmentation cells are reproducible:
 
 | model | iowa | minnesota | north_carolina | california |
 |---|---|---|---|---|
-| **satmae** | — | ✅ | ✅ | no checkpoint |
-| **prithvi** | — | ✅ | ✅ | no chips |
-| **spectralgpt** | — | ✅ | ✅ | ✅ |
+| **satmae** | - | yes | yes | no checkpoint |
+| **prithvi** | - | yes | yes | no chips |
+| **spectralgpt** | - | yes | yes | yes |
 
 Iowa has no segmentation chips published for any backbone.
 
@@ -241,7 +234,7 @@ names still work.
 
 Published at
 [`sanmay4119/geofm-agriculture-benchmark`](https://huggingface.co/datasets/sanmay4119/geofm-agriculture-benchmark)
-— 482 GB in total, so do not clone it. One cell is 3–30 GB and `fetch.py`
+- 482 GB in total, so do not clone it. One cell is 3-30 GB and `fetch.py`
 downloads only what a cell needs.
 
 Chip manifests are **not** published: they contain absolute paths, and are
@@ -268,9 +261,50 @@ for t in tests/test_*.py; do python "$t"; done
 ```
 
 These check that the registry stays complete and that the collapsed inference
-scripts remain numerically identical to the per-region scripts they replaced —
+scripts remain numerically identical to the per-region scripts they replaced -
 the equivalence tests compare against frozen fixtures, since the originals were
 deleted.
+
+## Troubleshooting
+
+### Python version
+
+Python 3.9 is a hard requirement. The dependency versions were resolved against
+3.9.18, and two of them have no wheels for newer interpreters: `torch
+1.11.0+cu113` and `mmcv-full`. On Python 3.10 or later, pip falls back to
+building them from source and the install fails. `setup.sh` checks the version
+and stops if it is wrong.
+
+If your default `python3` is something else, install a 3.9 interpreter and point
+`GFM_PYTHON` at it:
+
+```bash
+pyenv install 3.9.18
+GFM_PYTHON=~/.pyenv/versions/3.9.18/bin/python ./setup.sh
+
+# or, with conda
+conda create -n gfm39 python=3.9 -y
+GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
+```
+
+If an earlier attempt already created environments with the wrong interpreter,
+delete them first -- they cannot be repaired in place:
+
+```bash
+rm -rf venvs
+```
+
+### Data download
+
+Data and checkpoints are downloaded automatically
+from [Hugging Face](https://huggingface.co/datasets/sanmay4119/geofm-agriculture-benchmark)
+on first use; no paths or environment variables need to be set.
+
+Check what a run will download before committing to it:
+
+```bash
+./reproduce.sh --task cd --dry-run
+```
 
 ## Citation
 
