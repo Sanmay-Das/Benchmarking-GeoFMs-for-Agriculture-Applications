@@ -181,36 +181,6 @@ Training needs all three regions of a state:
 python scripts/fetch.py --task cd --model satmae --state minnesota --splits all
 ```
 
-## Layout
-
-```
-setup.sh               build the per-model environments
-reproduce.sh           fetch + score + results table
-
-configs/paths.py       every path, resolved from three roots
-configs/registry.py    what varies per model, state and region
-
-infer_cd.py            change-detection inference, all models and states
-infer_seg.py           segmentation inference
-
-benchmark-gfm          infer, train, manifests
-                       add --sbatch to submit to SLURM
-
-scripts/fetch.py       download one cell from Hugging Face
-scripts/               region-specific helpers and analysis one-offs
-tests/                 registry and numerical-equivalence guards
-
-SatMAE/                vendored upstream backbone code
-IEEE_TPAMI_SpectralGPT/
-prithvi_finetune/
-```
-
-Top-level scripts are the ones meant to be run. Anything region-specific or
-single-purpose lives in `scripts/`.
-
-The three backbone directories are vendored upstream code, imported by the
-inference scripts but not modified beyond path handling.
-
 ## Configuration
 
 Defaults are self-contained; override only if you want data elsewhere.
