@@ -7,8 +7,6 @@
 # Commands:
 #     infer      run inference          --task {cd,seg} --model M --state S
 #     train      fine-tune a backbone   --task {cd,seg} --model M --state S
-#     viz        render prediction maps --task cd --state S
-#     eval       segmentation metrics   --task seg
 #     manifests  rebuild chip manifests [model ...]
 #     help       this text
 #
@@ -32,7 +30,7 @@ source "$HERE/configs/paths.sh"
 # shellcheck disable=SC1091
 source "$HERE/configs/env.sh"
 
-usage() { sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; }
 
 die() { echo "$*" >&2; exit 2; }
 
@@ -56,7 +54,6 @@ sbatch_resources() {
     case "$1" in
         train)     echo "--partition=$GFM_PARTITION_GPU --gres=$GFM_GRES_TRAIN --cpus-per-task=16 --mem=128G --time=24:00:00 $GFM_SBATCH_EXTRA" ;;
         infer)     echo "--partition=$GFM_PARTITION_GPU --gres=$GFM_GRES_INFER --cpus-per-task=8 --mem=64G --time=08:00:00 $GFM_SBATCH_EXTRA" ;;
-        viz|eval)  echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=32G --time=04:00:00 $GFM_SBATCH_EXTRA" ;;
         manifests) echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=32G --time=06:00:00 $GFM_SBATCH_EXTRA" ;;
         *)         echo "--partition=$GFM_PARTITION_CPU --cpus-per-task=4 --mem=16G --time=02:00:00 $GFM_SBATCH_EXTRA" ;;
     esac
@@ -269,39 +266,6 @@ cmd_train() {
     esac
 }
 
-# ------------------------------------------------- visualization and metrics
-
-cmd_viz() {
-    local state="" rest=()
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --task)  shift 2 ;;   # cd is the only one implemented
-            --state) state="$2"; shift 2 ;;
-            *) rest+=("$1"); shift ;;
-        esac
-    done
-    [ -n "$state" ] && rest+=(--region "$(state_to_region "$state")")
-
-    msr_load_cuda
-    cd "$GFM_ROOT"
-    "$(msr_python spectralgpt)" visualize_cd.py "${rest[@]+"${rest[@]}"}"
-    echo ""
-    echo "Outputs under $GFM_OUTPUT_ROOT/visualizations/"
-}
-
-cmd_eval() {
-    local rest=()
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --task) shift 2 ;;    # seg is the only one implemented
-            *) rest+=("$1"); shift ;;
-        esac
-    done
-    msr_load_cuda
-    cd "$GFM_ROOT"
-    "$(msr_python satmae)" evaluate_seg.py "${rest[@]+"${rest[@]}"}"
-}
-
 cmd_manifests() {
     cd "$GFM_ROOT"
     local models=("$@")
@@ -339,8 +303,6 @@ fi
 case "$COMMAND" in
     infer)     cmd_infer "$@" ;;
     train)     cmd_train "$@" ;;
-    viz)       cmd_viz "$@" ;;
-    eval)      cmd_eval "$@" ;;
     manifests) cmd_manifests "$@" ;;
     help|-h|--help) usage ;;
     *) echo "unknown command: $COMMAND" >&2; echo ""; usage; exit 2 ;;

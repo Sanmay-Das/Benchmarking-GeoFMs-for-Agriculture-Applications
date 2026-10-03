@@ -123,7 +123,6 @@ the chips, so `fetch.py` writes them after unpacking.
 python scripts/fetch.py --task {cd,seg} [options] # download only
 ./benchmark-gfm infer --task {cd,seg} --model M --state S
 ./benchmark-gfm train --task {cd,seg} --model M --state S
-./benchmark-gfm eval --task seg --region R        # segmentation metrics
 ./benchmark-gfm manifests [model]                 # rebuild chip manifests
 ```
 
@@ -161,7 +160,7 @@ set them once in your shell:
 
 ```bash
 export GFM_PARTITION_GPU=gpu-shared     # partition with GPUs
-export GFM_PARTITION_CPU=compute        # partition for eval and viz
+export GFM_PARTITION_CPU=compute        # partition for CPU-only jobs
 export GFM_GRES_INFER=gpu:1             # --gres for inference
 export GFM_GRES_TRAIN=gpu:1             # --gres for training
 export GFM_SBATCH_EXTRA="--account=abc123"
@@ -193,10 +192,8 @@ configs/registry.py    what varies per model, state and region
 
 infer_cd.py            change-detection inference, all models and states
 infer_seg.py           segmentation inference
-evaluate_seg.py        segmentation metrics
-visualize_cd.py        change-detection maps
 
-benchmark-gfm          infer, train, viz, eval, manifests
+benchmark-gfm          infer, train, manifests
                        add --sbatch to submit to SLURM
 
 scripts/fetch.py       download one cell from Hugging Face
