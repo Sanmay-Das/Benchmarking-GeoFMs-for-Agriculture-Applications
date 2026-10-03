@@ -105,12 +105,17 @@ done
 
 echo
 echo "############### results ###############"
-GFM_TASK="$TASK" python3 - <<'PY'
+GFM_TASK="$TASK" GFM_MODELS="${MODELS[*]}" GFM_STATES="${STATES[*]}" python3 - <<'PY'
 import json, os, sys
 sys.path.insert(0, "configs")
 import paths as P
 
 task = os.environ.get("GFM_TASK", "cd")
+# Only the cells this run asked for. Results from earlier runs stay on disk
+# under predictions/ but are not listed unless their model and state were
+# requested again.
+models = set(os.environ.get("GFM_MODELS", "").split())
+states = set(os.environ.get("GFM_STATES", "").split())
 
 rows = []
 if P.PREDICTIONS.is_dir():
@@ -121,11 +126,12 @@ if P.PREDICTIONS.is_dir():
             continue
         # A change-detection record reports F1, a segmentation record mIoU.
         kind = "cd" if "F1" in r else "seg"
-        if kind == task:
+        if kind == task and r.get("model") in models and r.get("state") in states:
             rows.append(r)
 
 if not rows:
-    print("No {} metrics found under {}".format(task, P.PREDICTIONS))
+    print("No {} metrics for the requested cells under {}".format(
+        task, P.PREDICTIONS))
     raise SystemExit
 
 def key(r):
