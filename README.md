@@ -155,17 +155,6 @@ with the resources that command needs:
 ./benchmark-gfm --sbatch infer --task seg --model prithvi --state minnesota
 ```
 
-The partition and GRES names default to the ones on UCR's HPCC. Elsewhere,
-set them once in your shell:
-
-```bash
-export GFM_PARTITION_GPU=gpu-shared     # partition with GPUs
-export GFM_PARTITION_CPU=compute        # partition for CPU-only jobs
-export GFM_GRES_INFER=gpu:1             # --gres for inference
-export GFM_GRES_TRAIN=gpu:1             # --gres for training
-export GFM_SBATCH_EXTRA="--account=abc123"
-```
-
 With no GPU, the inference commands say so and ask before continuing, since
 CPU runs are slow. Pass `--allow-cpu` to skip the question in a batch job.
 
