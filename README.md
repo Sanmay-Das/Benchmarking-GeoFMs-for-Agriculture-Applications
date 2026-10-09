@@ -17,10 +17,11 @@ cd Benchmarking-GeoFMs-for-Agriculture-Applications
 ./setup.sh
 ```
 
-If `python3` on your machine is not 3.9:
+If `python3` on your machine is not 3.9, create one with conda:
 
 ```bash
-GFM_PYTHON=/path/to/python3.9 ./setup.sh
+conda create -n gfm39 python=3.9 -y
+GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
 ```
 
 ## Run
@@ -231,17 +232,17 @@ Python 3.9 is a hard requirement. The dependency versions were resolved against
 building them from source and the install fails. `setup.sh` checks the version
 and stops if it is wrong.
 
-If your default `python3` is something else, install a 3.9 interpreter and point
-`GFM_PYTHON` at it:
+If your default `python3` is something else, create a 3.9 interpreter with
+conda and point `GFM_PYTHON` at it:
 
 ```bash
-pyenv install 3.9.18
-GFM_PYTHON=~/.pyenv/versions/3.9.18/bin/python ./setup.sh
-
-# or, with conda
 conda create -n gfm39 python=3.9 -y
 GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
 ```
+
+Use conda rather than a Python compiled from source (for example with pyenv):
+a source build made without system libraries such as libffi is missing modules
+that torch needs, and `setup.sh` will refuse it.
 
 If an earlier attempt already created environments with the wrong interpreter,
 delete them first -- they cannot be repaired in place:

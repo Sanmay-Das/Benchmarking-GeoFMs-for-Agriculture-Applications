@@ -46,12 +46,38 @@ The pinned versions have no wheels for $version, so pip would try to build
 them from source and fail (mmcv-full needs pkg_resources, which modern
 setuptools no longer ships; torch 1.11.0+cu113 has no $version wheels at all).
 
-Install a 3.9 interpreter and point GFM_PYTHON at it, for example:
+Create a 3.9 interpreter with conda and point GFM_PYTHON at it:
 
-    pyenv install 3.9.18
-    GFM_PYTHON=~/.pyenv/versions/3.9.18/bin/python ./setup.sh
+    conda create -n gfm39 python=3.9 -y
+    GFM_PYTHON=\$(conda run -n gfm39 which python) ./setup.sh
+MSG
+    exit 1
+fi
 
-    # or, with conda
+# Python compiled from source without the system libraries it needs -- what
+# pyenv produces on a machine missing the libffi or OpenSSL headers -- reports
+# 3.9 but lacks modules that torch and pip import, and fails only partway
+# through the install. Check for them before installing anything.
+missing_modules() {
+    "$1" - <<'PYCHECK'
+missing = []
+for name in ("ctypes", "ssl", "zlib"):
+    try:
+        __import__(name)
+    except ImportError:
+        missing.append(name)
+print(" ".join(missing))
+PYCHECK
+}
+
+missing=$(missing_modules "$PYTHON")
+if [ -n "$missing" ]; then
+    cat >&2 <<MSG
+'$PYTHON' is Python 3.9 but is missing modules: $missing
+
+It was built without the system libraries those modules need. Use a complete
+Python 3.9 from conda instead:
+
     conda create -n gfm39 python=3.9 -y
     GFM_PYTHON=\$(conda run -n gfm39 which python) ./setup.sh
 MSG
@@ -77,6 +103,12 @@ for model in "${MODELS[@]}"; do
         have=$("$env/bin/python" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo unknown)
         if [ "$have" != "3.9" ]; then
             echo "Existing environment uses Python $have, not 3.9: $env" >&2
+            echo "Remove it and re-run:  rm -rf '$env'" >&2
+            exit 1
+        fi
+        broken=$(missing_modules "$env/bin/python")
+        if [ -n "$broken" ]; then
+            echo "Existing environment was built from an incomplete Python (missing: $broken): $env" >&2
             echo "Remove it and re-run:  rm -rf '$env'" >&2
             exit 1
         fi
