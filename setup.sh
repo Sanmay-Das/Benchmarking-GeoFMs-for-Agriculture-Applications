@@ -5,10 +5,11 @@
 #     ./setup.sh              # all three models
 #     ./setup.sh prithvi      # just one
 #
-# Requires Python 3.9. The pins were resolved against 3.9.18 and several of
-# them -- torch 1.11.0+cu113 and mmcv-full in particular -- have no wheels for
-# newer interpreters, so they would be built from source and fail. If your
-# default python3 is not 3.9, point GFM_PYTHON at one:
+# Requires Python 3.9 or 3.10. The pins were resolved against 3.9.18, and
+# both versions install the identical package set. Outside that range some pins
+# have no wheels: torch 1.11.0+cu113 and mmcv-full stop at 3.10, and numpy,
+# scipy and torch 2.5.1 start at 3.9. If your default python3 is neither, point
+# GFM_PYTHON at one:
 #
 #     GFM_PYTHON=/usr/bin/python3.9 ./setup.sh
 #
@@ -33,18 +34,18 @@ fi
 
 if ! command -v "$PYTHON" >/dev/null 2>&1; then
     echo "No such interpreter: $PYTHON" >&2
-    echo "Set GFM_PYTHON to a Python 3.9 interpreter." >&2
+    echo "Set GFM_PYTHON to a Python 3.9 or 3.10 interpreter." >&2
     exit 1
 fi
 
 version=$("$PYTHON" -c 'import sys; print("%d.%d" % sys.version_info[:2])')
-if [ "$version" != "3.9" ]; then
+if [ "$version" != "3.9" ] && [ "$version" != "3.10" ]; then
     cat >&2 <<MSG
-Python 3.9 is required; '$PYTHON' is $version.
+Python 3.9 or 3.10 is required; '$PYTHON' is $version.
 
-The pinned versions have no wheels for $version, so pip would try to build
-them from source and fail (mmcv-full needs pkg_resources, which modern
-setuptools no longer ships; torch 1.11.0+cu113 has no $version wheels at all).
+Some pinned versions have no wheels for $version: torch 1.11.0+cu113 and
+mmcv-full exist only up to 3.10, and numpy, scipy and torch 2.5.1 only from
+3.9. pip would try to build them from source and fail.
 
 Get a 3.9 interpreter with uv and point GFM_PYTHON at it:
 
@@ -57,7 +58,7 @@ fi
 
 # Python compiled from source without the system libraries it needs -- what
 # pyenv produces on a machine missing the libffi or OpenSSL headers -- reports
-# 3.9 but lacks modules that torch and pip import, and fails only partway
+# the right version but lacks modules that torch and pip import, and fails only partway
 # through the install. Check for them before installing anything.
 missing_modules() {
     "$1" - <<'PYCHECK'
@@ -74,7 +75,7 @@ PYCHECK
 missing=$(missing_modules "$PYTHON")
 if [ -n "$missing" ]; then
     cat >&2 <<MSG
-'$PYTHON' is Python 3.9 but is missing modules: $missing
+'$PYTHON' is Python $version but is missing modules: $missing
 
 It was built without the system libraries those modules need. Use a prebuilt
 Python 3.9 from uv instead:
@@ -103,8 +104,8 @@ for model in "${MODELS[@]}"; do
     # by installing into it, so refuse rather than fail obscurely later.
     if [ -x "$env/bin/python" ]; then
         have=$("$env/bin/python" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo unknown)
-        if [ "$have" != "3.9" ]; then
-            echo "Existing environment uses Python $have, not 3.9: $env" >&2
+        if [ "$have" != "3.9" ] && [ "$have" != "3.10" ]; then
+            echo "Existing environment uses Python $have, not 3.9 or 3.10: $env" >&2
             echo "Remove it and re-run:  rm -rf '$env'" >&2
             exit 1
         fi

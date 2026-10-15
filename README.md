@@ -7,7 +7,9 @@ four US agricultural regions.
 ## Requirements
 
 - Linux with an NVIDIA GPU. Check with `nvidia-smi`: if it prints your GPU, you're ready.
-- Python 3.9. If you don't have it, the setup below installs it for you.
+- Python 3.9 (recommended) or 3.10. If you don't have either, the setup below
+  installs 3.9 for you. See [Python version](#python-version) for why other
+  versions don't work.
 
 ## Setup
 
@@ -19,8 +21,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh      # install uv, a small tool 
 GFM_PYTHON=$(~/.local/bin/uv python find 3.9) ./setup.sh   # build one environment per model
 ```
 
-If `python3` on your machine is already 3.9, the last line can be just
-`./setup.sh`.
+If `python3` on your machine is already 3.9 or 3.10, the last line can be
+just `./setup.sh`.
 
 ## Run
 
@@ -224,14 +226,35 @@ deleted.
 
 ### Python version
 
-Python 3.9 is a hard requirement. The dependency versions were resolved against
-3.9.18, and two of them have no wheels for newer interpreters: `torch
-1.11.0+cu113` and `mmcv-full`. On Python 3.10 or later, pip falls back to
-building them from source and the install fails. `setup.sh` checks the version
-and stops if it is wrong.
+Use Python 3.9 or 3.10. Both install exactly the same package versions, and
+`setup.sh` stops with a message on any other version. 3.9 is recommended
+because the published results were produced with it (3.9.18).
+
+| Python | SatMAE | SpectralGPT | Prithvi |
+|---|---|---|---|
+| 3.8 or older | no | no | no |
+| **3.9** | yes | yes | yes |
+| **3.10** | yes | yes | yes |
+| 3.11 | no | yes | no |
+| 3.12 or newer | no | no | no |
+
+Why other versions don't work:
+
+- **3.8 or older:** `numpy 1.26.4`, `scipy 1.13.1`, `rasterio 1.4.3` and
+  `torch 2.5.1` were only released for Python 3.9 and newer.
+- **3.11:** SatMAE and Prithvi need `torch 1.11.0+cu113` and `mmcv-full`
+  (1.7.1 and 1.6.2), which were only released up to Python 3.10. pip finds no
+  `torch 1.11.0+cu113` for 3.11 at all, and SatMAE's older pins (`pandas
+  1.3.4`, `matplotlib 3.5.1`, `Pillow 9.0.1`) fail to compile from source.
+- **3.12 or newer:** in addition, SpectralGPT pins `numpy 1.23.5`, which was
+  only released up to Python 3.11.
+
+These versions can't simply be upgraded: the pins reproduce the exact
+environments the published results came from, and newer releases of these
+packages would change the environment.
 
 If your default `python3` is something else, get a 3.9 interpreter with uv
-and point `GFM_PYTHON` at it:
+and point `GFM_PYTHON` at it (use `3.10` in both commands for 3.10):
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -239,7 +262,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 GFM_PYTHON=$(~/.local/bin/uv python find 3.9) ./setup.sh
 ```
 
-Any complete Python 3.9 works, including one from conda. Avoid a Python
+Any complete Python 3.9 or 3.10 works, including one from conda. Avoid a Python
 compiled from source (for example with pyenv): a source build made without
 system libraries such as libffi is missing modules that torch needs, and
 `setup.sh` will refuse it. uv downloads a prebuilt Python, so it does not have
