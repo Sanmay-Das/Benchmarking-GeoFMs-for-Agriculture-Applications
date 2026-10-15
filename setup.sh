@@ -46,10 +46,11 @@ The pinned versions have no wheels for $version, so pip would try to build
 them from source and fail (mmcv-full needs pkg_resources, which modern
 setuptools no longer ships; torch 1.11.0+cu113 has no $version wheels at all).
 
-Create a 3.9 interpreter with conda and point GFM_PYTHON at it:
+Get a 3.9 interpreter with uv and point GFM_PYTHON at it:
 
-    conda create -n gfm39 python=3.9 -y
-    GFM_PYTHON=\$(conda run -n gfm39 which python) ./setup.sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ~/.local/bin/uv python install 3.9
+    GFM_PYTHON=\$(~/.local/bin/uv python find 3.9) ./setup.sh
 MSG
     exit 1
 fi
@@ -75,11 +76,12 @@ if [ -n "$missing" ]; then
     cat >&2 <<MSG
 '$PYTHON' is Python 3.9 but is missing modules: $missing
 
-It was built without the system libraries those modules need. Use a complete
-Python 3.9 from conda instead:
+It was built without the system libraries those modules need. Use a prebuilt
+Python 3.9 from uv instead:
 
-    conda create -n gfm39 python=3.9 -y
-    GFM_PYTHON=\$(conda run -n gfm39 which python) ./setup.sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ~/.local/bin/uv python install 3.9
+    GFM_PYTHON=\$(~/.local/bin/uv python find 3.9) ./setup.sh
 MSG
     exit 1
 fi

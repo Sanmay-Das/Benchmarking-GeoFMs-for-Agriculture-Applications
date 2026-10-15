@@ -6,23 +6,21 @@ four US agricultural regions.
 
 ## Requirements
 
-- An NVIDIA GPU. Check with `nvidia-smi`: if it prints your GPU, you're ready.
-- Python 3.9.
+- Linux with an NVIDIA GPU. Check with `nvidia-smi`: if it prints your GPU, you're ready.
+- Python 3.9. If you don't have it, the setup below installs it for you.
 
 ## Setup
 
 ```bash
 git clone https://github.com/Sanmay-Das/Benchmarking-GeoFMs-for-Agriculture-Applications
 cd Benchmarking-GeoFMs-for-Agriculture-Applications
-./setup.sh
+curl -LsSf https://astral.sh/uv/install.sh | sh      # install uv, a small tool that downloads Python
+~/.local/bin/uv python install 3.9                   # download Python 3.9 (no admin rights needed)
+GFM_PYTHON=$(~/.local/bin/uv python find 3.9) ./setup.sh   # build one environment per model
 ```
 
-If `python3` on your machine is not 3.9, create one with conda:
-
-```bash
-conda create -n gfm39 python=3.9 -y
-GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
-```
+If `python3` on your machine is already 3.9, the last line can be just
+`./setup.sh`.
 
 ## Run
 
@@ -232,17 +230,20 @@ Python 3.9 is a hard requirement. The dependency versions were resolved against
 building them from source and the install fails. `setup.sh` checks the version
 and stops if it is wrong.
 
-If your default `python3` is something else, create a 3.9 interpreter with
-conda and point `GFM_PYTHON` at it:
+If your default `python3` is something else, get a 3.9 interpreter with uv
+and point `GFM_PYTHON` at it:
 
 ```bash
-conda create -n gfm39 python=3.9 -y
-GFM_PYTHON=$(conda run -n gfm39 which python) ./setup.sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+~/.local/bin/uv python install 3.9
+GFM_PYTHON=$(~/.local/bin/uv python find 3.9) ./setup.sh
 ```
 
-Use conda rather than a Python compiled from source (for example with pyenv):
-a source build made without system libraries such as libffi is missing modules
-that torch needs, and `setup.sh` will refuse it.
+Any complete Python 3.9 works, including one from conda. Avoid a Python
+compiled from source (for example with pyenv): a source build made without
+system libraries such as libffi is missing modules that torch needs, and
+`setup.sh` will refuse it. uv downloads a prebuilt Python, so it does not have
+this problem.
 
 If an earlier attempt already created environments with the wrong interpreter,
 delete them first -- they cannot be repaired in place:
