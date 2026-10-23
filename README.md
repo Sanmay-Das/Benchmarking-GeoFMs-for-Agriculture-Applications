@@ -171,6 +171,17 @@ Training needs all three regions of a state:
 python scripts/fetch.py --task cd --model satmae --state minnesota --splits all
 ```
 
+It also needs the pretrained backbone the model starts from, which inference
+does not:
+
+```bash
+python scripts/fetch_backbones.py --model satmae
+```
+
+These are the original authors' checkpoints (Prithvi-EO-1.0-100M, SatMAE
+fMoW-Sentinel ViT-Large, SpectralGPT+), mirrored in the same dataset and
+installed into `$GFM_WEIGHTS`, where `--pretrain-path` looks by default.
+
 ## Configuration
 
 Defaults are self-contained; override only if you want data elsewhere.
@@ -193,6 +204,10 @@ Published at
 [`sanmay4119/geofm-agriculture-benchmark`](https://huggingface.co/datasets/sanmay4119/geofm-agriculture-benchmark)
 - 482 GB in total, so do not clone it. One cell is 3-30 GB and `fetch.py`
 downloads only what a cell needs.
+
+The pretrained backbones are mirrored under `weights/<model>/`, and the
+fine-tuned checkpoints this benchmark produced under
+`weights/{segmentation,change_detection}/`.
 
 Chip manifests are **not** published: they contain absolute paths, and are
 rebuilt from the chips after unpacking. `./benchmark-gfm manifests` does this if you

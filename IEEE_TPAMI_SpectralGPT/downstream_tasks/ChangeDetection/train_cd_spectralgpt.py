@@ -33,7 +33,7 @@ Run:
         --nproc_per_node=1 --master_port=25643 --use_env \
         train_cd_spectralgpt.py \
         --data-root $GFM_DATA_ROOT/change_detection_chips/spectralgpt \
-        --pretrain-path $GFM_ROOT/weights/SpectralGPT+.pth \
+        --pretrain-path $GFM_WEIGHTS/SpectralGPT+.pth \
         --output-dir ./cd_train_spectralgpt
 
 Test only (EastIA):

@@ -24,7 +24,7 @@ Run:
         --nproc_per_node=1 --master_port=29549 --use_env \
         train_cd_prithvi.py \
         --data-root $GFM_DATA_ROOT/change_detection_chips/prithvi \
-        --pretrain-path $GFM_ROOT/weights/Prithvi_EO_V1_100M.pt \
+        --pretrain-path $GFM_WEIGHTS/Prithvi_EO_V1_100M.pt \
         --output-dir ./cd_train_prithvi
 """
 

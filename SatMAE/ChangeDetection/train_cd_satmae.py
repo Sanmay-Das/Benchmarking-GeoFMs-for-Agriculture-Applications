@@ -27,7 +27,7 @@ Run:
         --nproc_per_node=1 --master_port=29550 --use_env \
         train_cd_satmae.py \
         --data-root $GFM_DATA_ROOT/change_detection_chips/satmae \
-        --pretrain-path $GFM_ROOT/weights/<satmae_pretrain>.pth \
+        --pretrain-path $GFM_WEIGHTS/pretrain-vit-large-e199.pth \
         --output-dir ./cd_train_satmae
 """
 
