@@ -318,6 +318,12 @@ def main():
     # checkpoint, or a checkpoint without its chips, cannot produce a number,
     # so downloading either half wastes tens of gigabytes. An incomplete cell
     # is reported and skipped unless --partial says otherwise.
+    #
+    # Training is the exception. --splits all is asked for only when the
+    # intent is to fine-tune, and there the checkpoint is the output, not an
+    # input: an unpublished one must not suppress the chips that would produce
+    # it. The three SpectralGPT change-detection cells are exactly this case.
+    training = args.splits == "all"
     wanted, present, missing, skipped = [], [], [], []
     for model in models:
         for st in states:
@@ -328,7 +334,9 @@ def main():
                 item["size"] = index.get(item["remote"], 0)
             absent = [i for i in items
                       if not i["dest"].exists() and i["remote"] not in index]
-            if absent and not args.partial:
+            blocking = ([i for i in absent if i["kind"] != "weights"]
+                        if training else absent)
+            if blocking and not args.partial:
                 missing.extend(absent)
                 skipped.extend(i for i in items
                                if i not in absent and not i["dest"].exists())
