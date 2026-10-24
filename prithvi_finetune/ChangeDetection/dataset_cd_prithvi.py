@@ -27,6 +27,19 @@ import torch.utils.data as data
 import rasterio
 import pandas as pd
 
+# Chip manifests store paths relative to the change-detection chips root, so
+# that a published CSV resolves on any machine. load_chips_csv() makes them
+# absolute; reading the CSV directly yields paths that resolve only if the
+# process happens to run from that root, which training does not.
+import os as _os, sys as _sys
+_d = _os.path.dirname(_os.path.abspath(__file__))
+while _d != _os.path.dirname(_d) and not _os.path.isfile(
+        _os.path.join(_d, 'configs', 'paths.py')):
+    _d = _os.path.dirname(_d)
+_sys.path.insert(0, _os.path.join(_d, 'configs'))
+from paths import load_chips_csv  # noqa: E402
+
+
 
 # ============================================================================
 # Iowa normalization stats for Prithvi CD
@@ -152,7 +165,7 @@ class CDDatasetPrithvi(data.Dataset):
 
         for csv_path in csv_paths:
             assert os.path.exists(csv_path), f"CSV not found: {csv_path}"
-            df = pd.read_csv(csv_path)
+            df = load_chips_csv(csv_path)
             for _, row in df.iterrows():
                 self.samples.append((
                     str(row['t1']),
