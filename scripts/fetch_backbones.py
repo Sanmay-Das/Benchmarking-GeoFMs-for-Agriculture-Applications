@@ -22,7 +22,8 @@ one dataset rather than three. The upstream sources, should you prefer them:
     spectralgpt  zenodo.org/records/8412455 (SpectralGPT+, BigEarthNet)
 
 Already-downloaded files are left alone, so an interrupted run is resumed by
-running it again.
+running it again. A dangling symlink left by earlier versions of this script
+does not count as downloaded, so running it again also repairs that.
 """
 
 import argparse
@@ -119,15 +120,28 @@ def main():
     if args.dry_run:
         return
 
-    P.WEIGHTS.mkdir(parents=True, exist_ok=True)
+    # Download into a staging directory beside the destination, as fetch.py
+    # does, rather than into the Hub cache. The cache path hf_hub_download
+    # returns is a relative symlink into the cache's blobs/ directory, and
+    # moving that symlink into GFM_WEIGHTS leaves it dangling; with local_dir
+    # the download is a regular file, and staging on the same filesystem keeps
+    # the move a rename instead of a multi-gigabyte copy.
+    staging = P.WEIGHTS / "_downloads"
+    staging.mkdir(parents=True, exist_ok=True)
     for i, model in enumerate(todo, 1):
         print("\n[{}/{}] {}".format(i, len(todo), remote(model)))
-        cached = download(repo_id=REPO_ID, repo_type=REPO_TYPE,
-                          filename=remote(model))
-        # Move rather than copy: the Hub cache is a second full copy of a
-        # multi-gigabyte file, and nothing else reads it.
-        os.replace(cached, dest(model))
+        local = Path(download(repo_id=REPO_ID, repo_type=REPO_TYPE,
+                              filename=remote(model), local_dir=str(staging)))
+        if local.is_symlink() or not local.is_file():
+            raise SystemExit(
+                "Download of {} did not produce a regular file: {}".format(
+                    remote(model), local))
+        os.replace(str(local), str(dest(model)))
         print("  installed {}".format(dest(model)))
+
+    # Only lock and metadata files remain once the weights are moved out.
+    import shutil
+    shutil.rmtree(staging, ignore_errors=True)
 
     print("\nDone. Training reads these from {}.".format(P.WEIGHTS))
 
